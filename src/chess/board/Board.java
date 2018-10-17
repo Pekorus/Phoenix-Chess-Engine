@@ -43,54 +43,33 @@ public class Board {
         
         switch(move.getMoveType()){
             case NORMAL:
-            //TODO: pack code in Methode movePiece!
-            //clear old field
-            this.clearField(coordFrom);
-            //set figure to new field
-            this.setField(piece, coordTo);
-            piece.setCoordinate(coordTo);
-            piece.increaseMoveCounter();
+            move(piece, coordFrom, coordTo);
             break;
             
             case TAKE:
-            //clear old field
-            this.clearField(coordFrom);
-            //TODO: geschlagene Figuren in Liste
-            //set figure to new field
-            this.setField(piece, coordTo);
-            piece.setCoordinate(coordTo);
-            piece.increaseMoveCounter();
-            optPiece.setCoordinate(null);
+            //TODO: geschlagene Figuren in Liste            
+            move(piece, coordFrom, coordTo);
+            optPiece.setCoordinate(null);            
             break;
             
             case ENPASSANT:
-            //clear old field
-            this.clearField(coordFrom);
+            //TODO: geschlageen Figur Liste            
+            move(piece, coordFrom, coordTo);            
             //clear pawn that is taken by en passant
-            //TODO: geschlageen Figur Liste
-            this.clearField(move.getOptionalPieceCoord());
-            //set pawn to new field
-            this.setField(piece, coordTo);
-            piece.setCoordinate(coordTo);
-            piece.increaseMoveCounter();
-            optPiece.setCoordinate(null);            
+            this.clearField(move.getOptionalPieceCoord());            
+            optPiece.setCoordinate(null);          
             break;
             
             case CASTLE:
             //move king
-            this.clearField(coordFrom);
-            this.setField(piece, coordTo);
-            piece.setCoordinate(coordTo);
-            piece.increaseMoveCounter();            
+            move(piece, coordFrom, coordTo);          
             
             //move rook
             Coordinate rookFrom = coordTo.getRookCastleCoord();
             Piece rook = this.getPieceOnCoord(rookFrom);
             Coordinate rookTo = coordFrom.
                             getCoordInDir(coordFrom.straightLineDir(coordTo));
-            this.clearField(rookFrom);
-            this.setField(rook, rookTo);
-            rook.setCoordinate(rookTo);
+            move(rook, rookFrom, rookTo);
             rook.increaseMoveCounter();
             break;      
         
@@ -98,6 +77,7 @@ public class Board {
             //TODO
             break;       
         }
+        piece.increaseMoveCounter();
         this.nextPlayer();
         moveList.add(move);
     }
@@ -457,44 +437,29 @@ public class Board {
         
         switch(move.getMoveType()){
             case NORMAL:
-            //reverse clear old field
-            this.clearField(coordTo);
-            // reverse set figure to new field
-            this.setField(piece, coordFrom);
-            piece.setCoordinate(coordFrom);
-            piece.decreaseMoveCounter();
+            //reverse move
+            move(piece, coordTo, coordFrom);
             break;
             
             case TAKE:
-            //clear old field
-            this.setField(optPiece, coordTo);
-            //TODO: geschlagene Figuren in Liste
-            //set figure to new field
-            this.setField(piece, coordFrom);
-            piece.setCoordinate(coordFrom);
-            piece.decreaseMoveCounter();
+            //TODO: geschlagene Figuren in Liste            
+            move(piece, coordTo, coordFrom);
+            //reset taken piece
+            this.setField(optPiece, coordTo);            
             optPiece.setCoordinate(coordTo);            
             break;
             
             case ENPASSANT:
-            //reverse clear old field
-            this.clearField(coordTo);
-            // reverse clear pawn that is taken by en passant
-            //TODO: geschlageen Figur Liste
-            this.setField(optPiece, move.getOptionalPieceCoord());
-            // reverse set pawn to new field
-            this.setField(piece, coordFrom);
-            piece.setCoordinate(coordFrom);
-            piece.decreaseMoveCounter();
+            //TODO: geschlageen Figur Liste  
+            move(piece, coordTo, coordFrom);    
+            //reset taken pawn
+            this.setField(optPiece, move.getOptionalPieceCoord());            
             optPiece.setCoordinate(move.getOptionalPieceCoord());                       
             break;
             
             case CASTLE:
             //move king
-            this.clearField(coordTo);
-            this.setField(piece, coordFrom);
-            piece.setCoordinate(coordFrom);
-            piece.decreaseMoveCounter();            
+            move(piece, coordTo, coordFrom);    
             
             //move rook
             Coordinate rookFrom = coordTo.getRookCastleCoord();
@@ -502,9 +467,7 @@ public class Board {
                             getCoordInDir(coordFrom.straightLineDir(coordTo));            
             Piece rook = this.getPieceOnCoord(rookTo);
             
-            this.clearField(rookTo);
-            this.setField(rook, rookFrom);
-            rook.setCoordinate(rookFrom);
+            move(rook, rookTo, rookFrom);  
             rook.decreaseMoveCounter();
             break;       
         
@@ -512,6 +475,7 @@ public class Board {
             //TODO
             break;       
         }
+        piece.decreaseMoveCounter();
         this.nextPlayer();
         moveList.remove(move);
     }     
@@ -581,6 +545,14 @@ public class Board {
         if(rook==null) return false;
         if(rook.getPiecetype()!=ROOK) return false;
         return rook.getMoveCounter()==0; 
+    }
+
+    private void move(Piece piece, Coordinate coordFrom, Coordinate coordTo) {
+            //clear old field
+            this.clearField(coordFrom);
+            //set figure to new field
+            this.setField(piece, coordTo);
+            piece.setCoordinate(coordTo);
     }
 
 }
