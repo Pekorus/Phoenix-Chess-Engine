@@ -24,14 +24,13 @@ public class Board {
     private final Piece[][] board;
     private ChessColor playersTurn;
     private Piece whiteKing, blackKing;
-    private final List<Move> moveList;
+    private final LinkedList<Move> moveList= new LinkedList<>();
     private List<Coordinate> castleCoords;
     
     public Board() {
         this.playersTurn= WHITE;
         this.board = new Piece[8][8];
-        createStartPosition();        
-        this.moveList = new ArrayList();            
+        createStartPosition();                    
     }
     
     public void executeMove(Move move){
@@ -145,10 +144,20 @@ public class Board {
         break;    
         
         case ENPASSANT:            
+        Piece optPiece = move.getOptionalPiece();
+        if(optPiece==null) return false;
         if(pieceType!=PAWN) return false;
-        if(move.getOptionalPiece().getPiecetype()!=PAWN) return false;
+        if(optPiece.getPiecetype()!=PAWN) return false;
+        if(optPiece.isColor()==piece.isColor()) return false;
         if(this.isOccupied(coordTo)) return false;
-        //TODO 
+        if((piece.isColor()==WHITE && coordFrom.getX()!=4)||
+                (piece.isColor()==BLACK && coordFrom.getX()!=3)) return false;
+        Move lastMove = moveList.getLast();
+        if(lastMove.getPiece().getPiecetype()!=PAWN) return false;
+        if(!lastMove.getCoordTo().
+                                equals(optPiece.getCoordinate())) return false;
+        if(lastMove.getCoordFrom().
+                               distance(lastMove.getCoordTo())!=2) return false; 
         break;
             
         case CASTLE:
@@ -167,6 +176,7 @@ public class Board {
             if(isCheck(auxCoord, piece.isColor())) return false;
             auxCoord = auxCoord.getCoordInDir(dir);
         }        
+        if(isCheck(coordFrom, piece.isColor())) return false;
         break;    
             
         case PROMOTION:
