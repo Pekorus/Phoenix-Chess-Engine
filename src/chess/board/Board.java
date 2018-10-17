@@ -145,7 +145,10 @@ public class Board {
         break;    
         
         case ENPASSANT:            
-        //TODO
+        if(pieceType!=PAWN) return false;
+        if(move.getOptionalPiece().getPiecetype()!=PAWN) return false;
+        if(this.isOccupied(coordTo)) return false;
+        //TODO 
         break;
             
         case CASTLE:
