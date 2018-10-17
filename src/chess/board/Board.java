@@ -570,7 +570,7 @@ public class Board {
         castleCoords.add(new Coordinate(0,1));
         castleCoords.add(new Coordinate(0,5));
         castleCoords.add(new Coordinate(7,1));
-        castleCoords.add(new Coordinate(7,1));
+        castleCoords.add(new Coordinate(7,5));
     }
 
     private boolean rookCastleCheck(Coordinate rookCoord) {
