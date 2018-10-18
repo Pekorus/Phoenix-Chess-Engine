@@ -16,7 +16,6 @@ import chess.coordinate.Coordinate;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -48,10 +47,14 @@ public class ChessBoardFrame{
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
     Piece[][] pieceArray;
     Coordinate pressedCoord1=null, pressedCoord2=null;
+    Coordinate paintedCoord1, paintedCoord2;
     private Move nextMove;
     private PieceType nextPromotion =null;
+    private ChessColor ownColor;
     
-    public ChessBoardFrame() throws IOException {
+    public ChessBoardFrame(ChessColor ownColor) throws IOException {
+        this.ownColor = ownColor;
+        
         chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         chessBoardFrame.setResizable(false);
         chessBoardFrame.setSize(700,720);
@@ -102,11 +105,16 @@ public class ChessBoardFrame{
     public void drawBoard(Piece[][] pieces){
         for(int i=0;i<8;i++){
             for(int j=0; j<8; j++){
-                if(pieces[i][j]==null)buttonArray[i][j].setIcon(null);
+                int a=i, b=j;
+                if(ownColor==WHITE){
+                 a=7-i;
+                 b=7-j;
+                }
+                if(pieces[i][j]==null)buttonArray[a][b].setIcon(null);
                 else{
                 ImageIcon sprite = getSprite(pieces[i][j].getPiecetype(), 
                                                         pieces[i][j].isColor());
-                buttonArray[i][j].setIcon(sprite);
+                buttonArray[a][b].setIcon(sprite);
                 }
             }
         } 
@@ -249,22 +257,30 @@ public class ChessBoardFrame{
             for(int i=0; i<8; i++){
                 for(int j=0; j<8; j++){
                     if(e.getSource() == buttonArray[i][j]){
-                        if(pressedCoord1==null && pieceArray[i][j]!=null){                            
-                        pressedCoord1 = new Coordinate(i,j);
-                        paintFieldColor(pressedCoord1);
+                        int a=i, b=j;
+                        if(ownColor==WHITE){
+                            a=7-i;
+                            b=7-j;
+                        }
+                        if(pressedCoord1==null && pieceArray[a][b]!=null){                            
+                            pressedCoord1 = new Coordinate(a,b);
+                            paintedCoord1 = new Coordinate(i,j);
+                            paintFieldColor(paintedCoord1);
                         }
                         else if(pressedCoord1!=null && pressedCoord2==null){
-                            pressedCoord2 = new Coordinate(i,j);
-                        paintFieldColor(pressedCoord2);
+                            pressedCoord2 = new Coordinate(a,b);
+                            paintedCoord2 = new Coordinate(i,j);
+                            paintFieldColor(paintedCoord2);
                             createMove();                        
                         }    
                         else if(pressedCoord1!=null && pressedCoord2!=null){
                             nextMove=null;
-                            restoreFieldColor(pressedCoord1);
-                            restoreFieldColor(pressedCoord2);
+                            restoreFieldColor(paintedCoord1);
+                            restoreFieldColor(paintedCoord2);
                             pressedCoord1 = null;
-                            //paintFieldColor(pressedCoord1);
                             pressedCoord2 = null;
+                            paintedCoord1 = null;
+                            paintedCoord2 = null;
                         }
                     }    
                 }
