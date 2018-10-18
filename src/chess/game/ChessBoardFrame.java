@@ -16,6 +16,7 @@ import chess.coordinate.Coordinate;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -54,7 +55,8 @@ public class ChessBoardFrame{
         chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         chessBoardFrame.setResizable(false);
         chessBoardFrame.setSize(700,720);
-
+        chessBoardFrame.setLocationRelativeTo(null);
+        
         //load sprite sheet and process it
         spriteSheet = ImageIO.read(getClass().
                                        getResource("/images/Chess_pieces.png"));
@@ -63,6 +65,7 @@ public class ChessBoardFrame{
         //menu bar
         createMenuBar();     
         createPromotionDialog();
+        promoteDialog.setLocationRelativeTo(chessBoardFrame);
         //boarder panel
         boarderPanel.add(chessBoardPanel, BorderLayout.CENTER);
         boarderPanel.add(mainBar, BorderLayout.PAGE_START);
@@ -74,6 +77,7 @@ public class ChessBoardFrame{
         for(int i=0; i<8; i++){
             for(int j=0; j<8; j++){
                 buttonArray[i][j] = new JButton();
+                buttonArray[i][j].setBorder(null);
                 if((i+j)%2==0)
                     buttonArray[i][j].setBackground(Color.white);
                 else buttonArray[i][j].setBackground(Color.gray);
@@ -192,14 +196,14 @@ public class ChessBoardFrame{
            promoteDialog.setTitle("Pawn Promotion");
            promoteDialog.setSize(400, 150);
            promoteDialog.setModal(true);
-         
-           queenButton = new JButton(spriteArray[1][1]); 
+           
+           queenButton = new JButton(getSprite(QUEEN, WHITE)); 
            iconOnlyButton(queenButton);
-           bishopButton = new JButton(spriteArray[1][2]);
+           bishopButton = new JButton(getSprite(BISHOP, WHITE));
            iconOnlyButton(bishopButton);
-           knightButton = new JButton(spriteArray[1][3]);
+           knightButton = new JButton(getSprite(KNIGHT, WHITE));
            iconOnlyButton(knightButton);
-           rookButton = new JButton(spriteArray[1][4]);           
+           rookButton = new JButton(getSprite(ROOK, WHITE));           
            iconOnlyButton(rookButton);
            ButtonListener bt = new ButtonListener();
            queenButton.addActionListener(bt);
@@ -278,6 +282,7 @@ public class ChessBoardFrame{
                 //Pawn promotion
                 if(piece1.getPiecetype()==PAWN && 
                     (pressedCoord2.getX()==0 || pressedCoord2.getX()==7)){
+                setPromoteDialogColor(piece1.isColor());
                 promoteDialog.setVisible(true);
                 nextMove = new Move(piece1, pressedCoord2, TAKE,
                                                     piece2, nextPromotion);
@@ -301,6 +306,7 @@ public class ChessBoardFrame{
                 //pawn promotion
                 if(piece1.getPiecetype()==PAWN && 
                     (pressedCoord2.getX()==0 || pressedCoord2.getX()==7)){
+                setPromoteDialogColor(piece1.isColor()); 
                 promoteDialog.setVisible(true);
                 nextMove = new Move(piece1, pressedCoord2, NORMAL, null, nextPromotion);
                 }
@@ -319,6 +325,13 @@ public class ChessBoardFrame{
 
         private void paintFieldColor(Coordinate coord) {
             buttonArray[coord.getX()][coord.getY()].setBackground(Color.cyan);
+        }
+
+        private void setPromoteDialogColor(ChessColor color) {
+           queenButton.setIcon(getSprite(QUEEN, color)); 
+           bishopButton.setIcon(getSprite(BISHOP, color));
+           knightButton.setIcon(getSprite(KNIGHT, color));
+           rookButton.setIcon(getSprite(ROOK, color));  
         }
     }
 }
