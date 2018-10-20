@@ -34,27 +34,6 @@ public class ChessGame{
         this.rules = new ChessRules();
         this.playersTurn = WHITE;
     }    
-    
-/*    public void startGame(){        
-        while(!checkMate){
-        this.handlePlayerMove(playerWhite);
-        //checkMate = board.isCheckmate();
-        if(!checkMate) this.handlePlayerMove(playerBlack);
-        //checkMate = board.isCheckmate();
-        }
-        if(board.getPlayersTurn()==WHITE) winner = BLACK;
-        else winner = WHITE;
-        notifyObservers();
-    }*/
-
-    /*private void handlePlayerMove(Player player) {
-        nextMove = player.nextMove(board);
-        while(!board.validateMove(nextMove)){
-            nextMove = player.nextMove(board);
-        }
-        board.executeMove(nextMove);
-        this.notifyObservers();
-    }*/
 
     public boolean nextMove(Move move){
         //class game rules

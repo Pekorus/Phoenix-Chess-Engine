@@ -5,17 +5,12 @@
  */
 package chess.game;
 
-import chess.board.Board;
-import chess.move.Move;
-
 /**
  *
  * @author Phoenix
  */
 
-//vllt Interface ??
 public interface Player {
     
     public abstract void update(ChessGame game, Object arg);
-    public abstract Move nextMove(Board board);
 }

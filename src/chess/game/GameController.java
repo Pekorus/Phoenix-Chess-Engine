@@ -5,6 +5,7 @@
  */
 package chess.game;
 
+import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.move.Move;
 import java.io.IOException;
@@ -20,8 +21,8 @@ public class GameController {
     Player player2;
     
     public GameController() throws IOException {
-        player1 = new ChessGUI(this, WHITE);
-        player2 = new ChessGUI(this, BLACK);
+        player1 = new ChessGuiController(this, WHITE);
+        player2 = new ChessGuiController(this, BLACK);
         game = new ChessGame(player1, player2);
     }    
     
