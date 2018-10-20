@@ -6,7 +6,7 @@
 package chess.game;
 
 import static chess.board.ChessColor.*;
-import chess.board.Move;
+import chess.move.Move;
 import java.io.IOException;
 
 /**

@@ -5,6 +5,7 @@
  */
 package chess.board;
 
+import chess.move.Move;
 import static chess.board.ChessColor.*;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;

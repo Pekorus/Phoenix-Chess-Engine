@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package chess.board;
+package chess.move;
 
+import chess.board.Piece;
+import chess.board.PieceType;
 import chess.coordinate.Coordinate;
 
 /**

@@ -7,8 +7,8 @@ package chess.game;
 
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
-import chess.board.Move;
-import static chess.board.MoveType.*;
+import chess.move.Move;
+import static chess.move.MoveType.*;
 import chess.board.Piece;
 import chess.board.PieceType;
 import static chess.board.PieceType.*;
