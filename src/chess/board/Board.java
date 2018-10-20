@@ -22,13 +22,11 @@ import java.util.List;
 public class Board {
     
     private final Piece[][] board;
-    private ChessColor playersTurn;
+   // private ChessColor playersTurn;
     private Piece whiteKing, blackKing;
-    private final LinkedList<Move> moveList= new LinkedList<>();
-    private List<Coordinate> castleCoords;
     
     public Board() {
-        this.playersTurn= WHITE;
+        //this.playersTurn= WHITE;
         this.board = new Piece[8][8];
         createStartPosition();                    
     }
@@ -83,124 +81,6 @@ public class Board {
             break;            
         }
         piece.increaseMoveCounter();
-        this.nextPlayer();
-        moveList.add(move);
-    }
-
-    public boolean validateMove(Move move) {
-        
-        //preparation and fail safes
-        if(move==null) return false;
-        Piece piece = move.getPiece();        
-        if (piece==null) return false;
-        PieceType pieceType = piece.getPiecetype();
-        if(pieceType==null) return false;
-        if(piece.isColor()!= playersTurn) return false;
-        Coordinate coordFrom = move.getCoordFrom();
-        Coordinate coordTo = move.getCoordTo();
-        if(coordFrom==null) return false;
-        if(coordTo==null) return false;
-        if(!coordFrom.equals(piece.getCoordinate())) return false;
-        
-        switch(move.getMoveType()){
-        case NORMAL:
-        if(this.isOccupied(move.getCoordTo())) return false;    
-        if(!this.isMovePossible(move)) return false;
-        
-        //TODO: auslagern in Methode
-        if(pieceType==PAWN){
-            if(piece.isColor()==WHITE){
-                Coordinate sCoord= coordFrom.getCoordInDir(Direction.S);
-                Coordinate s2Coord= sCoord.getCoordInDir(Direction.S);
-                if(!sCoord.equals(coordTo) && !coordTo.equals(s2Coord)) return false;
-                if(this.isOccupied(sCoord)) return false;
-                if(coordTo.equals(s2Coord) && piece.getMoveCounter()!=0) 
-                        return false;
-                if(move.getPromoteTo()!=null && coordTo.getX()!=7) return false;        
-            }
-            else{                   
-                Coordinate nCoord= coordFrom.getCoordInDir(Direction.N);
-                Coordinate n2Coord= nCoord.getCoordInDir(Direction.N);
-                if(!nCoord.equals(coordTo) && !coordTo.equals(n2Coord)) return false;
-                if(this.isOccupied(nCoord)) return false;
-                if(coordTo.equals(n2Coord) && piece.getMoveCounter()!=0) 
-                    return false;
-                if(move.getPromoteTo()!=null && coordTo.getX()!=0) return false;
-                }
-            }    
-        break;
-            
-        case TAKE:
-        if(!this.isOccupied(coordTo)) return false;    
-        if(this.getPieceOnCoord(coordTo).isColor()== 
-                    piece.isColor())
-            return false;
-        if(!this.isMovePossible(move)) return false;
-            
-        if(pieceType==PAWN){
-            if(piece.isColor()==WHITE){
-                if(!coordTo.equals(coordFrom.getCoordInDir(Direction.SW)) && 
-                        !coordTo.equals(coordFrom.getCoordInDir(Direction.SE))) 
-                    return false;
-            if(move.getPromoteTo()!=null && coordTo.getX()!=7) return false;
-            }
-            else{                   
-                if(!coordTo.equals(coordFrom.getCoordInDir(Direction.NW)) && 
-                        !coordTo.equals(coordFrom.getCoordInDir(Direction.NE))) 
-                    return false;
-            if(move.getPromoteTo()!=null && coordTo.getX()!=0) return false;
-            }
-        }
-        break;    
-        
-        case ENPASSANT:            
-        Piece optPiece = move.getOptionalPiece();
-        if(optPiece==null) return false;
-        if(pieceType!=PAWN) return false;
-        if(optPiece.getPiecetype()!=PAWN) return false;
-        if(optPiece.isColor()==piece.isColor()) return false;
-        if(this.isOccupied(coordTo)) return false;
-        if((piece.isColor()==WHITE && coordFrom.getX()!=4)||
-                (piece.isColor()==BLACK && coordFrom.getX()!=3)) return false;
-        Move lastMove = moveList.getLast();
-        if(lastMove.getPiece().getPiecetype()!=PAWN) return false;
-        if(!lastMove.getCoordTo().
-                                equals(optPiece.getCoordinate())) return false;
-        if(lastMove.getCoordFrom().
-                               distance(lastMove.getCoordTo())!=2) return false; 
-        break;
-            
-        case CASTLE:
-        if(pieceType!=KING) return false;
-        if(piece.getMoveCounter()!=0) return false;
-        if(!castleCoords.contains(coordTo)) return false;
-        Coordinate rookCoord = coordTo.getRookCastleCoord();
-        if(!rookCastleCheck(rookCoord)) return false;
-        //check if all fields between king and rook are empty and not in check
-        Coordinate kingCoord = piece.getCoordinate();
-        Direction dir = kingCoord.straightLineDir(rookCoord);
-        Coordinate auxCoord = kingCoord.getCoordInDir(dir);
-        while(!auxCoord.equals(rookCoord)){
-            if(this.isOccupied(auxCoord)) return false;
-            //TODO: kurze vs lange ROchade, ein Feld ist Schach egal
-            if(isCheck(auxCoord, piece.isColor())) return false;
-            auxCoord = auxCoord.getCoordInDir(dir);
-        }        
-        if(isCheck(coordFrom, piece.isColor())) return false;
-        break;       
-        }
-    
-        this.executeMove(move);
-        if(playersTurn == BLACK && isCheck(whiteKing.getCoordinate(), WHITE)){
-            this.unexecuteMove(move);
-            return false;
-        }    
-        if(playersTurn == WHITE && isCheck(blackKing.getCoordinate(), BLACK)){
-            this.unexecuteMove(move);
-            return false;
-        }
-        this.unexecuteMove(move);
-    return true;        
     }
 
     private void clearField(Coordinate coord) {
@@ -211,11 +91,11 @@ public class Board {
         this.board[coord.getX()][coord.getY()] = piece;
     }
 
-    private Piece getPieceOnCoord(Coordinate coord) {
+    public Piece getPieceOnCoord(Coordinate coord) {
         return this.board[coord.getX()][coord.getY()];
     }
 
-    private boolean isOccupied(Coordinate coordTo) {
+    public boolean isOccupied(Coordinate coordTo) {
         return this.board[coordTo.getX()][coordTo.getY()]!= null;       
     }
 
@@ -491,25 +371,10 @@ public class Board {
             break;           
         }
         piece.decreaseMoveCounter();
-        this.nextPlayer();
-        moveList.remove(move);
     }     
-
-    private void nextPlayer() {
-        if(this.playersTurn== WHITE) this.playersTurn= BLACK;
-        else this.playersTurn= WHITE;
-    }
 
     public boolean isCheckmate() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public ChessColor getPlayersTurn() {
-        return playersTurn;
-    }
-
-    public void setPlayersTurn(ChessColor playersTurn) {
-        this.playersTurn = playersTurn;
     }
 
     public Piece[][] getPieceArray() {
@@ -545,21 +410,6 @@ public class Board {
         }
         this.whiteKing= board[0][3];
         this.blackKing= board[7][3];    
-        castleCoords = new LinkedList();
-        castleCoords.add(new Coordinate(0,1));
-        castleCoords.add(new Coordinate(0,5));
-        castleCoords.add(new Coordinate(7,1));
-        castleCoords.add(new Coordinate(7,5));
-    }
-
-    private boolean rookCastleCheck(Coordinate rookCoord) {
-        
-        if(rookCoord==null) return false;
-
-        Piece rook = board[rookCoord.getX()][rookCoord.getY()];
-        if(rook==null) return false;
-        if(rook.getPiecetype()!=ROOK) return false;
-        return rook.getMoveCounter()==0; 
     }
 
     private void move(Piece piece, Coordinate coordFrom, Coordinate coordTo) {
@@ -570,4 +420,13 @@ public class Board {
             piece.setCoordinate(coordTo);
     }
 
+    public Piece getWhiteKing() {
+        return whiteKing;
+    }
+
+    public Piece getBlackKing() {
+        return blackKing;
+    }
+
+    
 }

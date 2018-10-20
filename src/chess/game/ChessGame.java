@@ -7,7 +7,9 @@ package chess.game;
 
 import chess.board.Board;
 import chess.board.ChessColor;
+import static chess.board.ChessColor.*;
 import chess.board.Move;
+import java.util.LinkedList;
 
 /**
  *
@@ -20,7 +22,8 @@ public class ChessGame{
     private boolean checkMate;
     private ChessColor playersTurn;
     private ChessColor winner;
-    
+    private ChessRules rules;
+    private final LinkedList<Move> moveList= new LinkedList<>();
     
     public ChessGame(Player playerWhite, Player playerBlack) {
         this.playerWhite = playerWhite;
@@ -28,6 +31,8 @@ public class ChessGame{
         this.board = new Board(); 
         this.checkMate = false;
         this.winner = null;
+        this.rules = new ChessRules();
+        this.playersTurn = WHITE;
     }    
     
 /*    public void startGame(){        
@@ -53,8 +58,10 @@ public class ChessGame{
 
     public boolean nextMove(Move move){
         //class game rules
-        if(!board.validateMove(move)) return false;
+        if(!rules.validateMove(move, this)) return false;
         board.executeMove(move);
+        moveList.add(move);
+        this.nextPlayer();
         return true;
     }
     
@@ -76,5 +83,18 @@ public class ChessGame{
 
     public ChessColor getWinner() {
         return winner;
+    }
+
+    private void nextPlayer() {
+        if(this.playersTurn== WHITE) this.playersTurn= BLACK;
+        else this.playersTurn= WHITE;
+    }
+
+    ChessColor getPlayersTurn() {
+        return playersTurn;
+    }    
+
+    Move getLastMove() {
+        return moveList.getLast();
     }
 }
