@@ -28,9 +28,9 @@ public class ChessGuiController implements ActionListener, Player{
     
         private final ChessGuiView view;
         private final GameController gameControl;
-
-        private PieceType nextPromotion =null;
         private final ChessColor ownColor;
+        
+        private PieceType nextPromotion =null;
         private Move nextMove=null;
         private Coordinate pressedCoord1=null, pressedCoord2=null;    
         private Coordinate paintedCoord1, paintedCoord2;    

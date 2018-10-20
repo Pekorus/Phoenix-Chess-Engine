@@ -7,13 +7,7 @@ package chess.board;
 
 import chess.move.Move;
 import static chess.board.ChessColor.*;
-import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
-import chess.coordinate.Direction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  *
@@ -226,10 +220,6 @@ public class Board {
         }
         piece.decreaseMoveCounter();
     }     
-
-    public boolean isCheckmate() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
     public Piece[][] getPieceArray() {
         return board;

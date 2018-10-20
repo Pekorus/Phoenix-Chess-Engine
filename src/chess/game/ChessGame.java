@@ -21,8 +21,8 @@ public class ChessGame{
     private final Player playerWhite, playerBlack; 
     private boolean checkMate;
     private ChessColor playersTurn;
-    private ChessColor winner;
-    private ChessRules rules;
+    private final ChessColor winner;
+    private final ChessRules rules;
     private final LinkedList<Move> moveList= new LinkedList<>();
     
     public ChessGame(Player playerWhite, Player playerBlack) {
