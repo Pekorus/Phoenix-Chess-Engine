@@ -156,6 +156,8 @@ public class ChessRules {
     return true;        
     }
 
+//checks if move from start coordinate to target coordinate is possible
+//NOT checking if target is legit in case of taking, just considers if the way is free
     private boolean isMovePossible(Move move) {
         
         Coordinate coordFrom = move.getCoordFrom();

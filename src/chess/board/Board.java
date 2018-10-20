@@ -9,7 +9,6 @@ import static chess.board.ChessColor.*;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.coordinate.Direction;
-import static java.lang.Math.abs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -22,11 +21,9 @@ import java.util.List;
 public class Board {
     
     private final Piece[][] board;
-   // private ChessColor playersTurn;
     private Piece whiteKing, blackKing;
     
     public Board() {
-        //this.playersTurn= WHITE;
         this.board = new Piece[8][8];
         createStartPosition();                    
     }
@@ -100,7 +97,7 @@ public class Board {
     }
 
 //wird benötigt für KI
-    private List<Coordinate> reachPiece(Piece piece) {
+    /*private List<Coordinate> reachPiece(Piece piece) {
         
         List<Coordinate> coordList = new ArrayList<>();
         Coordinate startCoord = piece.getCoordinate();
@@ -165,9 +162,9 @@ public class Board {
         
         }
         return coordList;
-    }
+    }*/
 
-    private List<Coordinate> zoomPieceList(List<Direction> dirList, 
+    /*private List<Coordinate> zoomPieceList(List<Direction> dirList, 
                         Coordinate startCoord, ChessColor pieceColor) {
         
         List<Coordinate> returnList = new ArrayList<>();
@@ -182,153 +179,9 @@ public class Board {
             }
         });
     return returnList;    
-    }
-
-//checks if move from start coordinate to target coordinate is possible
-//NOT checking if target is legit in case of taking, just considers if the way is free
-    private boolean isMovePossible(Move move) {
-        
-        Coordinate coordFrom = move.getCoordFrom();
-        Coordinate coordTo = move.getCoordTo();
-        Direction dir;
-        Coordinate newCoord;
-
-        if(move.getPiece()==null) return false;
-        switch(move.getPiece().getPiecetype()){
-            case KING:
-            //TODO: gleiches FEld ausschließen ?
-            if(abs(coordFrom.getX()-coordTo.getX())>1)
-                return false;
-            if(abs(coordFrom.getY()-coordTo.getY())>1)
-                return false;
-            break;
-            
-            case QUEEN:
-            //diagFlag states if coordinates are on diagonal, strightFlag lines
-            //TODO: Methoden Coordinatesonlien/diag
-            boolean diagFlag = abs(coordFrom.getX()-coordTo.getX())== 
-                    abs(coordFrom.getY()-coordTo.getY());
-            boolean straightFlag = coordFrom.getX()== coordTo.getX()
-                    || coordFrom.getY()== coordTo.getY();
-            if (!diagFlag && !straightFlag) return false;
-            
-            if(diagFlag) dir = coordFrom.diagonalLineDir(coordTo);
-                else dir = coordFrom.straightLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(this.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }                
-            break;
-            
-            case BISHOP:
-            if (abs(coordFrom.getX()-coordTo.getX())!= 
-                    abs(coordFrom.getY()-coordTo.getY()))
-                return false;
-            dir = coordFrom.diagonalLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(this.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }
-            break;            
-            
-            case KNIGHT:
-            int disX = abs(coordFrom.getX()-coordTo.getX());
-            int disY = abs(coordFrom.getY()-coordTo.getY());
-            if( (disX !=2||disY !=1) && (disX!=1 || disY !=2)) return false;
-            break;
-            
-            case ROOK:
-            if (coordFrom.getX()!= coordTo.getX()
-                    && coordFrom.getY()!= coordTo.getY())
-                return false;
-            dir = coordFrom.straightLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(this.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }
-            break;
-            
-            case PAWN:    
-            //is coded in validateMove                                
-            break;    
-        }
-    return true;
-    }
-
-    //checks if a given field is in check on current boardstate
-    private boolean isCheck(Coordinate kingCoord, ChessColor color) {
-       
-       Coordinate startCoord = kingCoord;
-       Coordinate auxCoord;
-       List<Direction> bishopList= Direction.createBishopList();
-       List<Direction> rookList = Direction.createRookList();
-       List<Coordinate> knightList = startCoord.createKnightCoordinates();
-       Piece auxPiece;
-       
-       //check from a bishop or queen?
-       for(Direction dir : bishopList){
-           auxCoord = startCoord.getCoordInDir(dir);
-           while(auxCoord!=null && !this.isOccupied(auxCoord)){
-               auxCoord = auxCoord.getCoordInDir(dir);
-           }
-           if(auxCoord!=null){
-                auxPiece = this.getPieceOnCoord(auxCoord);
-                PieceType PT = auxPiece.getPiecetype();
-                if(auxPiece.isColor()!= color && 
-                   (PT == BISHOP || PT == QUEEN))
-                    return true;
-            }
-       }       
-       //check from a rook or queen? 
-       for(Direction dir : rookList){
-           auxCoord = startCoord.getCoordInDir(dir);
-           while(auxCoord!=null && !this.isOccupied(auxCoord)){
-               auxCoord = auxCoord.getCoordInDir(dir);
-           }
-           if(auxCoord!=null){
-                Piece occuPiece = this.getPieceOnCoord(auxCoord);
-                PieceType PT = occuPiece.getPiecetype();
-                if(occuPiece.isColor()!= color && 
-                   (PT == ROOK || PT == QUEEN))
-                    return true;
-            }
-       }              
-       //check from a knight?
-       for(Coordinate possCoord : knightList){
-           Piece piece = this.getPieceOnCoord(possCoord);
-           if(piece!=null && piece.getPiecetype() == KNIGHT 
-                          && piece.isColor()!=color )
-               return true;
-       }
-       //check from a pawn?
-       if(color==WHITE){
-           auxPiece = getPieceOnCoord(startCoord.getCoordInDir(Direction.SW));
-           if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                   && auxPiece.isColor()==BLACK)
-               return true;
-           auxPiece = getPieceOnCoord(startCoord.getCoordInDir(Direction.SE));
-           if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                   && auxPiece.isColor()==BLACK)
-               return true;           
-       }
-       else{
-           auxPiece = getPieceOnCoord(startCoord.getCoordInDir(Direction.NW));
-           if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                   && auxPiece.isColor()==WHITE)
-               return true;
-           auxPiece = getPieceOnCoord(startCoord.getCoordInDir(Direction.NE));
-           if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                   && auxPiece.isColor()==WHITE)
-               return true;           
-       }       
-       return false;
-    }
+    }*/
 
     public void unexecuteMove(Move move) {
-        //TODO: promotion
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Piece piece = move.getPiece();

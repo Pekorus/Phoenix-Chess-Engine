@@ -5,11 +5,7 @@
  */
 package chess;
 
-import static chess.board.ChessColor.*;
-import chess.game.ChessGUI;
-import chess.game.ChessGame;
 import chess.game.GameController;
-import chess.game.Player;
 import java.io.IOException;
 
 /**
