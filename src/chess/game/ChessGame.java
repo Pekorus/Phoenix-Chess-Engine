@@ -18,16 +18,13 @@ import java.util.LinkedList;
 public class ChessGame{
     
     private final Board board;
-    private final Player playerWhite, playerBlack; 
     private boolean checkMate;
     private ChessColor playersTurn;
     private final ChessColor winner;
     private final ChessRules rules;
     private final LinkedList<Move> moveList= new LinkedList<>();
     
-    public ChessGame(Player playerWhite, Player playerBlack) {
-        this.playerWhite = playerWhite;
-        this.playerBlack = playerBlack;
+    public ChessGame() {
         this.board = new Board(); 
         this.checkMate = false;
         this.winner = null;
@@ -46,14 +43,6 @@ public class ChessGame{
     
     public Board getBoard() {
         return board;
-    }
-
-    public Player getPlayerWhite() {
-        return playerWhite;
-    }
-
-    public Player getPlayerBlack() {
-        return playerBlack;
     }
 
     public boolean isCheckMate() {

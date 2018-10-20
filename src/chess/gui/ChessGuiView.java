@@ -28,43 +28,44 @@ public class ChessGuiView{
        
     private final ChessGuiController guiController;    
     private final ChessColor ownColor;   
+    Piece[][] pieceArray;    
     
     //frames, panels, dialogs
     private final JFrame chessBoardFrame = new JFrame("Totally not Gergen's chess");
     private final JPanel boarderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8,8));
+    private final JMenuBar mainBar = new JMenuBar();
     final JDialog promoteDialog = new JDialog();
 
     //buttons
+    final JButton[][] buttonArray = new JButton[8][8];
     JButton queenButton; 
     JButton bishopButton;
     JButton knightButton;
     JButton rookButton; 
-    final JButton[][] buttonArray = new JButton[8][8];
-    
-    private final JMenuBar mainBar = new JMenuBar();
+
+    //sprites
     BufferedImage spriteSheet;
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
-    Piece[][] pieceArray;
 
     
-    public ChessGuiView(ChessGuiController guiController, ChessColor ownColor) throws IOException {
+    public ChessGuiView(ChessGuiController guiController, ChessColor ownColor) 
+                                                            throws IOException {
         this.ownColor = ownColor;
         this.guiController = guiController;
         
-        chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        chessBoardFrame.setResizable(false);
-        chessBoardFrame.setSize(700,720);
-        chessBoardFrame.setLocationRelativeTo(null);
+        createMainFrame();
         
         //load sprite sheet and process it
         spriteSheet = ImageIO.read(getClass().
                                    getResource("/images/Chess_pieces.png"));
         createSpriteArray();
         
-        //menu bar
+        //creating view components
         createMenuBar();     
         createPromotionDialog();
+        createChessboardPanel();
+        
         promoteDialog.setLocationRelativeTo(chessBoardFrame);
         //boarder panel
         boarderPanel.add(chessBoardPanel, BorderLayout.CENTER);
@@ -73,17 +74,7 @@ public class ChessGuiView{
         
         //chessBoardPanel.setSize(400,400);
         //chessBoardPanel.setLayout(new GridLayout(8,8));       
-        for(int i=0; i<8; i++){
-            for(int j=0; j<8; j++){
-                buttonArray[i][j] = new JButton();
-                buttonArray[i][j].setBorder(null);
-                if((i+j)%2==0)
-                    buttonArray[i][j].setBackground(Color.white);
-                else buttonArray[i][j].setBackground(Color.gray);
-                buttonArray[i][j].addActionListener(guiController);
-                chessBoardPanel.add(buttonArray[i][j]);
-            }
-        }
+
         chessBoardFrame.getContentPane().add(boarderPanel);
         //pack();
     }
@@ -232,4 +223,25 @@ public class ChessGuiView{
            knightButton.setIcon(getSprite(KNIGHT, color));
            rookButton.setIcon(getSprite(ROOK, color));  
         }
+
+    private void createMainFrame() {
+        chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        chessBoardFrame.setResizable(false);
+        chessBoardFrame.setSize(700,720);
+        chessBoardFrame.setLocationRelativeTo(null);
+    }
+
+    private void createChessboardPanel() {
+        for(int i=0; i<8; i++){
+            for(int j=0; j<8; j++){
+                buttonArray[i][j] = new JButton();
+                buttonArray[i][j].setBorder(null);
+                if((i+j)%2==0)
+                    buttonArray[i][j].setBackground(Color.white);
+                else buttonArray[i][j].setBackground(Color.gray);
+                buttonArray[i][j].addActionListener(guiController);
+                chessBoardPanel.add(buttonArray[i][j]);
+            }
+        }
+    }
 }

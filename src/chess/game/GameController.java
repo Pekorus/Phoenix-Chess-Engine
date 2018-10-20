@@ -23,7 +23,7 @@ public class GameController {
     public GameController() throws IOException {
         player1 = new ChessGuiController(this, WHITE);
         player2 = new ChessGuiController(this, BLACK);
-        game = new ChessGame(player1, player2);
+        game = new ChessGame();
     }    
     
     public void startGame(){
