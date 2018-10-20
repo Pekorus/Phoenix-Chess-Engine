@@ -5,12 +5,12 @@
  */
 package chess;
 
+import static chess.board.ChessColor.*;
 import chess.game.ChessGUI;
-import chess.game.Game;
+import chess.game.ChessGame;
+import chess.game.GameController;
 import chess.game.Player;
 import java.io.IOException;
-import java.util.Observer;
-import javax.swing.*;
 
 /**
  *
@@ -23,12 +23,9 @@ public class Chess {
      */
     public static void main(String[] args) throws IOException {
        
-        Player gui1 = new ChessGUI();
-        Player gui2 = new ChessGUI();
-        Game game = new Game(gui1, gui2);
-        gui1.update(game, null);
-        gui2.update(game, null);
-        game.startGame();
+        GameController controller = new GameController();
+        controller.startGame();
+
     }
     
 }

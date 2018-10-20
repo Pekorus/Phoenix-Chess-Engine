@@ -51,9 +51,11 @@ public class ChessBoardFrame{
     private Move nextMove;
     private PieceType nextPromotion =null;
     private ChessColor ownColor;
+    private GameController controller;
     
-    public ChessBoardFrame(ChessColor ownColor) throws IOException {
+    public ChessBoardFrame(GameController controller, ChessColor ownColor) throws IOException {
         this.ownColor = ownColor;
+        this.controller = controller;
         
         chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         chessBoardFrame.setResizable(false);
@@ -62,7 +64,7 @@ public class ChessBoardFrame{
         
         //load sprite sheet and process it
         spriteSheet = ImageIO.read(getClass().
-                                       getResource("/images/Chess_pieces.png"));
+                                   getResource("/images/Chess_pieces(2).png"));
         createSpriteArray();
         
         //menu bar
@@ -94,7 +96,7 @@ public class ChessBoardFrame{
     }
 
 
-    public void update(Game game, Object arg) {
+    public void update(ChessGame game, Object arg) {
         //TODO: unschöne lösung, geben das PieceArray raus an viewer, könnte
         //verändert werden
         pieceArray = game.getBoard().getPieceArray();
@@ -272,6 +274,7 @@ public class ChessBoardFrame{
                             paintedCoord2 = new Coordinate(i,j);
                             paintFieldColor(paintedCoord2);
                             createMove();                        
+                            controller.nextMove(nextMove);
                         }    
                         else if(pressedCoord1!=null && pressedCoord2!=null){
                             nextMove=null;
@@ -324,7 +327,8 @@ public class ChessBoardFrame{
                     (pressedCoord2.getX()==0 || pressedCoord2.getX()==7)){
                 setPromoteDialogColor(piece1.isColor()); 
                 promoteDialog.setVisible(true);
-                nextMove = new Move(piece1, pressedCoord2, NORMAL, null, nextPromotion);
+                nextMove = new Move(piece1, pressedCoord2, 
+                                                   NORMAL, null, nextPromotion);
                 }
                 //usual move
                 else nextMove = new Move(piece1, pressedCoord2, NORMAL);            

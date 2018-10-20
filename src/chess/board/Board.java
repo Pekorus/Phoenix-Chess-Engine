@@ -34,7 +34,6 @@ public class Board {
     }
     
     public void executeMove(Move move){
-        
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Piece piece = move.getPiece();
@@ -43,12 +42,24 @@ public class Board {
         switch(move.getMoveType()){
             case NORMAL:
             move(piece, coordFrom, coordTo);
+            if(move.getPromoteTo()!=null){
+            Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
+                                        coordTo);    
+            auxPiece.increaseMoveCounter();
+            this.setField(auxPiece, coordTo);
+            }
             break;
             
             case TAKE:
             //TODO: geschlagene Figuren in Liste            
             move(piece, coordFrom, coordTo);
             optPiece.setCoordinate(null);            
+            if(move.getPromoteTo()!=null){
+            Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
+                                        coordTo);    
+            auxPiece.increaseMoveCounter();
+            this.setField(auxPiece, coordTo);
+            }
             break;
             
             case ENPASSANT:
@@ -61,8 +72,7 @@ public class Board {
             
             case CASTLE:
             //move king
-            move(piece, coordFrom, coordTo);          
-            
+            move(piece, coordFrom, coordTo);                      
             //move rook
             Coordinate rookFrom = coordTo.getRookCastleCoord();
             Piece rook = this.getPieceOnCoord(rookFrom);
@@ -70,11 +80,7 @@ public class Board {
                             getCoordInDir(coordFrom.straightLineDir(coordTo));
             move(rook, rookFrom, rookTo);
             rook.increaseMoveCounter();
-            break;      
-        
-            case PROMOTION:
-            //TODO
-            break;       
+            break;            
         }
         piece.increaseMoveCounter();
         this.nextPlayer();
@@ -106,18 +112,20 @@ public class Board {
             if(piece.isColor()==WHITE){
                 Coordinate sCoord= coordFrom.getCoordInDir(Direction.S);
                 Coordinate s2Coord= sCoord.getCoordInDir(Direction.S);
-                if(!sCoord.equals(coordTo) && !s2Coord.equals(coordTo)) return false;
+                if(!sCoord.equals(coordTo) && !coordTo.equals(s2Coord)) return false;
                 if(this.isOccupied(sCoord)) return false;
-                if(s2Coord.equals(coordTo) && piece.getMoveCounter()!=0) 
+                if(coordTo.equals(s2Coord) && piece.getMoveCounter()!=0) 
                         return false;
+                if(move.getPromoteTo()!=null && coordTo.getX()!=7) return false;        
             }
             else{                   
                 Coordinate nCoord= coordFrom.getCoordInDir(Direction.N);
                 Coordinate n2Coord= nCoord.getCoordInDir(Direction.N);
-                if(!nCoord.equals(coordTo) && !n2Coord.equals(coordTo)) return false;
+                if(!nCoord.equals(coordTo) && !coordTo.equals(n2Coord)) return false;
                 if(this.isOccupied(nCoord)) return false;
-                if(n2Coord.equals(coordTo) && piece.getMoveCounter()!=0) 
+                if(coordTo.equals(n2Coord) && piece.getMoveCounter()!=0) 
                     return false;
+                if(move.getPromoteTo()!=null && coordTo.getX()!=0) return false;
                 }
             }    
         break;
@@ -134,11 +142,13 @@ public class Board {
                 if(!coordTo.equals(coordFrom.getCoordInDir(Direction.SW)) && 
                         !coordTo.equals(coordFrom.getCoordInDir(Direction.SE))) 
                     return false;
+            if(move.getPromoteTo()!=null && coordTo.getX()!=7) return false;
             }
             else{                   
                 if(!coordTo.equals(coordFrom.getCoordInDir(Direction.NW)) && 
                         !coordTo.equals(coordFrom.getCoordInDir(Direction.NE))) 
                     return false;
+            if(move.getPromoteTo()!=null && coordTo.getX()!=0) return false;
             }
         }
         break;    
@@ -177,11 +187,7 @@ public class Board {
             auxCoord = auxCoord.getCoordInDir(dir);
         }        
         if(isCheck(coordFrom, piece.isColor())) return false;
-        break;    
-            
-        case PROMOTION:
-        //TODO
-        break;    
+        break;       
         }
     
         this.executeMove(move);
@@ -442,7 +448,7 @@ public class Board {
     }
 
     public void unexecuteMove(Move move) {
-        
+        //TODO: promotion
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Piece piece = move.getPiece();
@@ -482,11 +488,7 @@ public class Board {
             
             move(rook, rookTo, rookFrom);  
             rook.decreaseMoveCounter();
-            break;       
-        
-            case PROMOTION:
-            //TODO
-            break;       
+            break;           
         }
         piece.decreaseMoveCounter();
         this.nextPlayer();
