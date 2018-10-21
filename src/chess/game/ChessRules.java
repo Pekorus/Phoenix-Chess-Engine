@@ -359,7 +359,7 @@ public class ChessRules {
     private LinkedList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color){
         //pawns can give check to a field without being able to move to it,
         //also they can go to fields without giving check to the field
-        LinkedList<Piece> potentialOccupants = isCheck(coord, color);
+        LinkedList<Piece> potentialOccupants = isCheck(coord, color.getOppositeColor());
         LinkedList<Piece> occupants = canPawnMoveCoord(coord, color);
         
         for(Piece auxPiece : potentialOccupants){
