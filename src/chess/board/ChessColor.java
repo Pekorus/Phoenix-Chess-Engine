@@ -10,6 +10,14 @@ package chess.board;
  * @author Phoenix
  */
 public enum ChessColor {
-         WHITE,
-         BLACK;
+    WHITE,
+    BLACK;
+
+    public ChessColor getOppositeColor(ChessColor color) {
+        if (color == WHITE) {
+            return BLACK;
+        }
+        return BLACK;
+    }
+
 }

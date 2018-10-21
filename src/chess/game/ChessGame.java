@@ -28,7 +28,7 @@ public class ChessGame{
         this.board = new Board(); 
         this.checkMate = false;
         this.winner = null;
-        this.rules = new ChessRules();
+        this.rules = new ChessRules(this);
         this.playersTurn = WHITE;
     }    
 

@@ -264,13 +264,8 @@ public class Board {
             piece.setCoordinate(coordTo);
     }
 
-    public Piece getWhiteKing() {
-        return whiteKing;
-    }
-
-    public Piece getBlackKing() {
+    public Piece getKing(ChessColor color) {
+        if(color==WHITE) return whiteKing;
         return blackKing;
-    }
-
-    
+    }    
 }

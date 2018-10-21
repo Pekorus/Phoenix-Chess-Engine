@@ -14,6 +14,8 @@ import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.coordinate.Direction;
+import static chess.move.MoveType.NORMAL;
+import static chess.move.MoveType.TAKE;
 import static java.lang.Math.abs;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,22 +26,19 @@ import java.util.List;
  */
 public class ChessRules {
          
-    private final List<Coordinate> castleCoords;
-    Board board;
+    private final List<Coordinate> castleCoords= new LinkedList();;
+    private final ChessGame game;
+    private final Board board;
     
-    public ChessRules() {
-        castleCoords = new LinkedList();
-        castleCoords.add(new Coordinate(0,1));
-        castleCoords.add(new Coordinate(0,5));
-        castleCoords.add(new Coordinate(7,1));
-        castleCoords.add(new Coordinate(7,5));
+    public ChessRules(ChessGame game) {
+        this.game = game;
+        this.board = game.getBoard();
+        createCastleCoords();
     }
     
         
     public boolean validateMove(Move move, ChessGame game) {
-        
-        board = game.getBoard();
-        
+             
         //preparation and fail safes
         if(move==null) return false;
         Piece piece = move.getPiece();        
@@ -134,21 +133,21 @@ public class ChessRules {
         while(!auxCoord.equals(rookCoord)){
             if(board.isOccupied(auxCoord)) return false;
             //TODO: kurze vs lange ROchade, ein Feld ist Schach egal
-            if(isCheck(auxCoord, piece.isColor())) return false;
+            if(!isCheck(auxCoord, piece.isColor()).isEmpty()) return false;
             auxCoord = auxCoord.getCoordInDir(dir);
         }        
-        if(isCheck(coordFrom, piece.isColor())) return false;
+        if(!isCheck(coordFrom, piece.isColor()).isEmpty()) return false;
         break;       
         }
     
         board.executeMove(move);
         if(game.getPlayersTurn() == WHITE && 
-                isCheck(board.getWhiteKing().getCoordinate(), WHITE)){
+               !isCheck(board.getKing(WHITE).getCoordinate(), WHITE).isEmpty()){
             board.unexecuteMove(move);
             return false;
         }    
         if(game.getPlayersTurn() == BLACK && 
-                isCheck(board.getBlackKing().getCoordinate(), BLACK)){
+                !isCheck(board.getKing(BLACK).getCoordinate(), BLACK).isEmpty()){
             board.unexecuteMove(move);
             return false;
         }
@@ -233,7 +232,6 @@ public class ChessRules {
     private boolean rookCastleCheck(Coordinate rookCoord) {
         
         if(rookCoord==null) return false;
-
         Piece rook = board.getPieceOnCoord(rookCoord);
         if(rook==null) return false;
         if(rook.getPiecetype()!=ROOK) return false;
@@ -241,8 +239,10 @@ public class ChessRules {
     }
 
     //checks if a given field is in check on current boardstate
-    private boolean isCheck(Coordinate kingCoord, ChessColor color) {
+    private LinkedList<Piece> isCheck(Coordinate kingCoord, ChessColor color) {
        
+       LinkedList<Piece> givesCheckList = new LinkedList<>();
+        
        Coordinate startCoord = kingCoord;
        Coordinate auxCoord;
        List<Direction> bishopList= Direction.createBishopList();
@@ -261,7 +261,7 @@ public class ChessRules {
                 PieceType PT = auxPiece.getPiecetype();
                 if(auxPiece.isColor()!= color && 
                    (PT == BISHOP || PT == QUEEN))
-                    return true;
+                    givesCheckList.add(auxPiece);
             }
        }       
        //check from a rook or queen? 
@@ -271,42 +271,153 @@ public class ChessRules {
                auxCoord = auxCoord.getCoordInDir(dir);
            }
            if(auxCoord!=null){
-                Piece occuPiece = board.getPieceOnCoord(auxCoord);
-                PieceType PT = occuPiece.getPiecetype();
-                if(occuPiece.isColor()!= color && 
+                auxPiece = board.getPieceOnCoord(auxCoord);
+                PieceType PT = auxPiece.getPiecetype();
+                if(auxPiece.isColor()!= color && 
                    (PT == ROOK || PT == QUEEN))
-                    return true;
+                    givesCheckList.add(auxPiece);
             }
        }              
        //check from a knight?
        for(Coordinate possCoord : knightList){
-           Piece piece = board.getPieceOnCoord(possCoord);
-           if(piece!=null && piece.getPiecetype() == KNIGHT 
-                          && piece.isColor()!=color )
-               return true;
+           auxPiece = board.getPieceOnCoord(possCoord);
+           if(auxPiece!=null && auxPiece.getPiecetype() == KNIGHT 
+                          && auxPiece.isColor()!=color )
+               givesCheckList.add(auxPiece);
        }
        //check from a pawn?
        if(color==WHITE){
            auxPiece = board.getPieceOnCoord(startCoord.getCoordInDir(Direction.SW));
            if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
                    && auxPiece.isColor()==BLACK)
-               return true;
+               givesCheckList.add(auxPiece);
            auxPiece = board.getPieceOnCoord(startCoord.getCoordInDir(Direction.SE));
            if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
                    && auxPiece.isColor()==BLACK)
-               return true;           
+               givesCheckList.add(auxPiece);           
        }
        else{
            auxPiece = board.getPieceOnCoord(startCoord.getCoordInDir(Direction.NW));
            if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
                    && auxPiece.isColor()==WHITE)
-               return true;
+               givesCheckList.add(auxPiece);
            auxPiece = board.getPieceOnCoord(startCoord.getCoordInDir(Direction.NE));
            if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
                    && auxPiece.isColor()==WHITE)
-               return true;           
+               givesCheckList.add(auxPiece);           
        }       
-       return false;
+       return givesCheckList;
+    }
+
+    protected boolean isCheckMate(ChessColor color){
+        
+        Piece king = board.getKing(color);
+        Coordinate kingCoord = king.getCoordinate();
+        LinkedList<Piece> pieceCheckList = isCheck(kingCoord, color);
+        LinkedList<Piece> threatensCheckGiver;
+        LinkedList<Piece> pieceBlocking;
+        Piece givesCheck;
+        Coordinate auxCoord;
+        
+        if(pieceCheckList.isEmpty()) return false;
+        //Can the king get out of chess?
+        for(Direction dir : Direction.values()){
+            auxCoord = kingCoord.getCoordInDir(dir);
+            if(auxCoord!=null && isCheck(auxCoord, color).isEmpty())
+                return false;
+        }
+        //if the king cant move and double check is given -> checkmate
+        if(pieceCheckList.size()>=2) return true;
+        //is it possible to take the piece giving check?
+        givesCheck = pieceCheckList.getFirst();
+        threatensCheckGiver = isCheck(givesCheck.getCoordinate(), givesCheck.isColor());
+        for(Piece threat : threatensCheckGiver){
+            if(validateMove(new Move(threat, givesCheck.getCoordinate(), TAKE,
+                                      givesCheck, null), game)) 
+            return false;
+        }
+        //is it possible to block the check from queen, rook, bishop?
+        PieceType auxPt = givesCheck.getPiecetype();
+        if(auxPt==QUEEN || auxPt==BISHOP || auxPt==ROOK){
+            Direction auxDir = kingCoord.
+                                    diagonalLineDir(givesCheck.getCoordinate());
+            if(auxDir==null)kingCoord.
+                                    straightLineDir(givesCheck.getCoordinate());
+            auxCoord = kingCoord.getCoordInDir(auxDir);
+            while(!board.isOccupied(auxCoord)){
+                pieceBlocking = canCoordBeOccupied(auxCoord, king.isColor());
+                for(Piece pieceBL : pieceBlocking){
+                    if(validateMove(new Move(pieceBL, auxCoord ,NORMAL), game)) 
+                        return false;
+                }
+                auxCoord = auxCoord.getCoordInDir(auxDir);
+            }
+        }
+    return true;    
+    }
+    
+    private LinkedList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color){
+        //pawns can give check to a field without being able to move to it,
+        //also they can go to fields without giving check to the field
+        LinkedList<Piece> potentialOccupants = isCheck(coord, color);
+        LinkedList<Piece> occupants = canPawnMoveCoord(coord, color);
+        
+        for(Piece auxPiece : potentialOccupants){
+            if(auxPiece.getPiecetype()!= PAWN) occupants.add(auxPiece);
+        }
+        return occupants;
+    }
+    
+    private void createCastleCoords() {
+        castleCoords.add(new Coordinate(0, 1));
+        castleCoords.add(new Coordinate(0, 5));
+        castleCoords.add(new Coordinate(7, 1));
+        castleCoords.add(new Coordinate(7, 5));
+    }
+    
+    //TODO: duplizierter Code
+    private LinkedList<Piece> canPawnMoveCoord(Coordinate coord, 
+                                                            ChessColor color) {
+        
+        LinkedList<Piece> pawns = new LinkedList<>();
+        Piece auxPiece;
+        if(color==WHITE){
+            Coordinate auxCoord =coord.getCoordInDir(Direction.S);
+            if(auxCoord!=null){ 
+               auxPiece= board.getPieceOnCoord(auxCoord);
+               if(auxPiece!= null && auxPiece.getPiecetype()==PAWN && 
+                                                     auxPiece.isColor()==color)
+                   pawns.add(auxPiece);
+               
+               if(!board.isOccupied(auxCoord)){
+               auxCoord = auxCoord.getCoordInDir(Direction.S);
+               if(auxCoord!=null){
+               auxPiece= board.getPieceOnCoord(auxCoord);
+               if(auxPiece!=null && auxPiece.getPiecetype()==PAWN && 
+                    auxPiece.isColor()==color && auxPiece.getMoveCounter()==0)
+                   pawns.add(auxPiece);
+                }}
+            }
+        }
+        else{
+            Coordinate auxCoord =coord.getCoordInDir(Direction.N);
+            if(auxCoord!=null){ 
+               auxPiece= board.getPieceOnCoord(auxCoord);
+               if(auxPiece!= null && auxPiece.getPiecetype()==PAWN && 
+                                                     auxPiece.isColor()==color)
+                   pawns.add(auxPiece);
+
+               if(!board.isOccupied(auxCoord)){               
+               auxCoord = auxCoord.getCoordInDir(Direction.N);
+               if(auxCoord!=null){
+               auxPiece= board.getPieceOnCoord(auxCoord);
+               if(auxPiece!=null && auxPiece.getPiecetype()==PAWN && 
+                    auxPiece.isColor()==color && auxPiece.getMoveCounter()==0)
+                   pawns.add(auxPiece);                   
+                }
+            }}
+        }
+    return pawns;
     }
 
 }
