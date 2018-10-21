@@ -105,8 +105,8 @@ public class ChessGuiController implements ActionListener, Player {
         //TAKE
         if (piece2 != null) {
             //Pawn promotion
-            if (piece1.getPiecetype() == PAWN
-                    && (pressedCoord2.getX() == 0 || pressedCoord2.getX() == 7)) {
+            if (piece1.getPiecetype() == PAWN && piece1.isColor()==ownColor
+                    && pawnPromotionValid()){
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialog.setVisible(true);
                 nextMove = new Move(piece1, pressedCoord2, TAKE,
@@ -119,7 +119,8 @@ public class ChessGuiController implements ActionListener, Player {
         else if (piece1.getPiecetype() == KING
                 && pressedCoord1.distance(pressedCoord2) == 2) {
             nextMove = new Move(piece1, pressedCoord2, CASTLE);
-        } /* ENPASSANT */ else if (piece1.getPiecetype() == PAWN
+        } /* ENPASSANT */ 
+        else if (piece1.getPiecetype() == PAWN
                 && pressedCoord1.diagonalLineDir(pressedCoord2) != null) {
             auxCoord = pressedCoord1.enPassantTake(pressedCoord2);
             nextMove = new Move(piece1, pressedCoord2, ENPASSANT,
@@ -127,8 +128,8 @@ public class ChessGuiController implements ActionListener, Player {
         } //NORMAL
         else {
             //pawn promotion
-            if (piece1.getPiecetype() == PAWN
-                    && (pressedCoord2.getX() == 0 || pressedCoord2.getX() == 7)) {
+            if (piece1.getPiecetype() == PAWN && piece1.isColor()==ownColor
+                    && pawnPromotionValid()) {
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialog.setVisible(true);
                 nextMove = new Move(piece1, pressedCoord2,
@@ -143,6 +144,16 @@ public class ChessGuiController implements ActionListener, Player {
     @Override
     public void update(ChessGame game, Object arg) {
         view.update(game, arg);
+    }
+
+    private boolean pawnPromotionValid() {
+        if(ownColor==WHITE && pressedCoord2.getX() == 7 && 
+                                                      pressedCoord1.getX()==6)
+            return true;
+        else if(ownColor==BLACK && pressedCoord2.getX() == 0 
+                && pressedCoord1.getX()== 1)
+            return true;
+    return false;    
     }
 
 }

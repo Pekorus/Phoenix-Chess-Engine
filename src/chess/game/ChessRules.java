@@ -341,8 +341,8 @@ public class ChessRules {
         if(auxPt==QUEEN || auxPt==BISHOP || auxPt==ROOK){
             Direction auxDir = kingCoord.
                                     diagonalLineDir(givesCheck.getCoordinate());
-            if(auxDir==null)kingCoord.
-                                    straightLineDir(givesCheck.getCoordinate());
+            if(auxDir==null) 
+                auxDir =kingCoord.straightLineDir(givesCheck.getCoordinate());
             auxCoord = kingCoord.getCoordInDir(auxDir);
             while(!board.isOccupied(auxCoord)){
                 pieceBlocking = canCoordBeOccupied(auxCoord, king.isColor());

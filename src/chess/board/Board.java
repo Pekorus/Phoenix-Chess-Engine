@@ -84,6 +84,7 @@ public class Board {
     }
 
     public Piece getPieceOnCoord(Coordinate coord) {
+        if(coord==null) return null;
         return this.board[coord.getX()][coord.getY()];
     }
 
