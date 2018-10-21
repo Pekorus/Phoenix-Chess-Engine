@@ -18,15 +18,13 @@ import java.util.LinkedList;
 public class ChessGame{
     
     private final Board board;
-    private boolean checkMate;
     private ChessColor playersTurn;
-    private final ChessColor winner;
+    private ChessColor winner;
     private final ChessRules rules;
     private final LinkedList<Move> moveList= new LinkedList<>();
     
     public ChessGame() {
         this.board = new Board(); 
-        this.checkMate = false;
         this.winner = null;
         this.rules = new ChessRules(this);
         this.playersTurn = WHITE;
@@ -37,7 +35,7 @@ public class ChessGame{
         if(!rules.validateMove(move, this)) return false;
         board.executeMove(move);
         moveList.add(move);
-        this.nextPlayer();
+        this.nextPlayer();        
         return true;
     }
     
@@ -46,7 +44,11 @@ public class ChessGame{
     }
 
     public boolean isCheckMate() {
-        return checkMate;
+        if(rules.isCheckMate(playersTurn)){
+            winner= playersTurn.getOppositeColor();
+            return true;
+        }
+        return false;
     }
 
     public ChessColor getWinner() {

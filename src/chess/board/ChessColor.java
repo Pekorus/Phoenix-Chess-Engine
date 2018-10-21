@@ -13,11 +13,16 @@ public enum ChessColor {
     WHITE,
     BLACK;
 
-    public ChessColor getOppositeColor(ChessColor color) {
-        if (color == WHITE) {
+    public ChessColor getOppositeColor() {
+        if (this == WHITE) {
             return BLACK;
         }
-        return BLACK;
+        return WHITE;
     }
-
+    
+    @Override
+    public String toString(){
+        if(this==WHITE) return "White";
+        return "Black";
+    }
 }

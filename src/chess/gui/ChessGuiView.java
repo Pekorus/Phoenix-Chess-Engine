@@ -36,7 +36,7 @@ public class ChessGuiView {
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));
     private final JMenuBar mainBar = new JMenuBar();
     final JDialog promoteDialog = new JDialog();
-
+    
     //buttons
     final JButton[][] buttonArray = new JButton[8][8];
     JButton queenButton;
@@ -82,6 +82,7 @@ public class ChessGuiView {
         //verändert werden
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
+        if(game.getWinner()!= null) showGameEndDialog(game.getWinner());
     }
 
     public void drawBoard(Piece[][] pieces) {
@@ -246,5 +247,10 @@ public class ChessGuiView {
                 chessBoardPanel.add(buttonArray[i][j]);
             }
         }
+    }
+
+    private void showGameEndDialog(ChessColor winner) {
+        JOptionPane.showMessageDialog(chessBoardFrame, winner+" Player has won!", "Game ended",
+                JOptionPane.WARNING_MESSAGE);
     }
 }

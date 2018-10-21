@@ -323,7 +323,7 @@ public class ChessRules {
         //Can the king get out of chess?
         for(Direction dir : Direction.values()){
             auxCoord = kingCoord.getCoordInDir(dir);
-            if(auxCoord!=null && isCheck(auxCoord, color).isEmpty())
+            if(auxCoord!=null && !board.isOccupied(auxCoord) && isCheck(auxCoord, color).isEmpty())
                 return false;
         }
         //if the king cant move and double check is given -> checkmate

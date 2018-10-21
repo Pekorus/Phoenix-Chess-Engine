@@ -19,6 +19,7 @@ public class GameController {
     ChessGame game;
     Player player1;
     Player player2;
+    Boolean checkmate= false;
     
     public GameController() throws IOException {
         player1 = new ChessGuiController(this, WHITE);
@@ -31,7 +32,9 @@ public class GameController {
     }
             
     public boolean nextMove(Move move){
+        if(checkmate) return false;
         if(game.nextMove(move)){
+            checkmate = game.isCheckMate();
             notifyObservers();
             return true;
         }
