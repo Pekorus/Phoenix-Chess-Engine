@@ -146,4 +146,14 @@ public class Coordinate {
     public Coordinate pointSymmCoordinate(){
         return new Coordinate(7-this.x, 7-this.y);
     }
+
+    public Boolean coordinatesOnLine(Coordinate coordTo){
+        return this.getX()== coordTo.getX()
+                    || this.getY()== coordTo.getY();
+    }
+
+    public Boolean coordinatesOnDiag(Coordinate coordTo){
+        return abs(this.getX()-coordTo.getX())== 
+                    abs(this.getY()-coordTo.getY());
+    }    
 }
