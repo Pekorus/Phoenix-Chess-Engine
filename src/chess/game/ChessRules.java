@@ -53,12 +53,11 @@ public class ChessRules {
         if(!coordFrom.equals(piece.getCoordinate())) return false;
         
         switch(move.getMoveType()){
-        case NORMAL:
-        if(board.isOccupied(move.getCoordTo())) return false;    
-        if(!isMovePossible(move)) return false;
+            case NORMAL:
+            if(board.isOccupied(move.getCoordTo())) return false;    
+            if(!isMovePossible(move)) return false;
 
-        if(pieceType==PAWN){
-
+            if(pieceType==PAWN){
             Direction auxDirect=Direction.S; 
             int promoteParameter=7;
             if(piece.isColor()==BLACK){
@@ -153,8 +152,7 @@ public class ChessRules {
         
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        Direction dir;
-        Coordinate newCoord;
+        Direction auxDir;
 
         if(move.getPiece()==null) return false;
         switch(move.getPiece().getPiecetype()){
@@ -162,29 +160,17 @@ public class ChessRules {
             if(coordFrom.distance(coordTo)>1) return false;
             break;
             
-            //TODO: duplizierter Code
             case QUEEN:
-            boolean diagFlag = coordFrom.coordinatesOnDiag(coordTo);
-            boolean straightFlag = coordFrom.coordinatesOnLine(coordTo);
-            
-            if(!diagFlag && !straightFlag) return false;
-            if(diagFlag) dir = coordFrom.diagonalLineDir(coordTo);
-                else dir = coordFrom.straightLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(board.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }                
+            auxDir = coordFrom.diagonalLineDir(coordTo);
+            if(auxDir==null) auxDir = coordFrom.straightLineDir(coordTo);
+            if(auxDir==null) return false;
+            if(coordsOccupied(coordFrom, coordTo, auxDir)) return false;           
             break;
             
             case BISHOP:
-            if(!coordFrom.coordinatesOnDiag(coordTo)) return false;
-            dir = coordFrom.diagonalLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(board.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }
+            auxDir = coordFrom.diagonalLineDir(coordTo);
+            if(auxDir==null) return false;            
+            if(coordsOccupied(coordFrom, coordTo, auxDir)) return false;
             break;            
             
             case KNIGHT:
@@ -194,13 +180,9 @@ public class ChessRules {
             break;
             
             case ROOK:
-            if (!coordFrom.coordinatesOnLine(coordTo)) return false;
-            dir = coordFrom.straightLineDir(coordTo);
-            newCoord = coordFrom.getCoordInDir(dir);
-            while(!newCoord.equals(coordTo)){
-                if(board.isOccupied(newCoord)) return false;
-                newCoord = newCoord.getCoordInDir(dir);
-            }
+            auxDir = coordFrom.straightLineDir(coordTo);
+            if(auxDir==null) return false;
+            if(coordsOccupied(coordFrom, coordTo, auxDir)) return false;
             break;
             
             case PAWN:    
@@ -376,5 +358,15 @@ public class ChessRules {
             }            
         }
     return pawns;
+    }
+
+    private boolean coordsOccupied(Coordinate coordFrom, Coordinate coordTo, 
+                                                            Direction auxDir) {
+        Coordinate newCoord = coordFrom.getCoordInDir(auxDir);
+        while(!newCoord.equals(coordTo)){
+            if(board.isOccupied(newCoord)) return true;
+            newCoord = newCoord.getCoordInDir(auxDir);
+        } 
+    return false;
     }
 }

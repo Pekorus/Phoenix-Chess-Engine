@@ -45,26 +45,26 @@ public class ChessGuiController implements ActionListener, Player {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
-        if (e.getSource() == view.queenButton) {
+        Object source = e.getSource();
+        if (source == view.queenButton) {
             nextPromotion = QUEEN;
             view.promoteDialog.setVisible(false);
         }
-        if (e.getSource() == view.bishopButton) {
+        if (source == view.bishopButton) {
             nextPromotion = BISHOP;
             view.promoteDialog.setVisible(false);
         }
-        if (e.getSource() == view.knightButton) {
+        if (source == view.knightButton) {
             nextPromotion = KNIGHT;
             view.promoteDialog.setVisible(false);
         }
-        if (e.getSource() == view.rookButton) {
+        if (source == view.rookButton) {
             nextPromotion = ROOK;
             view.promoteDialog.setVisible(false);
         }
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (e.getSource() == view.buttonArray[i][j]) {
+                if (source == view.buttonArray[i][j]) {
                     int a = i, b = j;
                     if (ownColor == WHITE) {
                         a = 7 - i;
