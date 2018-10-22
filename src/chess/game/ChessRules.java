@@ -36,7 +36,6 @@ public class ChessRules {
         createCastleCoords();
     }
     
-        
     public boolean validateMove(Move move, ChessGame game) {
              
         //preparation and fail safes
@@ -201,19 +200,21 @@ public class ChessRules {
         return rook.getMoveCounter()==0; 
     }
 
-    //checks if a given field is in check on current boardstate
+    /*checks if a given coordinate is attacked by pieces of opposite specified color 
+        on current boardstate*/
     private LinkedList<Piece> isAttacked(Coordinate checkedCoord, ChessColor color) {
-       
-       LinkedList<Piece> givesCheckList = new LinkedList<>();
-        
-       Coordinate auxCoord;
-       List<Direction> bishopList= Direction.createBishopList();
-       List<Direction> rookList = Direction.createRookList();
+       //TODO: ändere color auf die Farbe der angreifenden Pieces (inkl. Verwendung)
+       LinkedList<Piece> attackerList = new LinkedList<>();
        List<Coordinate> knightList = checkedCoord.createKnightCoordinates();
+       Coordinate auxCoord;
        Piece auxPiece;
-       //TODO: duplizierter Code
-       //check from a bishop or queen?
-       for(Direction dir : bishopList){
+
+        //attacked by a king?
+        if(board.getKing(color.getOppositeColor()).getCoordinate().distance(checkedCoord)==1)
+            attackerList.add(board.getKing(color.getOppositeColor()));
+
+        //attacked by a bishop, rook or queen?
+        for(Direction dir : Direction.values()){
            auxCoord = checkedCoord.getCoordInDir(dir);
            while(auxCoord!=null && !board.isOccupied(auxCoord)){
                auxCoord = auxCoord.getCoordInDir(dir);
@@ -221,49 +222,38 @@ public class ChessRules {
            if(auxCoord!=null){
                 auxPiece = board.getPieceOnCoord(auxCoord);
                 PieceType PT = auxPiece.getPiecetype();
-                if(auxPiece.isColor()!= color && 
-                   (PT == BISHOP || PT == QUEEN))
-                    givesCheckList.add(auxPiece);
+                if(auxPiece.isColor()!= color){ 
+                   if((checkedCoord.coordinatesOnDiag(auxCoord) && 
+                           (PT == BISHOP || PT == QUEEN)) ||
+                      (checkedCoord.coordinatesOnLine(auxCoord) &&
+                           (PT == ROOK || PT == QUEEN)))        
+                    attackerList.add(auxPiece);
+                }
             }
-       }       
-       //check from a rook or queen? 
-       for(Direction dir : rookList){
-           auxCoord = checkedCoord.getCoordInDir(dir);
-           while(auxCoord!=null && !board.isOccupied(auxCoord)){
-               auxCoord = auxCoord.getCoordInDir(dir);
-           }
-           if(auxCoord!=null){
-                auxPiece = board.getPieceOnCoord(auxCoord);
-                PieceType PT = auxPiece.getPiecetype();
-                if(auxPiece.isColor()!= color && 
-                   (PT == ROOK || PT == QUEEN))
-                    givesCheckList.add(auxPiece);
-            }
-       }              
-       //check from a knight?
+       }  
+       
+       //attacked by a knight?
        for(Coordinate possCoord : knightList){
            auxPiece = board.getPieceOnCoord(possCoord);
            if(auxPiece!=null && auxPiece.getPiecetype() == KNIGHT 
                           && auxPiece.isColor()!=color )
-               givesCheckList.add(auxPiece);
+               attackerList.add(auxPiece);
        }
-       //check from a pawn?
+       //attacked by a pawn?
        Direction auxDirection1 = Direction.SW;
        Direction auxDirection2 = Direction.SE;
        if(color==BLACK){
            auxDirection1 = Direction.NW;
            auxDirection2 = Direction.NE;
         }
-        //TODO: duplizierter Code
-        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection1));
-        if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
+        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection1));        
+        for(int i=0; i<2; i++){
+            if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
                    && auxPiece.isColor()==color.getOppositeColor())
-            givesCheckList.add(auxPiece);
+                attackerList.add(auxPiece);
         auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection2));
-        if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                && auxPiece.isColor()==color.getOppositeColor())
-                givesCheckList.add(auxPiece);               
-       return givesCheckList;
+        }             
+       return attackerList;
     }
 
     protected boolean isCheckMate(ChessColor color){
@@ -334,11 +324,10 @@ public class ChessRules {
     
     private LinkedList<Piece> canPawnMoveCoord(Coordinate coord, 
                                                             ChessColor color) {
-        
         LinkedList<Piece> pawns = new LinkedList<>();
         Piece auxPiece;
-        Direction dir = Direction.N;
-        if (color==WHITE) dir = Direction.S;
+        Direction dir = Direction.S;
+        if (color==WHITE) dir = Direction.N;
         
         Coordinate auxCoord =coord.getCoordInDir(dir);
         if(auxCoord!=null){ 
