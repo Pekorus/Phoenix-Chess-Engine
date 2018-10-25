@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import static javax.swing.BoxLayout.Y_AXIS;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
@@ -46,6 +47,7 @@ public class ChessGuiView {
     private final JPanel downPanel= new JPanel();
     //right side
     private final JPanel rightSidePanel = new JPanel();
+    private final JLabel resultLabel = new JLabel();
     private final JPanel displayMovesPanel= new JPanel();
     private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
     private final JMenuBar mainBar = new JMenuBar();
@@ -94,7 +96,10 @@ public class ChessGuiView {
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
         updateMovesDisplay(game.getMoveList());
-        if(game.getWinner()!= null) showGameEndDialog(game.getWinner());
+        if(game.getWinner()!= null){
+            setResultLabel(game.getWinner());
+            showGameEndDialog(game.getWinner());
+        }
     }
 
     public void drawBoard(Piece[][] pieces) {
@@ -279,7 +284,7 @@ public class ChessGuiView {
         
         if(newestMove==-1) ; 
         else if(newestMove%2==0){
-                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+"  ";
+                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+"   ";
                 JLabel label = new JLabel(labelString);
                 label.setAlignmentX(Component.CENTER_ALIGNMENT);
                 label.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -295,6 +300,7 @@ public class ChessGuiView {
     }
 
     private void createRightPanel() {
+        rightSidePanel.setLayout(new BoxLayout(rightSidePanel, Y_AXIS));
         createDisplayMovesScroll();
         JLabel playerNames;
         if(ownColor==WHITE)playerNames = new JLabel(guiController.getOwnName()+
@@ -302,8 +308,19 @@ public class ChessGuiView {
         else playerNames = new JLabel(guiController.getOpponentName()+
                                          " - "+guiController.getOwnName());
         playerNames.setFont(new Font("Arial", Font.BOLD, 18));        
+        playerNames.setAlignmentX(Component.CENTER_ALIGNMENT);
         rightSidePanel.add(playerNames);        
+        
+        resultLabel.setText(" ");
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 18)); 
+        resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        rightSidePanel.add(resultLabel);
         rightSidePanel.add(displayMovesScroll);
         rightSidePanel.setPreferredSize(new Dimension(200, frameHeight));        
+    }
+
+    private void setResultLabel(ChessColor winner) {
+        if(winner==WHITE) resultLabel.setText("1   -   0");
+        else resultLabel.setText("0   -   1");
     }
 }
