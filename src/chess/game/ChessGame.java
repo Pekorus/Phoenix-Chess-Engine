@@ -67,4 +67,10 @@ public class ChessGame{
     Move getLastMove() {
         return moveList.getLast();
     }
+
+    public LinkedList<Move> getMoveList() {
+        return moveList;
+    }
+
+    
 }

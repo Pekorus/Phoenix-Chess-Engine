@@ -80,5 +80,10 @@ public class Move {
         return promoteTo;
     }
 
+    @Override
+    public String toString() {
+       return piece.getPiecetype()+moveType.toString()+coordTo;      
+    }
+
     
 }

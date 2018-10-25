@@ -156,4 +156,11 @@ public class Coordinate {
         return abs(this.getX()-coordTo.getX())== 
                     abs(this.getY()-coordTo.getY());
     }    
+
+    @Override
+    public String toString() {
+        return ""+((char) (104-this.y))+(this.x+1);     
+    }
+
+    
 }

@@ -12,11 +12,13 @@ import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.game.ChessGame;
+import chess.move.Move;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -31,9 +33,10 @@ public class ChessGuiView {
     Piece[][] pieceArray;
 
     //frames, panels, dialogs
-    private final JFrame chessBoardFrame = new JFrame("Totally not Gergen's chess");
+    private final JFrame chessBoardFrame = new JFrame("Schaaach");
     private final JPanel boarderPanel = new JPanel(new BorderLayout());
-    private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));
+    private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
+    private final JPanel displayMovesPanel= new JPanel();
     private final JMenuBar mainBar = new JMenuBar();
     final JDialog promoteDialog = new JDialog();
     
@@ -53,35 +56,35 @@ public class ChessGuiView {
         this.ownColor = ownColor;
         this.guiController = guiController;
 
-        createMainFrame();
-
+        //create view components
+        createMainFrame();        
+        createMenuBar();
+        createPromotionDialog();
+        createChessboardPanel();
+        createDisplayMovesPanel();
+        
         //load sprite sheet and process it
         spriteSheet = ImageIO.read(getClass().
                 getResource("/images/Chess_pieces.png"));
         createSpriteArray();
 
-        //creating view components
-        createMenuBar();
-        createPromotionDialog();
-        createChessboardPanel();
-
         promoteDialog.setLocationRelativeTo(chessBoardFrame);
         //boarder panel
         boarderPanel.add(chessBoardPanel, BorderLayout.CENTER);
         boarderPanel.add(mainBar, BorderLayout.PAGE_START);
+        boarderPanel.add(displayMovesPanel, BorderLayout.EAST);
         //boarderPanel.add(jLabel, BorderLayout.PAGE_END);
 
         //chessBoardPanel.setSize(400,400);
         //chessBoardPanel.setLayout(new GridLayout(8,8));       
-        chessBoardFrame.getContentPane().add(boarderPanel);
+        chessBoardFrame.add(boarderPanel);
         //pack();
     }
 
     public void update(ChessGame game, Object arg) {
-        //TODO: unschöne lösung, geben das PieceArray raus an viewer, könnte
-        //verändert werden
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
+        updateMovesDisplay(game.getMoveList());
         if(game.getWinner()!= null) showGameEndDialog(game.getWinner());
     }
 
@@ -252,5 +255,31 @@ public class ChessGuiView {
     private void showGameEndDialog(ChessColor winner) {
         JOptionPane.showMessageDialog(chessBoardFrame, winner+" Player has won!", "Game ended",
                 JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void createDisplayMovesPanel() {
+        displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel, 
+                                                            BoxLayout.Y_AXIS));
+        JLabel emptyLabel = new JLabel("          ");
+        displayMovesPanel.add(emptyLabel);
+    }
+
+    private void updateMovesDisplay(LinkedList<Move> moveList) {
+        String labelString;
+        int newestMove = moveList.size()-1;
+        
+        if(newestMove==-1) ; 
+        else if(newestMove%2==0){
+                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+" ";
+                displayMovesPanel.add(new JLabel(labelString));   
+            }
+            else{
+                JLabel lastLabel = (JLabel)displayMovesPanel.
+                            getComponent(displayMovesPanel.getComponentCount()-1);
+                labelString = lastLabel.getText();
+                lastLabel.setText(labelString+moveList.getLast().toString());    
+            }
+      
+        displayMovesPanel.repaint();
     }
 }

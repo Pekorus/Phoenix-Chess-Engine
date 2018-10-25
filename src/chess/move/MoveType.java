@@ -14,4 +14,18 @@ public enum MoveType {
         TAKE,
         ENPASSANT,
         CASTLE;
+
+    //TODO: vereinfachen
+    @Override
+    public String toString() {
+        switch (this){
+            case NORMAL:
+                return "";
+            case TAKE:
+                return "x";
+        }
+    return "";    
+    }
+
+        
 }
