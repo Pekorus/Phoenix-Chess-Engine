@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 /**
  *
@@ -38,9 +40,12 @@ public class ChessGuiView {
     private final JFrame chessBoardFrame = new JFrame("Schaaach");
     private final int frameHeight = 700;
     private final int frameWidth = 900;
-    private final JPanel boarderPanel = new JPanel(new BorderLayout());
+    private final JPanel borderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
+    //right side
+    private final JPanel rightSidePanel = new JPanel();
     private final JPanel displayMovesPanel= new JPanel();
+    private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
     private final JMenuBar mainBar = new JMenuBar();
     final JDialog promoteDialog = new JDialog();
     
@@ -65,7 +70,8 @@ public class ChessGuiView {
         createMenuBar();
         createPromotionDialog();
         createChessboardPanel();
-        createDisplayMovesPanel();
+        createRightPanel();
+        createDisplayMovesScroll();
         
         //load sprite sheet and process it
         spriteSheet = ImageIO.read(getClass().
@@ -74,10 +80,10 @@ public class ChessGuiView {
 
         promoteDialog.setLocationRelativeTo(chessBoardFrame);
         //border panel
-        boarderPanel.add(chessBoardPanel, BorderLayout.CENTER);
-        boarderPanel.add(mainBar, BorderLayout.PAGE_START);
-        boarderPanel.add(displayMovesPanel, BorderLayout.LINE_END);
-        chessBoardFrame.add(boarderPanel);
+        borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
+        borderPanel.add(mainBar, BorderLayout.PAGE_START);
+        borderPanel.add(rightSidePanel, BorderLayout.LINE_END);
+        chessBoardFrame.add(borderPanel);
         //pack();
     }
 
@@ -258,10 +264,10 @@ public class ChessGuiView {
                 JOptionPane.WARNING_MESSAGE);
     }
 
-    private void createDisplayMovesPanel() {
+    private void createDisplayMovesScroll() {
         displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel, 
-                                                            BoxLayout.Y_AXIS));
-        displayMovesPanel.setPreferredSize(new Dimension(200, frameHeight));
+                                                            BoxLayout.Y_AXIS));       
+        displayMovesScroll.setPreferredSize(new Dimension(200, 300));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
@@ -281,7 +287,12 @@ public class ChessGuiView {
                 labelString = lastLabel.getText();
                 lastLabel.setText(labelString+moveList.getLast().toString());    
             }
-      
         displayMovesPanel.repaint();
+    }
+
+    private void createRightPanel() {
+        createDisplayMovesScroll();
+        rightSidePanel.add(displayMovesScroll);
+        rightSidePanel.setPreferredSize(new Dimension(200, frameHeight));        
     }
 }

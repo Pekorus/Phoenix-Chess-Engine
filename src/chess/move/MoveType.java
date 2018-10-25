@@ -23,7 +23,9 @@ public enum MoveType {
                 return "-";
             case TAKE:
                 return "x";
-        }
+            case ENPASSANT:    
+                return "x";
+        }       
     return "";    
     }
 
