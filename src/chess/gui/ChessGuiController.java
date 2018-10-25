@@ -29,16 +29,20 @@ public class ChessGuiController implements ActionListener, Player {
     private final ChessGuiView view;
     private final GameController gameControl;
     private final ChessColor ownColor;
-
+    private final String ownName;
+    private final String opponentName;
+    
     private PieceType nextPromotion = null;
     private Move nextMove = null;
     private Coordinate pressedCoord1 = null, pressedCoord2 = null;
     private Coordinate paintedCoord1, paintedCoord2;
 
-    public ChessGuiController(GameController gameControl,
-            ChessColor ownColor) throws IOException {
+    public ChessGuiController(GameController gameControl,ChessColor ownColor, 
+            String playerName, String opponentName) throws IOException {
         this.gameControl = gameControl;
         this.ownColor = ownColor;
+        this.ownName = playerName;
+        this.opponentName = opponentName;
         this.view = new ChessGuiView(this, ownColor);
         view.setVisible(true);
     }
@@ -155,5 +159,14 @@ public class ChessGuiController implements ActionListener, Player {
             return true;
     return false;    
     }
+
+    public String getOwnName() {
+        return ownName;
+    }
+
+    public String getOpponentName() {
+        return opponentName;
+    }
+
 
 }

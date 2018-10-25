@@ -22,8 +22,8 @@ public class GameController {
     Boolean checkmate= false;
     
     public GameController() throws IOException {
-        player1 = new ChessGuiController(this, WHITE);
-        player2 = new ChessGuiController(this, BLACK);
+        player1 = new ChessGuiController(this, WHITE, "Player1", "Player2");
+        player2 = new ChessGuiController(this, BLACK, "Player2", "Player1");
         game = new ChessGame();
     }    
     
@@ -45,4 +45,6 @@ public class GameController {
         player1.update(game, null);
         player2.update(game, null);
     }
+
+    
 }

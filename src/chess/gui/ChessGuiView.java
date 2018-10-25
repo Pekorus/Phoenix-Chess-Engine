@@ -17,6 +17,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class ChessGuiView {
     private final int frameWidth = 900;
     private final JPanel borderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
+    private final JPanel downPanel= new JPanel();
     //right side
     private final JPanel rightSidePanel = new JPanel();
     private final JPanel displayMovesPanel= new JPanel();
@@ -83,6 +85,7 @@ public class ChessGuiView {
         borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
         borderPanel.add(mainBar, BorderLayout.PAGE_START);
         borderPanel.add(rightSidePanel, BorderLayout.LINE_END);
+        borderPanel.add(downPanel, BorderLayout.PAGE_END);
         chessBoardFrame.add(borderPanel);
         //pack();
     }
@@ -279,6 +282,7 @@ public class ChessGuiView {
                 labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+"  ";
                 JLabel label = new JLabel(labelString);
                 label.setAlignmentX(Component.CENTER_ALIGNMENT);
+                label.setFont(new Font("Arial", Font.PLAIN, 16));
                 displayMovesPanel.add(label);   
             }
             else{
@@ -292,6 +296,13 @@ public class ChessGuiView {
 
     private void createRightPanel() {
         createDisplayMovesScroll();
+        JLabel playerNames;
+        if(ownColor==WHITE)playerNames = new JLabel(guiController.getOwnName()+
+                                         " - "+guiController.getOpponentName());
+        else playerNames = new JLabel(guiController.getOpponentName()+
+                                         " - "+guiController.getOwnName());
+        playerNames.setFont(new Font("Arial", Font.BOLD, 18));        
+        rightSidePanel.add(playerNames);        
         rightSidePanel.add(displayMovesScroll);
         rightSidePanel.setPreferredSize(new Dimension(200, frameHeight));        
     }
