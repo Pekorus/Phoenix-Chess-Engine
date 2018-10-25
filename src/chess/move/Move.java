@@ -87,7 +87,10 @@ public class Move {
            if(coordTo.getY()==1) return "0-0";
            else return "0-0-0";
         }   
-    return piece.getPiecetype()+moveType.toString()+coordTo;      
+    
+        if(promoteTo!=null) return ""+coordFrom+moveType.toString()+coordTo+promoteTo;
+        
+        return ""+piece.getPiecetype()+coordFrom+moveType.toString()+coordTo;      
     }
 
     

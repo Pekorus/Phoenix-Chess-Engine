@@ -37,7 +37,7 @@ public class ChessGuiView {
     //frames, panels, dialogs
     private final JFrame chessBoardFrame = new JFrame("Schaaach");
     private final int frameHeight = 700;
-    private final int frameWidth = 800;
+    private final int frameWidth = 900;
     private final JPanel boarderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
     private final JPanel displayMovesPanel= new JPanel();
@@ -261,7 +261,7 @@ public class ChessGuiView {
     private void createDisplayMovesPanel() {
         displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel, 
                                                             BoxLayout.Y_AXIS));
-        displayMovesPanel.setPreferredSize(new Dimension(100, frameHeight));
+        displayMovesPanel.setPreferredSize(new Dimension(200, frameHeight));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {

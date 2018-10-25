@@ -20,7 +20,7 @@ public enum MoveType {
     public String toString() {
         switch (this){
             case NORMAL:
-                return "";
+                return "-";
             case TAKE:
                 return "x";
         }
