@@ -15,6 +15,8 @@ import chess.game.ChessGame;
 import chess.move.Move;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -34,6 +36,8 @@ public class ChessGuiView {
 
     //frames, panels, dialogs
     private final JFrame chessBoardFrame = new JFrame("Schaaach");
+    private final int frameHeight = 700;
+    private final int frameWidth = 800;
     private final JPanel boarderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
     private final JPanel displayMovesPanel= new JPanel();
@@ -69,14 +73,10 @@ public class ChessGuiView {
         createSpriteArray();
 
         promoteDialog.setLocationRelativeTo(chessBoardFrame);
-        //boarder panel
+        //border panel
         boarderPanel.add(chessBoardPanel, BorderLayout.CENTER);
         boarderPanel.add(mainBar, BorderLayout.PAGE_START);
-        boarderPanel.add(displayMovesPanel, BorderLayout.EAST);
-        //boarderPanel.add(jLabel, BorderLayout.PAGE_END);
-
-        //chessBoardPanel.setSize(400,400);
-        //chessBoardPanel.setLayout(new GridLayout(8,8));       
+        boarderPanel.add(displayMovesPanel, BorderLayout.LINE_END);
         chessBoardFrame.add(boarderPanel);
         //pack();
     }
@@ -232,7 +232,7 @@ public class ChessGuiView {
     private void createMainFrame() {
         chessBoardFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         chessBoardFrame.setResizable(false);
-        chessBoardFrame.setSize(700, 720);
+        chessBoardFrame.setSize(frameWidth, frameHeight);
         chessBoardFrame.setLocationRelativeTo(null);
     }
 
@@ -250,6 +250,7 @@ public class ChessGuiView {
                 chessBoardPanel.add(buttonArray[i][j]);
             }
         }
+        chessBoardPanel.setPreferredSize(new Dimension(650,650));
     }
 
     private void showGameEndDialog(ChessColor winner) {
@@ -260,8 +261,7 @@ public class ChessGuiView {
     private void createDisplayMovesPanel() {
         displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel, 
                                                             BoxLayout.Y_AXIS));
-        JLabel emptyLabel = new JLabel("          ");
-        displayMovesPanel.add(emptyLabel);
+        displayMovesPanel.setPreferredSize(new Dimension(100, frameHeight));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
@@ -270,8 +270,10 @@ public class ChessGuiView {
         
         if(newestMove==-1) ; 
         else if(newestMove%2==0){
-                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+" ";
-                displayMovesPanel.add(new JLabel(labelString));   
+                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+"  ";
+                JLabel label = new JLabel(labelString);
+                label.setAlignmentX(Component.CENTER_ALIGNMENT);
+                displayMovesPanel.add(label);   
             }
             else{
                 JLabel lastLabel = (JLabel)displayMovesPanel.

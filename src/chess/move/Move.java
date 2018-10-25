@@ -8,6 +8,7 @@ package chess.move;
 import chess.board.Piece;
 import chess.board.PieceType;
 import chess.coordinate.Coordinate;
+import static chess.move.MoveType.CASTLE;
 
 /**
  *
@@ -82,7 +83,11 @@ public class Move {
 
     @Override
     public String toString() {
-       return piece.getPiecetype()+moveType.toString()+coordTo;      
+        if(moveType == CASTLE){
+           if(coordTo.getY()==1) return "0-0";
+           else return "0-0-0";
+        }   
+    return piece.getPiecetype()+moveType.toString()+coordTo;      
     }
 
     
