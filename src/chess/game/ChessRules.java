@@ -57,29 +57,29 @@ public class ChessRules {
             if(!isMovePossible(move)) return false;
 
             if(pieceType==PAWN){
-            Direction auxDirect=Direction.S; 
-            int promoteParameter=7;
-            if(piece.isColor()==BLACK){
-                auxDirect = Direction.N;
-                promoteParameter=0;
-            }    
-            Coordinate sCoord= coordFrom.getCoordInDir(auxDirect);
-            Coordinate s2Coord= sCoord.getCoordInDir(auxDirect);
-            if(!sCoord.equals(coordTo) && !coordTo.equals(s2Coord)) return false;
-            if(board.isOccupied(sCoord)) return false;
-            if(coordTo.equals(s2Coord) && piece.getMoveCounter()!=0) 
-                return false;
-            //promotion
-            if(move.getPromoteTo()!=null && coordTo.getX()!=promoteParameter) 
-                return false;    
+                Direction auxDirect=Direction.S; 
+                int promoteParameter=7;
+                if(piece.isColor()==BLACK){
+                    auxDirect = Direction.N;
+                    promoteParameter=0;
+                }    
+                Coordinate sCoord= coordFrom.getCoordInDir(auxDirect);
+                Coordinate s2Coord= sCoord.getCoordInDir(auxDirect);
+                if(!coordTo.equals(sCoord) && !coordTo.equals(s2Coord)) 
+                    return false;
+                if(board.isOccupied(sCoord)) return false;
+                if(coordTo.equals(s2Coord) && piece.getMoveCounter()!=0) 
+                    return false;
+                //promotion
+                if(move.getPromoteTo()!=null && coordTo.getX()!=promoteParameter) 
+                    return false;    
         }    
         break;
             
         case TAKE:
         if(!board.isOccupied(coordTo)) return false;    
-        if(board.getPieceOnCoord(coordTo).isColor()== 
-                    piece.isColor())
-            return false;
+        if(board.getPieceOnCoord(coordTo).isColor()== piece.isColor())
+               return false;
         if(!this.isMovePossible(move)) return false;
         //TODO: duplicated code    
         if(pieceType==PAWN){
@@ -119,19 +119,19 @@ public class ChessRules {
         if(pieceType!=KING) return false;
         if(piece.getMoveCounter()!=0) return false;
         if(!castleCoords.contains(coordTo)) return false;
+        if(!isAttacked(coordFrom, piece.isColor()).isEmpty()) return false;        
         Coordinate rookCoord = coordTo.getRookCastleCoord();
         if(!rookCastleCheck(rookCoord)) return false;
         //check if all fields between king and rook are empty and not in check
-        Coordinate kingCoord = piece.getCoordinate();
-        Direction dir = kingCoord.straightLineDir(rookCoord);
-        Coordinate auxCoord = kingCoord.getCoordInDir(dir);
-        while(!auxCoord.equals(rookCoord)){
+        Direction dir = coordFrom.straightLineDir(rookCoord);
+        Coordinate auxCoord = coordFrom.getCoordInDir(dir);
+        for(int i=0; i<2; i++){
             if(board.isOccupied(auxCoord)) return false;
-            //TODO: kurze vs lange ROchade, ein Feld ist Schach egal
             if(!isAttacked(auxCoord, piece.isColor()).isEmpty()) return false;
             auxCoord = auxCoord.getCoordInDir(dir);
-        }        
-        if(!isAttacked(coordFrom, piece.isColor()).isEmpty()) return false;
+        }
+        //large castling
+        if(coordTo.getY()==2 && board.isOccupied(auxCoord)) return false;
         break;       
         }
     
@@ -191,8 +191,7 @@ public class ChessRules {
     return true;
     }
 
-    private boolean rookCastleCheck(Coordinate rookCoord) {
-        
+    private boolean rookCastleCheck(Coordinate rookCoord) {        
         if(rookCoord==null) return false;
         Piece rook = board.getPieceOnCoord(rookCoord);
         if(rook==null) return false;
