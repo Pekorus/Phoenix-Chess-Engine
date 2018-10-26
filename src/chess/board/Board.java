@@ -8,6 +8,7 @@ package chess.board;
 import chess.move.Move;
 import static chess.board.ChessColor.*;
 import chess.coordinate.Coordinate;
+import java.util.LinkedList;
 
 /**
  *
@@ -16,11 +17,14 @@ import chess.coordinate.Coordinate;
 public class Board {
     
     private final Piece[][] board;
+    private final LinkedList<Piece> blackPieces= new LinkedList<>();
+    private final LinkedList<Piece> whitePieces= new LinkedList<>();    
     private Piece whiteKing, blackKing;
     
     public Board() {
         this.board = new Piece[8][8];
         createStartPosition();                    
+        createPieceLists();
     }
     
     public void executeMove(Move move){
@@ -33,31 +37,36 @@ public class Board {
             case NORMAL:
             move(piece, coordFrom, coordTo);
             if(move.getPromoteTo()!=null){
-            Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
+                Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
                                         coordTo);    
-            auxPiece.increaseMoveCounter();
-            this.setField(auxPiece, coordTo);
+                auxPiece.increaseMoveCounter();
+                this.setField(auxPiece, coordTo);
+                removePieceFromList(piece);
+                addPieceToList(auxPiece);
             }
             break;
             
-            case TAKE:
-            //TODO: geschlagene Figuren in Liste            
+            case TAKE:          
             move(piece, coordFrom, coordTo);
             optPiece.setCoordinate(null);            
             if(move.getPromoteTo()!=null){
-            Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
-                                        coordTo);    
-            auxPiece.increaseMoveCounter();
-            this.setField(auxPiece, coordTo);
+                Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
+                                            coordTo);    
+                auxPiece.increaseMoveCounter();
+                this.setField(auxPiece, coordTo);
+                removePieceFromList(piece);
+                addPieceToList(auxPiece);
             }
+            //remove taken piece from piece list
+            removePieceFromList(optPiece);
             break;
             
-            case ENPASSANT:
-            //TODO: geschlageen Figur Liste            
+            case ENPASSANT:          
             move(piece, coordFrom, coordTo);            
             //clear pawn that is taken by en passant
             this.clearField(move.getOptionalPieceCoord());            
             optPiece.setCoordinate(null);          
+            removePieceFromList(optPiece);
             break;
             
             case CASTLE:
@@ -187,22 +196,33 @@ public class Board {
             case NORMAL:
             //reverse move
             move(piece, coordTo, coordFrom);
+            //promotion
+            if(move.getPromoteTo()!=null){
+                removePieceFromList(this.getPieceOnCoord(coordTo));
+                addPieceToList(piece);
+            }
             break;
             
-            case TAKE:
-            //TODO: geschlagene Figuren in Liste            
+            case TAKE:           
             move(piece, coordTo, coordFrom);
             //reset taken piece
             this.setField(optPiece, coordTo);            
             optPiece.setCoordinate(coordTo);            
+            //insert taken piece back to list
+            addPieceToList(optPiece);           
+            //promotion
+            if(move.getPromoteTo()!=null){
+                removePieceFromList(this.getPieceOnCoord(coordTo));
+                addPieceToList(piece);
+            }
             break;
             
-            case ENPASSANT:
-            //TODO: geschlageen Figur Liste  
+            case ENPASSANT: 
             move(piece, coordTo, coordFrom);    
             //reset taken pawn
             this.setField(optPiece, move.getOptionalPieceCoord());            
             optPiece.setCoordinate(move.getOptionalPieceCoord());                       
+            addPieceToList(optPiece);
             break;
             
             case CASTLE:
@@ -269,4 +289,31 @@ public class Board {
         if(color==WHITE) return whiteKing;
         return blackKing;
     }    
+
+    private void createPieceLists() {
+        for(int i=0; i<8; i++){
+            for(int j=0; j<8; j++){
+                Piece auxPiece = board[i][j];
+                if(auxPiece!=null){
+                    if(auxPiece.isColor()==WHITE) whitePieces.add(auxPiece);
+                    else blackPieces.add(auxPiece);
+                }
+            }
+        }
+    }
+
+    private void removePieceFromList(Piece piece) {
+        if(piece.isColor()==WHITE) whitePieces.remove(piece);
+        else blackPieces.remove(piece);
+    }
+
+    private void addPieceToList(Piece optPiece) {
+        if(optPiece.isColor()==WHITE) whitePieces.add(optPiece);
+        else blackPieces.add(optPiece);
+    }
+
+    public LinkedList<Piece> getPiecesList(ChessColor color){
+        if(color==WHITE) return whitePieces;
+        else return blackPieces;
+    }
 }

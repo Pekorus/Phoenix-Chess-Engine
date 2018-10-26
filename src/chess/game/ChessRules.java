@@ -357,4 +357,9 @@ public class ChessRules {
         } 
     return false;
     }
+
+    private boolean isDraw(){
+        //TODO:
+    return true;
+    }
 }

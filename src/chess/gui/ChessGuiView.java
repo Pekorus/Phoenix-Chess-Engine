@@ -279,22 +279,32 @@ public class ChessGuiView {
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
-        String labelString;
+        JLabel label1, label2, label3;
         int newestMove = moveList.size()-1;
         
         if(newestMove==-1) ; 
         else if(newestMove%2==0){
-                labelString = (newestMove/2+1)+". "+moveList.getLast().toString()+"   ";
-                JLabel label = new JLabel(labelString);
-                label.setAlignmentX(Component.CENTER_ALIGNMENT);
-                label.setFont(new Font("Arial", Font.PLAIN, 16));
-                displayMovesPanel.add(label);   
+                JPanel triPanel= new JPanel(new GridLayout(1,3));
+                triPanel.setMaximumSize(new Dimension(200, 20));
+                label1 = new JLabel((newestMove/2+1)+".");
+                label1.setBackground(Color.red);
+                label1.setMaximumSize(new Dimension(20, 20));
+                label1.setAlignmentY(Component.RIGHT_ALIGNMENT);
+                label1.setFont(new Font("Arial", Font.PLAIN, 16));
+                label2 = new JLabel(moveList.getLast().toString());
+                label2.setFont(new Font("Arial", Font.PLAIN, 16));                
+                label2.setMaximumSize(new Dimension(90, 20));
+                label2.setAlignmentY(Component.LEFT_ALIGNMENT);                
+                triPanel.add(label1);
+                triPanel.add(label2);
+                displayMovesPanel.add(triPanel);   
             }
             else{
-                JLabel lastLabel = (JLabel)displayMovesPanel.
+                JPanel lastPanel = (JPanel)displayMovesPanel.
                             getComponent(displayMovesPanel.getComponentCount()-1);
-                labelString = lastLabel.getText();
-                lastLabel.setText(labelString+moveList.getLast().toString());    
+                label3 = new JLabel(moveList.getLast().toString());
+                label3.setFont(new Font("Arial", Font.PLAIN, 16));
+                lastPanel.add(label3);  
             }
         displayMovesPanel.repaint();
     }
