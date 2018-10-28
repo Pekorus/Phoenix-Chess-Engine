@@ -14,9 +14,11 @@ import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.coordinate.Direction;
-import static chess.move.MoveType.NORMAL;
-import static chess.move.MoveType.TAKE;
+import static chess.coordinate.Direction.*;
+import static chess.game.DrawType.*;
+import static chess.move.MoveType.*;
 import static java.lang.Math.abs;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -358,8 +360,174 @@ public class ChessRules {
     return false;
     }
 
-    private boolean isDraw(){
-        //TODO:
-    return true;
+    private DrawType isDraw(){
+        //TODO: other draws, return type of draw
+        if(isTechnicalDraw()) return TECHNICAL;
+        if(isStalemate()) return STALEMATE;
+        if(game.getDrawTurnTimer()>=50) return FIFTYTURNS;
+        if(isThreeRepetition()) return THREEFOLD;
+    return null;
+    }
+
+    private boolean isTechnicalDraw() {
+        LinkedList<Piece> whitePieces = board.getPiecesList(WHITE);
+        LinkedList<Piece> blackPieces = board.getPiecesList(BLACK);        
+        int countWhite = whitePieces.size();
+        int countBlack = blackPieces.size();
+        if(countWhite<=2 && countBlack <=2){
+            if(countWhite==1 && countBlack==1) return true;            
+            if(countWhite+countBlack==3){
+               if(!hasMinorPiece(whitePieces).isEmpty() || 
+                                !hasMinorPiece(blackPieces).isEmpty()) 
+                   return true;              
+            }
+        //remaining: both sides have king+piece
+        //TODO: king+bishop against king+bishop with same color is techn. draw      
+        //TODO: king+2knights against king??
+        } 
+        return false;
+    }
+
+    private boolean isStalemate() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private boolean isThreeRepetition() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private LinkedList<Piece> hasMinorPiece(LinkedList<Piece> pieceList) {
+        LinkedList<Piece> returnList = new LinkedList<>();
+        for(Piece piece : pieceList){
+            if(piece.getPiecetype()==KNIGHT || piece.getPiecetype()==BISHOP) 
+                returnList.add(piece);
+            }
+    return returnList;
+    }
+
+    private LinkedList<Move> getPossibleMoves(Piece piece) {
+        
+        LinkedList<Move> moveList = new LinkedList<>();
+        Coordinate startCoord = piece.getCoordinate();
+        Coordinate auxCoord;
+        ChessColor pieceColor = piece.isColor();
+        Move auxMove;
+        
+        switch(piece.getPiecetype()){
+            case KING:
+            for(Direction dir : Direction.values()){
+                auxCoord = startCoord.getCoordInDir(dir);
+                if(auxCoord!=null){
+                    auxMove=createValidMove(piece, auxCoord, null);
+                    if(auxMove!=null) moveList.add(auxMove);
+                }
+            }
+            //Castling
+            Direction dir= Direction.E;
+            for(int i=0; i<2; i++){
+                auxCoord=startCoord.getCoordInDir(dir).getCoordInDir(dir);
+                auxMove=createValidMove(piece, auxCoord, CASTLE);
+                if(auxMove!=null) moveList.add(auxMove);            
+                dir= Direction.W;
+            }
+            break;
+            
+            case QUEEN:   
+            List<Direction> queenList = 
+                         new LinkedList<>(Arrays.asList(Direction.values()));
+            moveList = zoomPieceList(queenList, piece);
+            break;
+
+            case BISHOP:
+            List<Direction> bishopList = Direction.createBishopList();
+            moveList = zoomPieceList(bishopList, piece);
+            break;                        
+
+            case ROOK:
+            List<Direction> rookList = Direction.createRookList();
+            moveList = zoomPieceList(rookList, piece);
+            break;    
+
+            case KNIGHT:
+            List<Coordinate> knightList = startCoord.createKnightCoordinates();
+            for(Coordinate coord : knightList){
+                auxMove=createValidMove(piece, coord, null);
+                if(auxMove!=null) moveList.add(auxMove);
+            }
+            break;    
+            
+            //TODO: EN Passant
+            case PAWN:            
+            //one step normal move+take
+            LinkedList<Direction> pawnDir =new LinkedList<>();
+            if(pieceColor==WHITE){ 
+                pawnDir.add(S);
+                pawnDir.add(SW);
+                pawnDir.add(SE);
+            }
+            else{ 
+                pawnDir.add(N);
+                pawnDir.add(NW);
+                pawnDir.add(NE);
+            }
+            for(Direction auxDir : pawnDir){
+                auxCoord = startCoord.getCoordInDir(auxDir);
+                //promotion
+                if(auxCoord.getX()==0 || auxCoord.getX()==7){
+                    auxMove=createValidMove(piece,auxCoord, QUEEN);
+                    if(auxMove!=null){
+                        moveList.add(auxMove);
+                        moveList.add(createValidMove(piece,auxCoord, BISHOP));
+                        moveList.add(createValidMove(piece,auxCoord, KNIGHT));
+                        moveList.add(createValidMove(piece,auxCoord, ROOK));
+                    }
+                }
+                else{
+                    auxMove=createValidMove(piece,auxCoord, null);
+                    if(auxMove!=null) moveList.add(auxMove);
+                }
+            }
+            //double step when not moved before
+            if(piece.getMoveCounter()==0){
+                Coordinate doubleStep = startCoord.getCoordInDir(pawnDir
+                                 .getFirst()).getCoordInDir(pawnDir.getFirst());
+                auxMove=createValidMove(piece,doubleStep, null);
+                if(auxMove!=null) moveList.add(auxMove);               
+            }
+            break;          
+        }
+        return moveList;
+    }
+
+    private LinkedList<Move> zoomPieceList(List<Direction> dirList, Piece piece) {
+        
+        LinkedList<Move> returnList = new LinkedList<>();
+        Coordinate startCoord = piece.getCoordinate();
+        
+        dirList.forEach((dir) -> {
+            Coordinate auxCoord = startCoord.getCoordInDir(dir);
+            Move auxMove;
+            while(auxCoord!=null){
+                auxMove=createValidMove(piece, auxCoord, null);
+                if(auxMove!=null) returnList.add(auxMove);
+                auxCoord = auxCoord.getCoordInDir(dir);
+            }
+        });
+    return returnList;    
+    }
+
+    private Move createValidMove(Piece piece, Coordinate coordTo, Object arg) {
+        Move createdMove;
+        if(!board.isOccupied(coordTo)){
+            if(arg==CASTLE) createdMove=new Move(piece, coordTo, CASTLE);
+            else createdMove = new Move(piece, coordTo, NORMAL, null, 
+                                                             (PieceType) arg);
+        }
+        else{
+            createdMove = new Move(piece, coordTo, TAKE, 
+                              board.getPieceOnCoord(coordTo), (PieceType) arg);
+        }   
+    if(validateMove(createdMove, game)) return createdMove;
+    return null;
     }
 }
