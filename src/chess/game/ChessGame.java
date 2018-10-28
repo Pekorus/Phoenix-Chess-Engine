@@ -8,7 +8,9 @@ package chess.game;
 import chess.board.Board;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
+import static chess.board.PieceType.PAWN;
 import chess.move.Move;
+import static chess.move.MoveType.TAKE;
 import java.util.LinkedList;
 
 /**
@@ -20,12 +22,16 @@ public class ChessGame{
     private final Board board;
     private ChessColor playersTurn;
     private ChessColor winner;
+    private DrawType draw;
+    private int drawTurnTimer;
     private final ChessRules rules;
     private final LinkedList<Move> moveList= new LinkedList<>();
     
     public ChessGame() {
         this.board = new Board(); 
         this.winner = null;
+        this.draw = null;
+        this.drawTurnTimer=0;
         this.rules = new ChessRules(this);
         this.playersTurn = WHITE;
     }    
@@ -35,6 +41,9 @@ public class ChessGame{
         if(!rules.validateMove(move, this)) return false;
         board.executeMove(move);
         moveList.add(move);
+        drawTurnTimer++;
+        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+            drawTurnTimer=0;
         this.nextPlayer();        
         return true;
     }
@@ -51,10 +60,19 @@ public class ChessGame{
         return false;
     }
 
+    public boolean isDraw() {
+        draw= rules.isDraw();
+        return draw!=null;       
+    }
+
     public ChessColor getWinner() {
         return winner;
     }
 
+    public DrawType getDraw() {
+        return draw;
+    }    
+    
     private void nextPlayer() {
         if(this.playersTurn== WHITE) this.playersTurn= BLACK;
         else this.playersTurn= WHITE;
@@ -73,8 +91,18 @@ public class ChessGame{
     }
 
     int getDrawTurnTimer() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return drawTurnTimer;
     }
 
+    public void resetDrawTurnTimer() {
+        this.drawTurnTimer = 0;
+    }
     
+    public void increaseDrawTurnTimer() {
+        drawTurnTimer++;
+    }
+    
+    public void decreaseDrawTurnTimer(){
+        drawTurnTimer--;
+    }
 }

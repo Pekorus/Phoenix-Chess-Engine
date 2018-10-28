@@ -360,7 +360,7 @@ public class ChessRules {
     return false;
     }
 
-    private DrawType isDraw(){
+    public DrawType isDraw(){
         //TODO: other draws, return type of draw
         if(isTechnicalDraw()) return TECHNICAL;
         if(isStalemate()) return STALEMATE;
@@ -389,11 +389,15 @@ public class ChessRules {
     }
 
     private boolean isStalemate() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        for(Piece piece : board.getPiecesList(game.getPlayersTurn())){
+            if(!getPossibleMoves(piece).isEmpty()) return false;
+        }
+    return true;
     }
 
     private boolean isThreeRepetition() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //TODO:
+        return false;
     }
 
     private LinkedList<Piece> hasMinorPiece(LinkedList<Piece> pieceList) {

@@ -12,6 +12,7 @@ import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.game.ChessGame;
+import chess.game.DrawType;
 import chess.move.Move;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -96,9 +97,9 @@ public class ChessGuiView {
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
         updateMovesDisplay(game.getMoveList());
-        if(game.getWinner()!= null){
+        if(game.getWinner()!= null || game.getDraw()!=null){
             setResultLabel(game.getWinner());
-            showGameEndDialog(game.getWinner());
+            showGameEndDialog(game.getWinner(), game.getDraw());
         }
     }
 
@@ -267,9 +268,14 @@ public class ChessGuiView {
         chessBoardPanel.setPreferredSize(new Dimension(650,650));
     }
 
-    private void showGameEndDialog(ChessColor winner) {
-        JOptionPane.showMessageDialog(chessBoardFrame, winner+" Player has won!", "Game ended",
-                JOptionPane.WARNING_MESSAGE);
+    private void showGameEndDialog(ChessColor winner, DrawType draw) {
+        if(winner!=null) JOptionPane.showMessageDialog(chessBoardFrame, 
+           winner+" Player has won!", "Game ended",JOptionPane.WARNING_MESSAGE);
+        else{
+        JOptionPane.showMessageDialog(chessBoardFrame, 
+                        "Game ended in a draw ("+draw+")!", "Game ended",
+                                                   JOptionPane.WARNING_MESSAGE);    
+        }
     }
 
     private void createDisplayMovesScroll() {
@@ -331,6 +337,7 @@ public class ChessGuiView {
 
     private void setResultLabel(ChessColor winner) {
         if(winner==WHITE) resultLabel.setText("1   -   0");
-        else resultLabel.setText("0   -   1");
+        else if(winner==BLACK) resultLabel.setText("0   -   1");
+        else resultLabel.setText("0.5   -   0.5");
     }
 }
