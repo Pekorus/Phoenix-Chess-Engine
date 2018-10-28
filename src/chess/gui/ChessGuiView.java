@@ -273,7 +273,7 @@ public class ChessGuiView {
            winner+" Player has won!", "Game ended",JOptionPane.WARNING_MESSAGE);
         else{
         JOptionPane.showMessageDialog(chessBoardFrame, 
-                        "Game ended in a draw ("+draw+")!", "Game ended",
+                        "Game ended in a draw ("+draw+")", "Game ended",
                                                    JOptionPane.WARNING_MESSAGE);    
         }
     }

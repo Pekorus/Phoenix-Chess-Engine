@@ -364,7 +364,7 @@ public class ChessRules {
         //TODO: other draws, return type of draw
         if(isTechnicalDraw()) return TECHNICAL;
         if(isStalemate()) return STALEMATE;
-        if(game.getDrawTurnTimer()>=50) return FIFTYTURNS;
+        if(game.getDrawTurnTimer()>=100) return FIFTYTURNS;
         if(isThreeRepetition()) return THREEFOLD;
     return null;
     }
@@ -427,12 +427,14 @@ public class ChessRules {
                 }
             }
             //Castling
-            Direction dir= Direction.E;
-            for(int i=0; i<2; i++){
-                auxCoord=startCoord.getCoordInDir(dir).getCoordInDir(dir);
-                auxMove=createValidMove(piece, auxCoord, CASTLE);
-                if(auxMove!=null) moveList.add(auxMove);            
-                dir= Direction.W;
+            if(piece.getMoveCounter()==0){
+                Direction dir= Direction.E;
+                for(int i=0; i<2; i++){
+                    auxCoord=startCoord.getCoordInDir(dir).getCoordInDir(dir);
+                    auxMove=createValidMove(piece, auxCoord, CASTLE);
+                    if(auxMove!=null) moveList.add(auxMove);            
+                    dir= Direction.W;
+                }
             }
             break;
             
@@ -476,20 +478,22 @@ public class ChessRules {
             }
             for(Direction auxDir : pawnDir){
                 auxCoord = startCoord.getCoordInDir(auxDir);
-                //promotion
-                if(auxCoord.getX()==0 || auxCoord.getX()==7){
-                    auxMove=createValidMove(piece,auxCoord, QUEEN);
-                    if(auxMove!=null){
-                        moveList.add(auxMove);
-                        moveList.add(createValidMove(piece,auxCoord, BISHOP));
-                        moveList.add(createValidMove(piece,auxCoord, KNIGHT));
-                        moveList.add(createValidMove(piece,auxCoord, ROOK));
+                if(auxCoord!=null){
+                    //promotion
+                    if(auxCoord.getX()==0 || auxCoord.getX()==7){
+                        auxMove=createValidMove(piece,auxCoord, QUEEN);
+                        if(auxMove!=null){
+                            moveList.add(auxMove);
+                            moveList.add(createValidMove(piece,auxCoord, BISHOP));
+                            moveList.add(createValidMove(piece,auxCoord, KNIGHT));
+                            moveList.add(createValidMove(piece,auxCoord, ROOK));
+                        }
+                    }   
+                    else{
+                        auxMove=createValidMove(piece,auxCoord, null);
+                        if(auxMove!=null) moveList.add(auxMove);
                     }
-                }
-                else{
-                    auxMove=createValidMove(piece,auxCoord, null);
-                    if(auxMove!=null) moveList.add(auxMove);
-                }
+                }    
             }
             //double step when not moved before
             if(piece.getMoveCounter()==0){
@@ -522,6 +526,8 @@ public class ChessRules {
 
     private Move createValidMove(Piece piece, Coordinate coordTo, Object arg) {
         Move createdMove;
+        if(coordTo==null) return null;
+        
         if(!board.isOccupied(coordTo)){
             if(arg==CASTLE) createdMove=new Move(piece, coordTo, CASTLE);
             else createdMove = new Move(piece, coordTo, NORMAL, null, 
