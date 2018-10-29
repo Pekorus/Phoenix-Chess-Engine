@@ -8,7 +8,7 @@ package chess.board;
 import chess.move.Move;
 import static chess.board.ChessColor.*;
 import chess.coordinate.Coordinate;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 /**
  *
@@ -17,8 +17,8 @@ import java.util.LinkedList;
 public class Board {
     
     private final Piece[][] board;
-    private final LinkedList<Piece> blackPieces= new LinkedList<>();
-    private final LinkedList<Piece> whitePieces= new LinkedList<>();    
+    private final ArrayList<Piece> blackPieces= new ArrayList<>();
+    private final ArrayList<Piece> whitePieces= new ArrayList<>();    
     private Piece whiteKing, blackKing;
     
     public Board() {
@@ -227,7 +227,7 @@ public class Board {
         else blackPieces.add(optPiece);
     }
 
-    public LinkedList<Piece> getPiecesList(ChessColor color){
+    public ArrayList<Piece> getPiecesList(ChessColor color){
         if(color==WHITE) return whitePieces;
         else return blackPieces;
     }

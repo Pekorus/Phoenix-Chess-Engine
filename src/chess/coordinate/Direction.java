@@ -5,7 +5,7 @@
  */
 package chess.coordinate;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,7 +24,7 @@ public enum Direction {
     }
 
     public static List<Direction> createBishopList(){
-        List<Direction> bishopList = new LinkedList<>();    
+        List<Direction> bishopList = new ArrayList<>();    
             bishopList.add(Direction.NE);
             bishopList.add(Direction.NW);
             bishopList.add(Direction.SE);
@@ -33,7 +33,7 @@ public enum Direction {
     }
 
     public static List<Direction> createRookList(){
-        List<Direction> rookList = new LinkedList<>();    
+        List<Direction> rookList = new ArrayList<>();    
             rookList.add(Direction.N);
             rookList.add(Direction.E);
             rookList.add(Direction.S);

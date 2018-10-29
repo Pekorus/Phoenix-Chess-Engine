@@ -146,7 +146,8 @@ public class ChessGuiController implements ActionListener, Player {
     }
 
     @Override
-    public void update(ChessGame game, Object arg) {
+    public void update(ChessGame game, Move move, Object arg) {
+        //TODO: eigenes board, nicht das von game benutzen
         view.update(game, arg);
     }
 

@@ -18,6 +18,7 @@ import static chess.coordinate.Direction.*;
 import static chess.game.DrawType.*;
 import static chess.move.MoveType.*;
 import static java.lang.Math.abs;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class ChessRules {
     }
     
     public boolean validateMove(Move move, ChessGame game) {
-        //TODO:piece.isColor() ersetzen durch owncolor     
+        
         //preparation and fail safes
         if(move==null) return false;
         Piece piece = move.getPiece();        
@@ -62,7 +63,7 @@ public class ChessRules {
             if(pieceType==PAWN){
                 Direction auxDirect=Direction.S; 
                 int promoteParameter=7;
-                if(piece.isColor()==BLACK){
+                if(ownColor==BLACK){
                     auxDirect = Direction.N;
                     promoteParameter=0;
                 }    
@@ -81,12 +82,12 @@ public class ChessRules {
             
         case TAKE:
         if(!board.isOccupied(coordTo)) return false;    
-        if(board.getPieceOnCoord(coordTo).isColor()== piece.isColor())
+        if(board.getPieceOnCoord(coordTo).isColor()== ownColor)
                return false;
         if(!this.isMovePossible(move)) return false;
         //TODO: duplicated code    
         if(pieceType==PAWN){
-            if(piece.isColor()==WHITE){
+            if(ownColor==WHITE){
                 if(!coordTo.equals(coordFrom.getCoordInDir(Direction.SW)) && 
                         !coordTo.equals(coordFrom.getCoordInDir(Direction.SE))) 
                     return false;
@@ -106,10 +107,10 @@ public class ChessRules {
         if(optPiece==null) return false;
         if(pieceType!=PAWN) return false;
         if(optPiece.getPiecetype()!=PAWN) return false;
-        if(optPiece.isColor()==piece.isColor()) return false;
+        if(optPiece.isColor()==ownColor) return false;
         if(board.isOccupied(coordTo)) return false;
-        if((piece.isColor()==WHITE && coordFrom.getX()!=4)||
-                (piece.isColor()==BLACK && coordFrom.getX()!=3)) return false;
+        if((ownColor==WHITE && coordFrom.getX()!=4)||
+                (ownColor==BLACK && coordFrom.getX()!=3)) return false;
         Move lastMove = game.getLastMove();
         if(lastMove.getPiece().getPiecetype()!=PAWN) return false;
         if(!lastMove.getCoordTo().
@@ -122,7 +123,7 @@ public class ChessRules {
         if(pieceType!=KING) return false;
         if(piece.getMoveCounter()!=0) return false;
         if(!castleCoords.contains(coordTo)) return false;
-        ChessColor enemyColor= piece.isColor().getInverse();
+        ChessColor enemyColor= ownColor.getInverse();
         if(!isAttackedBy(coordFrom, enemyColor).isEmpty()) return false;        
         Coordinate rookCoord = coordTo.getRookCastleCoord();
         if(!rookCastleCheck(rookCoord)) return false;
@@ -259,7 +260,7 @@ public class ChessRules {
        return attackerList;
     }
 
-    protected boolean isCheckMate(ChessColor color){
+    protected boolean isCheckmate(ChessColor color){
         
         Piece king = board.getKing(color);
         Coordinate kingCoord = king.getCoord();
@@ -366,7 +367,6 @@ public class ChessRules {
     }
 
     public DrawType isDraw(){
-        //TODO: other draws, return type of draw
         if(isTechnicalDraw()) return TECHNICAL;
         if(isStalemate()) return STALEMATE;
         if(game.getDrawTurnTimer()>=100) return FIFTYTURNS;
@@ -375,8 +375,8 @@ public class ChessRules {
     }
 
     private boolean isTechnicalDraw() {
-        LinkedList<Piece> whitePieces = board.getPiecesList(WHITE);
-        LinkedList<Piece> blackPieces = board.getPiecesList(BLACK);        
+        ArrayList<Piece> whitePieces = board.getPiecesList(WHITE);
+        ArrayList<Piece> blackPieces = board.getPiecesList(BLACK);        
         int countWhite = whitePieces.size();
         int countBlack = blackPieces.size();
         if(countWhite<=2 && countBlack <=2){
@@ -409,8 +409,8 @@ public class ChessRules {
         return false;
     }
 
-    private LinkedList<Piece> hasMinorPiece(LinkedList<Piece> pieceList) {
-        LinkedList<Piece> returnList = new LinkedList<>();
+    private ArrayList<Piece> hasMinorPiece(ArrayList<Piece> pieceList) {
+        ArrayList<Piece> returnList = new ArrayList<>();
         for(Piece piece : pieceList){
             if(piece.getPiecetype()==KNIGHT || piece.getPiecetype()==BISHOP) 
                 returnList.add(piece);
@@ -418,9 +418,9 @@ public class ChessRules {
     return returnList;
     }
 
-    private LinkedList<Move> getPossibleMoves(Piece piece) {
+    public ArrayList<Move> getPossibleMoves(Piece piece) {
         
-        LinkedList<Move> moveList = new LinkedList<>();
+        ArrayList<Move> moveList = new ArrayList<>();
         Coordinate startCoord = piece.getCoord();
         Coordinate auxCoord;
         ChessColor pieceColor = piece.isColor();
@@ -449,7 +449,7 @@ public class ChessRules {
             
             case QUEEN:   
             List<Direction> queenList = 
-                         new LinkedList<>(Arrays.asList(Direction.values()));
+                         new ArrayList<>(Arrays.asList(Direction.values()));
             moveList = zoomPieceList(queenList, piece);
             break;
 
@@ -516,9 +516,9 @@ public class ChessRules {
         return moveList;
     }
 
-    private LinkedList<Move> zoomPieceList(List<Direction> dirList, Piece piece) {
+    private ArrayList<Move> zoomPieceList(List<Direction> dirList, Piece piece) {
         
-        LinkedList<Move> returnList = new LinkedList<>();
+        ArrayList<Move> returnList = new ArrayList<>();
         Coordinate startCoord = piece.getCoord();
         
         dirList.forEach((dir) -> {

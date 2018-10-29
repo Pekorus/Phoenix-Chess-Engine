@@ -5,6 +5,7 @@
  */
 package chess.game;
 
+import chess.ai.ChessAI;
 import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.move.Move;
@@ -22,30 +23,31 @@ public class GameController {
     Boolean checkmate= false, draw=false;
     
     public GameController() throws IOException {
-        player1 = new ChessGuiController(this, WHITE, "Player1", "Player2");
-        player2 = new ChessGuiController(this, BLACK, "Player2", "Player1");
-        game = new ChessGame();
+        game = new ChessGame();        
+        player1 = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
+        player2 = new ChessAI(this, game, BLACK);
+
     }    
     
     public void startGame(){
-        notifyObservers();
+        notifyObservers(null);
     }
             
     public boolean nextMove(Move move){
         if(checkmate) return false;
         if(draw) return false;
         if(game.nextMove(move)){
-            checkmate = game.isCheckMate();
+            checkmate = game.isCheckmate();
             draw = game.isDraw();
-            notifyObservers();
+            notifyObservers(move);
             return true;
         }
     return false;    
     } 
 
-    private void notifyObservers() {
-        player1.update(game, null);
-        player2.update(game, null);
+    private void notifyObservers(Move nextMove) {
+        player1.update(game, nextMove, null);
+        player2.update(game, nextMove, null);
     }
 
     

@@ -52,8 +52,8 @@ public class ChessGame{
         return board;
     }
 
-    public boolean isCheckMate() {
-        if(rules.isCheckMate(playersTurn)){
+    public boolean isCheckmate() {
+        if(rules.isCheckmate(playersTurn)){
             winner= playersTurn.getInverse();
             return true;
         }
@@ -104,5 +104,9 @@ public class ChessGame{
     
     public void decreaseDrawTurnTimer(){
         drawTurnTimer--;
+    }
+
+    public ChessRules getRules(){
+        return rules;
     }
 }

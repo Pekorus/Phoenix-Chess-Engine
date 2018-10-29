@@ -5,6 +5,8 @@
  */
 package chess.game;
 
+import chess.move.Move;
+
 /**
  *
  * @author Phoenix
@@ -12,5 +14,5 @@ package chess.game;
 
 public interface Player {
     
-    public abstract void update(ChessGame game, Object arg);
+    public abstract void update(ChessGame game, Move move, Object arg);
 }
