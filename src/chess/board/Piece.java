@@ -26,7 +26,7 @@ public class Piece {
         this.moveCounter = 0;
     }
     
-    public Coordinate getCoordinate() {
+    public Coordinate getCoord() {
         return coordinate;
     }
 
@@ -46,7 +46,7 @@ public class Piece {
         this.moveCounter = this.moveCounter-1;        
     }
     
-    public void setCoordinate(Coordinate coordinate) {
+    public void setCoord(Coordinate coordinate) {
         this.coordinate = coordinate;
     }
 

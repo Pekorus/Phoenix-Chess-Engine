@@ -39,19 +39,20 @@ public class ChessRules {
     }
     
     public boolean validateMove(Move move, ChessGame game) {
-             
+        //TODO:piece.isColor() ersetzen durch owncolor     
         //preparation and fail safes
         if(move==null) return false;
         Piece piece = move.getPiece();        
         if (piece==null) return false;
         PieceType pieceType = piece.getPiecetype();
         if(pieceType==null) return false;
-        if(piece.isColor()!= game.getPlayersTurn()) return false;
+        ChessColor ownColor= piece.isColor();
+        if(ownColor!= game.getPlayersTurn()) return false;
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         if(coordFrom==null) return false;
         if(coordTo==null) return false;
-        if(!coordFrom.equals(piece.getCoordinate())) return false;
+        if(!coordFrom.equals(piece.getCoord())) return false;
         
         switch(move.getMoveType()){
             case NORMAL:
@@ -112,7 +113,7 @@ public class ChessRules {
         Move lastMove = game.getLastMove();
         if(lastMove.getPiece().getPiecetype()!=PAWN) return false;
         if(!lastMove.getCoordTo().
-                                equals(optPiece.getCoordinate())) return false;
+                                equals(optPiece.getCoord())) return false;
         if(lastMove.getCoordFrom().
                                distance(lastMove.getCoordTo())!=2) return false; 
         break;
@@ -121,7 +122,8 @@ public class ChessRules {
         if(pieceType!=KING) return false;
         if(piece.getMoveCounter()!=0) return false;
         if(!castleCoords.contains(coordTo)) return false;
-        if(!isAttacked(coordFrom, piece.isColor()).isEmpty()) return false;        
+        ChessColor enemyColor= piece.isColor().getInverse();
+        if(!isAttackedBy(coordFrom, enemyColor).isEmpty()) return false;        
         Coordinate rookCoord = coordTo.getRookCastleCoord();
         if(!rookCastleCheck(rookCoord)) return false;
         //check if all fields between king and rook are empty and not in check
@@ -129,7 +131,7 @@ public class ChessRules {
         Coordinate auxCoord = coordFrom.getCoordInDir(dir);
         for(int i=0; i<2; i++){
             if(board.isOccupied(auxCoord)) return false;
-            if(!isAttacked(auxCoord, piece.isColor()).isEmpty()) return false;
+            if(!isAttackedBy(auxCoord, enemyColor).isEmpty()) return false;
             auxCoord = auxCoord.getCoordInDir(dir);
         }
         //large castling
@@ -138,8 +140,8 @@ public class ChessRules {
         }
     
         board.executeMove(move);
-        ChessColor playersTurn = game.getPlayersTurn();
-        if(!isAttacked(board.getKing(playersTurn).getCoordinate(), playersTurn).isEmpty()){
+        Piece king = board.getKing(game.getPlayersTurn());
+        if(!isAttackedBy(king.getCoord(), ownColor.getInverse()).isEmpty()){
             board.unexecuteMove(move);
             return false;
         }    
@@ -203,16 +205,16 @@ public class ChessRules {
 
     /*checks if a given coordinate is attacked by pieces of opposite specified color 
         on current boardstate*/
-    private LinkedList<Piece> isAttacked(Coordinate checkedCoord, ChessColor color) {
-       //TODO: ändere color auf die Farbe der angreifenden Pieces (inkl. Verwendung)
+    private LinkedList<Piece> isAttackedBy(Coordinate checkedCoord, 
+                                                            ChessColor color) {
        LinkedList<Piece> attackerList = new LinkedList<>();
        List<Coordinate> knightList = checkedCoord.createKnightCoordinates();
        Coordinate auxCoord;
        Piece auxPiece;
 
         //attacked by a king?
-        if(board.getKing(color.getOppositeColor()).getCoordinate().distance(checkedCoord)==1)
-            attackerList.add(board.getKing(color.getOppositeColor()));
+        if(board.getKing(color).getCoord().distance(checkedCoord)==1)
+            attackerList.add(board.getKing(color));
 
         //attacked by a bishop, rook or queen?
         for(Direction dir : Direction.values()){
@@ -223,7 +225,7 @@ public class ChessRules {
            if(auxCoord!=null){
                 auxPiece = board.getPieceOnCoord(auxCoord);
                 PieceType PT = auxPiece.getPiecetype();
-                if(auxPiece.isColor()!= color){ 
+                if(auxPiece.isColor()!= color.getInverse()){ 
                    if((checkedCoord.coordinatesOnDiag(auxCoord) && 
                            (PT == BISHOP || PT == QUEEN)) ||
                       (checkedCoord.coordinatesOnLine(auxCoord) &&
@@ -237,7 +239,7 @@ public class ChessRules {
        for(Coordinate possCoord : knightList){
            auxPiece = board.getPieceOnCoord(possCoord);
            if(auxPiece!=null && auxPiece.getPiecetype() == KNIGHT 
-                          && auxPiece.isColor()!=color )
+                          && auxPiece.isColor()!=color.getInverse())
                attackerList.add(auxPiece);
        }
        //attacked by a pawn?
@@ -250,7 +252,7 @@ public class ChessRules {
         auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection1));        
         for(int i=0; i<2; i++){
             if(auxPiece!=null && auxPiece.getPiecetype()==PAWN 
-                   && auxPiece.isColor()==color.getOppositeColor())
+                   && auxPiece.isColor()==color)
                 attackerList.add(auxPiece);
         auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection2));
         }             
@@ -260,8 +262,10 @@ public class ChessRules {
     protected boolean isCheckMate(ChessColor color){
         
         Piece king = board.getKing(color);
-        Coordinate kingCoord = king.getCoordinate();
-        LinkedList<Piece> pieceCheckList = isAttacked(kingCoord, color);
+        Coordinate kingCoord = king.getCoord();
+        ChessColor enemyColor = color.getInverse();
+        LinkedList<Piece> pieceCheckList = isAttackedBy(kingCoord, 
+                                                                    enemyColor);
         LinkedList<Piece> threatensCheckGiver;
         LinkedList<Piece> pieceBlocking;
         Piece givesCheck;
@@ -271,16 +275,17 @@ public class ChessRules {
         //Can the king get out of chess?
         for(Direction dir : Direction.values()){
             auxCoord = kingCoord.getCoordInDir(dir);
-            if(auxCoord!=null && !board.isOccupied(auxCoord) && isAttacked(auxCoord, color).isEmpty())
+            if(auxCoord!=null && !board.isOccupied(auxCoord) && 
+                             isAttackedBy(auxCoord, enemyColor).isEmpty())
                 return false;
         }
         //if the king cant move and double check is given -> checkmate
         if(pieceCheckList.size()>=2) return true;
         //is it possible to take the piece giving check?
         givesCheck = pieceCheckList.getFirst();
-        threatensCheckGiver = isAttacked(givesCheck.getCoordinate(), givesCheck.isColor());
+        threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color);
         for(Piece threat : threatensCheckGiver){
-            if(validateMove(new Move(threat, givesCheck.getCoordinate(), TAKE,
+            if(validateMove(new Move(threat, givesCheck.getCoord(), TAKE,
                                       givesCheck, null), game)) 
             return false;
         }
@@ -288,9 +293,9 @@ public class ChessRules {
         PieceType auxPt = givesCheck.getPiecetype();
         if(auxPt==QUEEN || auxPt==BISHOP || auxPt==ROOK){
             Direction auxDir = kingCoord.
-                                    diagonalLineDir(givesCheck.getCoordinate());
+                                    diagonalLineDir(givesCheck.getCoord());
             if(auxDir==null) 
-                auxDir =kingCoord.straightLineDir(givesCheck.getCoordinate());
+                auxDir =kingCoord.straightLineDir(givesCheck.getCoord());
             auxCoord = kingCoord.getCoordInDir(auxDir);
             while(!board.isOccupied(auxCoord)){
                 pieceBlocking = canCoordBeOccupied(auxCoord, king.isColor());
@@ -307,7 +312,7 @@ public class ChessRules {
     private LinkedList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color){
         //pawns can give check to a field without being able to move to it,
         //also they can go to fields without giving check to the field
-        LinkedList<Piece> potentialOccupants = isAttacked(coord, color.getOppositeColor());
+        LinkedList<Piece> potentialOccupants = isAttackedBy(coord, color);
         LinkedList<Piece> occupants = canPawnMoveCoord(coord, color);
         
         for(Piece auxPiece : potentialOccupants){
@@ -389,7 +394,11 @@ public class ChessRules {
     }
 
     private boolean isStalemate() {
-        for(Piece piece : board.getPiecesList(game.getPlayersTurn())){
+        ChessColor playersTurn = game.getPlayersTurn();
+        if(!isAttackedBy(board.getKing(playersTurn).getCoord(),
+                playersTurn.getInverse()).isEmpty())
+            return false;
+        for(Piece piece : board.getPiecesList(playersTurn)){
             if(!getPossibleMoves(piece).isEmpty()) return false;
         }
     return true;
@@ -412,7 +421,7 @@ public class ChessRules {
     private LinkedList<Move> getPossibleMoves(Piece piece) {
         
         LinkedList<Move> moveList = new LinkedList<>();
-        Coordinate startCoord = piece.getCoordinate();
+        Coordinate startCoord = piece.getCoord();
         Coordinate auxCoord;
         ChessColor pieceColor = piece.isColor();
         Move auxMove;
@@ -510,7 +519,7 @@ public class ChessRules {
     private LinkedList<Move> zoomPieceList(List<Direction> dirList, Piece piece) {
         
         LinkedList<Move> returnList = new LinkedList<>();
-        Coordinate startCoord = piece.getCoordinate();
+        Coordinate startCoord = piece.getCoord();
         
         dirList.forEach((dir) -> {
             Coordinate auxCoord = startCoord.getCoordInDir(dir);
@@ -534,6 +543,7 @@ public class ChessRules {
                                                              (PieceType) arg);
         }
         else{
+            if(arg==CASTLE) return null;
             createdMove = new Move(piece, coordTo, TAKE, 
                               board.getPieceOnCoord(coordTo), (PieceType) arg);
         }   

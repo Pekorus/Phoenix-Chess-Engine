@@ -13,7 +13,7 @@ public enum ChessColor {
     WHITE,
     BLACK;
 
-    public ChessColor getOppositeColor() {
+    public ChessColor getInverse() {
         if (this == WHITE) {
             return BLACK;
         }

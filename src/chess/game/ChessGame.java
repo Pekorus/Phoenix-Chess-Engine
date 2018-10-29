@@ -54,7 +54,7 @@ public class ChessGame{
 
     public boolean isCheckMate() {
         if(rules.isCheckMate(playersTurn)){
-            winner= playersTurn.getOppositeColor();
+            winner= playersTurn.getInverse();
             return true;
         }
         return false;

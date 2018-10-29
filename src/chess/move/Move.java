@@ -26,7 +26,7 @@ public class Move {
     
     public Move(Piece piece, Coordinate coordinate, MoveType moveType) {
         this.piece = piece;
-        if(piece!=null) this.coordFrom = piece.getCoordinate();
+        if(piece!=null) this.coordFrom = piece.getCoord();
             else coordFrom =null;
         this.coordTo = coordinate;
         this.moveType = moveType;
@@ -38,13 +38,13 @@ public class Move {
     public Move(Piece piece, Coordinate coordinate, 
                 MoveType moveType, Piece optionalPiece, PieceType promoteTo) {
         this.piece = piece;
-        if(piece!=null)this.coordFrom= piece.getCoordinate();
+        if(piece!=null)this.coordFrom= piece.getCoord();
         else this.coordFrom = null;
         this.coordTo = coordinate;
         this.moveType = moveType;
         this.optionalPiece = optionalPiece;
         if(optionalPiece!=null) 
-            this.optPieceCoord = optionalPiece.getCoordinate();
+            this.optPieceCoord = optionalPiece.getCoord();
         else this.optPieceCoord = null;
         this.promoteTo=promoteTo;
     }

@@ -48,7 +48,7 @@ public class Board {
             
             case TAKE:          
             move(piece, coordFrom, coordTo);
-            optPiece.setCoordinate(null);            
+            optPiece.setCoord(null);            
             if(move.getPromoteTo()!=null){
                 Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
                                             coordTo);    
@@ -65,7 +65,7 @@ public class Board {
             move(piece, coordFrom, coordTo);            
             //clear pawn that is taken by en passant
             this.clearField(move.getOptionalPieceCoord());            
-            optPiece.setCoordinate(null);          
+            optPiece.setCoord(null);          
             removePieceFromList(optPiece);
             break;
             
@@ -122,7 +122,7 @@ public class Board {
             move(piece, coordTo, coordFrom);
             //reset taken piece
             this.setField(optPiece, coordTo);            
-            optPiece.setCoordinate(coordTo);            
+            optPiece.setCoord(coordTo);            
             //insert taken piece back to list
             addPieceToList(optPiece);           
             //promotion
@@ -136,7 +136,7 @@ public class Board {
             move(piece, coordTo, coordFrom);    
             //reset taken pawn
             this.setField(optPiece, move.getOptionalPieceCoord());            
-            optPiece.setCoordinate(move.getOptionalPieceCoord());                       
+            optPiece.setCoord(move.getOptionalPieceCoord());                       
             addPieceToList(optPiece);
             break;
             
@@ -197,7 +197,7 @@ public class Board {
             this.clearField(coordFrom);
             //set figure to new field
             this.setField(piece, coordTo);
-            piece.setCoordinate(coordTo);
+            piece.setCoord(coordTo);
     }
 
     public Piece getKing(ChessColor color) {
