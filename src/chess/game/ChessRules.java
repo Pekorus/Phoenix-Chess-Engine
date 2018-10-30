@@ -276,7 +276,8 @@ public class ChessRules {
         //Can the king get out of chess?
         for(Direction dir : Direction.values()){
             auxCoord = kingCoord.getCoordInDir(dir);
-            if(auxCoord!=null && !board.isOccupied(auxCoord) && 
+            if(auxCoord!=null && (!board.isOccupied(auxCoord)||
+                board.getPieceOnCoord(auxCoord).isColor()!=king.isColor()) && 
                              isAttackedBy(auxCoord, enemyColor).isEmpty())
                 return false;
         }

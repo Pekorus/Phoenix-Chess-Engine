@@ -25,7 +25,8 @@ public class GameController {
     public GameController() throws IOException {
         game = new ChessGame();        
         player1 = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
-        player2 = new ChessAI(this, BLACK);
+        player2 = new ChessGuiController(this, BLACK, "Player1", "Player2");        
+        //player2 = new ChessAI(this, BLACK);
 
     }    
     

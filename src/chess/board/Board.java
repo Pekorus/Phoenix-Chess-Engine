@@ -9,6 +9,7 @@ import chess.move.Move;
 import static chess.board.ChessColor.*;
 import chess.coordinate.Coordinate;
 import java.util.ArrayList;
+import java.util.Stack;
 
 /**
  *
@@ -19,6 +20,7 @@ public class Board {
     private final Piece[][] board;
     private final ArrayList<Piece> blackPieces= new ArrayList<>();
     private final ArrayList<Piece> whitePieces= new ArrayList<>();    
+    private final Stack<Piece> takenPieces= new Stack<>();
     private Piece whiteKing, blackKing;
     
     public Board() {
@@ -30,8 +32,8 @@ public class Board {
     public void executeMove(Move move){
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        Piece piece = move.getPiece();
-        Piece optPiece = move.getOptionalPiece();
+        Piece piece = getPieceOnCoord(coordFrom);
+        Piece optPiece = getPieceOnCoord(move.getOptPieceCoord());
         
         switch(move.getMoveType()){
             case NORMAL:
@@ -49,6 +51,7 @@ public class Board {
             case TAKE:          
             move(piece, coordFrom, coordTo);
             optPiece.setCoord(null);            
+            takenPieces.push(optPiece);
             if(move.getPromoteTo()!=null){
                 Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
                                             coordTo);    
@@ -66,6 +69,7 @@ public class Board {
             //clear pawn that is taken by en passant
             this.clearField(move.getOptionalPieceCoord());            
             optPiece.setCoord(null);          
+            takenPieces.push(optPiece);            
             removePieceFromList(optPiece);
             break;
             
@@ -104,8 +108,9 @@ public class Board {
     public void unexecuteMove(Move move) {
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        Piece piece = move.getPiece();
-        Piece optPiece = move.getOptionalPiece();
+        Piece piece = getPieceOnCoord(coordTo);
+        //TODO: how to recreate optional piece ?
+        //Piece optPiece = move.getOptionalPiece();
         
         switch(move.getMoveType()){
             case NORMAL:
@@ -121,10 +126,10 @@ public class Board {
             case TAKE:           
             move(piece, coordTo, coordFrom);
             //reset taken piece
-            this.setField(optPiece, coordTo);            
-            optPiece.setCoord(coordTo);            
+            this.setField(takenPieces.peek(), coordTo);            
+            takenPieces.peek().setCoord(coordTo);            
             //insert taken piece back to list
-            addPieceToList(optPiece);           
+            addPieceToList(takenPieces.pop());           
             //promotion
             if(move.getPromoteTo()!=null){
                 removePieceFromList(this.getPieceOnCoord(coordTo));
@@ -135,9 +140,9 @@ public class Board {
             case ENPASSANT: 
             move(piece, coordTo, coordFrom);    
             //reset taken pawn
-            this.setField(optPiece, move.getOptionalPieceCoord());            
-            optPiece.setCoord(move.getOptionalPieceCoord());                       
-            addPieceToList(optPiece);
+            this.setField(takenPieces.peek(), move.getOptionalPieceCoord());            
+            takenPieces.peek().setCoord(move.getOptionalPieceCoord());                       
+            addPieceToList(takenPieces.pop());
             break;
             
             case CASTLE:
