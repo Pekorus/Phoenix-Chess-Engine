@@ -27,32 +27,31 @@ public class ChessAI implements Player {
     private static final double FIREPOWER = 0.1; 
     
     private final GameController controller;
+    private final ChessGame ownGame;
     private ChessRules rules;
     private Board board;
     private ArrayList<Piece> ownPieces;
     private ArrayList<Piece> enemyPieces;
-    private boolean ownTurn;
     private ChessColor ownColor;
-    private ChessTreeNode chessTree;
+    private ChessTreeNode currentTree;
     
     
-    public ChessAI(GameController controller, ChessGame game, ChessColor ownColor) {
+    public ChessAI(GameController controller, ChessColor ownColor) {
         this.controller = controller;
-        this.rules = game.getRules();
-        //this.board = new Board();
-        this.board = game.getBoard();
+        this.ownGame = new ChessGame();
+        this.board = ownGame.getBoard();
+        this.rules = ownGame.getRules();        
         this.ownColor = ownColor;
         this.ownPieces = board.getPiecesList(ownColor);
         this.enemyPieces = board.getPiecesList(ownColor.getInverse());
         //create root of tree
-        this.chessTree= new ChessTreeNode(null,0, null);
+        this.currentTree= new ChessTreeNode(null,0, null);
     }
     
     @Override
     public void update(ChessGame game, Move lastMove, Object arg) {
-        ownTurn = true;
         if(lastMove!=null){
-            board.executeMove(lastMove);
+            ownGame.executeMove(lastMove);
             Move nextMove = findNextMove();
             controller.nextMove(nextMove);
         }
@@ -109,8 +108,8 @@ public class ChessAI implements Player {
     }
 
     private Move findNextMove() {
-        builtTree(chessTree);
-        ArrayList<Move> bestMoves = bestMovesFromTree(chessTree);
+        builtTree(currentTree);
+        ArrayList<Move> bestMoves = bestMovesFromTree(currentTree);
         Random random = new Random();
         return bestMoves.get(random.nextInt(bestMoves.size()));
     }
@@ -119,33 +118,28 @@ public class ChessAI implements Player {
         //recursive building of the tree
         if(chessTree.getDepth()<SEARCH_DEPTH){
             ArrayList<Move> allMoves;
-            if(ownTurn) allMoves = allPossibleMoves(ownPieces);
+            if(ownGame.getPlayersTurn()==ownColor) 
+                allMoves = allPossibleMoves(ownPieces);
             else allMoves= allPossibleMoves(enemyPieces);
             
             //build all nodes for possible moves of current tree (recursive)
             ChessTreeNode newNode;
             for(Move move : allMoves){
-                board.executeMove(move);
-                flipOwnTurn();
+                ownGame.executeMoveWithoutValidation(move);
                 newNode = new ChessTreeNode(move, 0, chessTree);
                 builtTree(newNode);
                 chessTree.addChildNode(newNode);
-                board.unexecuteMove(move);
-                flipOwnTurn();
+                ownGame.unexecuteMove(move);
             }            
-            if(ownTurn) chessTree.evaluateNodeMax();
+            if(ownGame.getPlayersTurn()==ownColor) chessTree.evaluateNodeMax();
             else chessTree.evaluateNodeMin();
         }
         //depth==SEARCH_DEPTH
         else{
-            board.executeMove(chessTree.getMove());
+            ownGame.executeMoveWithoutValidation(chessTree.getMove());
             chessTree.setGameValue(evaluateBoard());
-            board.unexecuteMove(chessTree.getMove());
+            ownGame.unexecuteMove(chessTree.getMove());
         }
-    }
-
-    private void flipOwnTurn() {
-        ownTurn = !ownTurn;
     }
 
     private ArrayList<Move> bestMovesFromTree(ChessTreeNode chessTree) {

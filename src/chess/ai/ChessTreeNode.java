@@ -36,8 +36,6 @@ public class ChessTreeNode {
         return children.size();
     }
 
-    
-    
     public ChessTreeNode getSubTreeByMove(Move move){
         for(ChessTreeNode child : children){
             if(child.move.equals(move)) return child;

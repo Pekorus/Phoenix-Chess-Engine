@@ -39,11 +39,11 @@ public class Piece {
     }
     
     public void increaseMoveCounter(){
-        this.moveCounter = this.moveCounter+1;
+        this.moveCounter++;
     }
     
     public void decreaseMoveCounter(){
-        this.moveCounter = this.moveCounter-1;        
+        this.moveCounter--;        
     }
     
     public void setCoord(Coordinate coordinate) {

@@ -36,7 +36,7 @@ public class ChessGame{
         this.playersTurn = WHITE;
     }    
 
-    public boolean nextMove(Move move){
+    public boolean executeMove(Move move){
         //class game rules
         if(!rules.validateMove(move, this)) return false;
         board.executeMove(move);
@@ -46,6 +46,26 @@ public class ChessGame{
             drawTurnTimer=0;
         this.nextPlayer();        
         return true;
+    }
+
+    //improve performance in AI
+    public void executeMoveWithoutValidation(Move move){
+        board.executeMove(move);
+        moveList.add(move);
+        drawTurnTimer++;
+        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+            drawTurnTimer=0;
+        this.nextPlayer(); 
+    }
+    
+    public void unexecuteMove(Move move){
+        board.unexecuteMove(move);
+        moveList.remove(move);
+        drawTurnTimer--;
+        //TODO: draw turn timer reset
+        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+            drawTurnTimer=0;
+        this.nextPlayer();         
     }
     
     public Board getBoard() {
@@ -78,11 +98,11 @@ public class ChessGame{
         else this.playersTurn= WHITE;
     }
 
-    ChessColor getPlayersTurn() {
+    public ChessColor getPlayersTurn() {
         return playersTurn;
     }    
 
-    Move getLastMove() {
+    public Move getLastMove() {
         return moveList.getLast();
     }
 

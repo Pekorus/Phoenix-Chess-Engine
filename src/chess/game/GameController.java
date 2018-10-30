@@ -25,7 +25,7 @@ public class GameController {
     public GameController() throws IOException {
         game = new ChessGame();        
         player1 = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
-        player2 = new ChessAI(this, game, BLACK);
+        player2 = new ChessAI(this, BLACK);
 
     }    
     
@@ -36,7 +36,7 @@ public class GameController {
     public boolean nextMove(Move move){
         if(checkmate) return false;
         if(draw) return false;
-        if(game.nextMove(move)){
+        if(game.executeMove(move)){
             checkmate = game.isCheckmate();
             draw = game.isDraw();
             notifyObservers(move);
