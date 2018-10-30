@@ -244,11 +244,11 @@ public class ChessRules {
                attackerList.add(auxPiece);
        }
        //attacked by a pawn?
-       Direction auxDirection1 = Direction.SW;
-       Direction auxDirection2 = Direction.SE;
+       Direction auxDirection1 = Direction.NW;
+       Direction auxDirection2 = Direction.NE;
        if(color==BLACK){
-           auxDirection1 = Direction.NW;
-           auxDirection2 = Direction.NE;
+           auxDirection1 = Direction.SW;
+           auxDirection2 = Direction.SE;
         }
         auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection1));        
         for(int i=0; i<2; i++){
