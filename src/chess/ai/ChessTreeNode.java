@@ -19,8 +19,8 @@ public class ChessTreeNode {
     private Move move;
     private double gameValue;
     private int depth;
-    private ChessTreeNode parent;
-    private ArrayList<ChessTreeNode> children;
+    private final ChessTreeNode parent;
+    private final ArrayList<ChessTreeNode> children;
     
     
     public ChessTreeNode(Move move, double gameValue, ChessTreeNode parent) {

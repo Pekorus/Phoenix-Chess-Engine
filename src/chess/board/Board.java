@@ -7,6 +7,7 @@ package chess.board;
 
 import chess.move.Move;
 import static chess.board.ChessColor.*;
+import static chess.board.PieceType.PAWN;
 import chess.coordinate.Coordinate;
 import java.util.ArrayList;
 import java.util.Stack;
@@ -38,9 +39,11 @@ public class Board {
         switch(move.getMoveType()){
             case NORMAL:
             move(piece, coordFrom, coordTo);
+            //TODO: promote method
             if(move.getPromoteTo()!=null){
                 Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
                                         coordTo);    
+                auxPiece.setMoveCounter(piece.getMoveCounter());
                 auxPiece.increaseMoveCounter();
                 this.setField(auxPiece, coordTo);
                 removePieceFromList(piece);
@@ -55,6 +58,7 @@ public class Board {
             if(move.getPromoteTo()!=null){
                 Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
                                             coordTo);    
+                auxPiece.setMoveCounter(piece.getMoveCounter());                
                 auxPiece.increaseMoveCounter();
                 this.setField(auxPiece, coordTo);
                 removePieceFromList(piece);
@@ -109,17 +113,20 @@ public class Board {
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Piece piece = getPieceOnCoord(coordTo);
-        //TODO: how to recreate optional piece ?
-        //Piece optPiece = move.getOptionalPiece();
         
         switch(move.getMoveType()){
             case NORMAL:
             //reverse move
             move(piece, coordTo, coordFrom);
             //promotion
+            //TODO: unpromote method
             if(move.getPromoteTo()!=null){
-                removePieceFromList(this.getPieceOnCoord(coordTo));
-                addPieceToList(piece);
+                removePieceFromList(piece);
+                Piece pawn = new Piece(PAWN, piece.isColor(), coordFrom);
+                pawn.setMoveCounter(piece.getMoveCounter());
+                pawn.decreaseMoveCounter();
+                addPieceToList(pawn);
+                setField(pawn, coordFrom);
             }
             break;
             
@@ -132,8 +139,12 @@ public class Board {
             addPieceToList(takenPieces.pop());           
             //promotion
             if(move.getPromoteTo()!=null){
-                removePieceFromList(this.getPieceOnCoord(coordTo));
+                removePieceFromList(piece);                
+                Piece pawn = new Piece(PAWN, piece.isColor(), coordFrom);
+                pawn.setMoveCounter(piece.getMoveCounter());
+                pawn.decreaseMoveCounter();
                 addPieceToList(piece);
+                setField(pawn, coordFrom);                
             }
             break;
             
