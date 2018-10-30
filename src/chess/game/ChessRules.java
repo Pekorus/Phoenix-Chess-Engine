@@ -43,7 +43,7 @@ public class ChessRules {
         
         //preparation and fail safes
         if(move==null) return false;
-        Piece piece = move.getPiece();        
+        Piece piece = game.getBoard().getPieceOnCoord(move.getCoordFrom());        
         if (piece==null) return false;
         PieceType pieceType = piece.getPiecetype();
         if(pieceType==null) return false;
@@ -103,7 +103,7 @@ public class ChessRules {
         break;    
         
         case ENPASSANT:            
-        Piece optPiece = move.getOptionalPiece();
+        Piece optPiece = game.getBoard().getPieceOnCoord(move.getOptPieceCoord());
         if(optPiece==null) return false;
         if(pieceType!=PAWN) return false;
         if(optPiece.getPiecetype()!=PAWN) return false;
@@ -112,7 +112,7 @@ public class ChessRules {
         if((ownColor==WHITE && coordFrom.getX()!=4)||
                 (ownColor==BLACK && coordFrom.getX()!=3)) return false;
         Move lastMove = game.getLastMove();
-        if(lastMove.getPiece().getPiecetype()!=PAWN) return false;
+        if(lastMove.getPieceType()!=PAWN) return false;
         if(!lastMove.getCoordTo().
                                 equals(optPiece.getCoord())) return false;
         if(lastMove.getCoordFrom().
@@ -158,8 +158,8 @@ public class ChessRules {
         Coordinate coordTo = move.getCoordTo();
         Direction auxDir;
 
-        if(move.getPiece()==null) return false;
-        switch(move.getPiece().getPiecetype()){
+        if(move.getPieceType()==null) return false;
+        switch(move.getPieceType()){
             case KING:
             if(coordFrom.distance(coordTo)>1) return false;
             break;
@@ -287,8 +287,9 @@ public class ChessRules {
         givesCheck = pieceCheckList.getFirst();
         threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color);
         for(Piece threat : threatensCheckGiver){
-            if(validateMove(new Move(threat, givesCheck.getCoord(), TAKE,
-                                      givesCheck, null), game)) 
+            if(validateMove(new Move(threat.getPiecetype(), threat.getCoord(),
+                    givesCheck.getCoord(), TAKE,
+                                      givesCheck.getCoord(), null), game)) 
             return false;
         }
         //is it possible to block the check from queen, rook, bishop?
@@ -302,7 +303,8 @@ public class ChessRules {
             while(!board.isOccupied(auxCoord)){
                 pieceBlocking = canCoordBeOccupied(auxCoord, king.isColor());
                 for(Piece pieceBL : pieceBlocking){
-                    if(validateMove(new Move(pieceBL, auxCoord ,NORMAL), game)) 
+                    if(validateMove(new Move(pieceBL.getPiecetype(), pieceBL.getCoord(),
+                                                    auxCoord ,NORMAL), game)) 
                         return false;
                 }
                 auxCoord = auxCoord.getCoordInDir(auxDir);
@@ -539,14 +541,15 @@ public class ChessRules {
         if(coordTo==null) return null;
         
         if(!board.isOccupied(coordTo)){
-            if(arg==CASTLE) createdMove=new Move(piece, coordTo, CASTLE);
-            else createdMove = new Move(piece, coordTo, NORMAL, null, 
+            if(arg==CASTLE) createdMove=new Move(piece.getPiecetype(),piece.getCoord(),
+                    coordTo, CASTLE);
+            else createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, NORMAL, null, 
                                                              (PieceType) arg);
         }
         else{
             if(arg==CASTLE) return null;
-            createdMove = new Move(piece, coordTo, TAKE, 
-                              board.getPieceOnCoord(coordTo), (PieceType) arg);
+            createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, TAKE, 
+                              coordTo, (PieceType) arg);
         }   
     if(validateMove(createdMove, game)) return createdMove;
     return null;

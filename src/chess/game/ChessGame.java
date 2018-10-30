@@ -42,7 +42,7 @@ public class ChessGame{
         board.executeMove(move);
         moveList.add(move);
         drawTurnTimer++;
-        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+        if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
         this.nextPlayer();        
         return true;
@@ -53,7 +53,7 @@ public class ChessGame{
         board.executeMove(move);
         moveList.add(move);
         drawTurnTimer++;
-        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+        if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
         this.nextPlayer(); 
     }
@@ -63,7 +63,7 @@ public class ChessGame{
         moveList.remove(move);
         drawTurnTimer--;
         //TODO: draw turn timer reset
-        if(move.getMoveType()==TAKE || move.getPiece().getPiecetype()==PAWN)
+        if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
         this.nextPlayer();         
     }
