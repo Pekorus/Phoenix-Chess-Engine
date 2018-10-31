@@ -15,4 +15,6 @@ import chess.move.Move;
 public interface Player {
     
     public abstract void update(ChessGame game, Move move, Object arg);
+
+    public abstract void getNextMove();
 }

@@ -6,6 +6,7 @@
 package chess.game;
 
 import chess.ai.ChessAI;
+import chess.board.ChessColor;
 import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.move.Move;
@@ -18,20 +19,21 @@ import java.io.IOException;
 public class GameController {
 
     ChessGame game;
-    Player player1;
-    Player player2;
+    Player whitePlayer;
+    Player blackPlayer;
     Boolean checkmate= false, draw=false;
     
     public GameController() throws IOException {
         game = new ChessGame();        
-        player1 = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
-        player2 = new ChessGuiController(this, BLACK, "Player1", "Player2");        
-        //player2 = new ChessAI(this, BLACK);
+        whitePlayer = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
+        //player2 = new ChessGuiController(this, BLACK, "Player1", "Player2");        
+        blackPlayer = new ChessAI(this, BLACK);
 
     }    
     
     public void startGame(){
         notifyObservers(null);
+        whitePlayer.getNextMove();
     }
             
     public boolean nextMove(Move move){
@@ -41,14 +43,20 @@ public class GameController {
             checkmate = game.isCheckmate();
             draw = game.isDraw();
             notifyObservers(move);
+            demandNextMove(game.getPlayersTurn());
             return true;
         }
     return false;    
     } 
 
     private void notifyObservers(Move nextMove) {
-        player1.update(game, nextMove, null);
-        player2.update(game, nextMove, null);
+        whitePlayer.update(game, nextMove, null);
+        blackPlayer.update(game, nextMove, null);
+    }
+
+    private void demandNextMove(ChessColor playersTurn) {
+        if(playersTurn==WHITE) whitePlayer.getNextMove();
+        else blackPlayer.getNextMove();
     }
 
     

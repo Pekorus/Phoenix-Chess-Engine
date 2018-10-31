@@ -23,7 +23,7 @@ import java.util.Random;
  */
 public class ChessAI implements Player {
 
-    private static final int SEARCH_DEPTH = 4;
+    private static final int SEARCH_DEPTH = 3;
     private static final double FIREPOWER = 0.1; 
     
     private final GameController controller;
@@ -52,8 +52,6 @@ public class ChessAI implements Player {
     public void update(ChessGame game, Move lastMove, Object arg) {
         if(lastMove!=null){
             ownGame.executeMove(lastMove);
-            Move nextMove = findNextMove();
-            controller.nextMove(nextMove);
         }
     }    
 
@@ -136,9 +134,9 @@ public class ChessAI implements Player {
         }
         //depth==SEARCH_DEPTH
         else{
-            ownGame.executeMoveWithoutValidation(chessTree.getMove());
+            //ownGame.executeMoveWithoutValidation(chessTree.getMove());
             chessTree.setGameValue(evaluateBoard());
-            ownGame.unexecuteMove(chessTree.getMove());
+            //ownGame.unexecuteMove(chessTree.getMove());
         }
     }
 
@@ -150,6 +148,12 @@ public class ChessAI implements Player {
                 bestMoves.add(child.getMove());
         }
         return bestMoves;
+    }
+
+    @Override
+    public void getNextMove() {
+        Move nextMove = findNextMove();
+        controller.nextMove(nextMove);
     }
     
     

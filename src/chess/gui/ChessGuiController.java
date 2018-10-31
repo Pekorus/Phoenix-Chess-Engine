@@ -170,5 +170,9 @@ public class ChessGuiController implements ActionListener, Player {
         return opponentName;
     }
 
+    @Override
+    public void getNextMove() {
+    }
+
 
 }
