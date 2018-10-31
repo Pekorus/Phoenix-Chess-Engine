@@ -19,7 +19,7 @@ public class ChessTreeNode {
     private Move move;
     private double gameValue;
     private int depth;
-    private final ChessTreeNode parent;
+    private ChessTreeNode parent;
     private final ArrayList<ChessTreeNode> children;
     
     
@@ -38,7 +38,11 @@ public class ChessTreeNode {
 
     public ChessTreeNode getSubTreeByMove(Move move){
         for(ChessTreeNode child : children){
-            if(child.move.equals(move)) return child;
+            if(child.move.equals(move)){
+                child.decreaseDepth();
+                child.parent=null;
+                return child;
+            }
         }
         return null;
     }
@@ -93,6 +97,21 @@ public class ChessTreeNode {
            minValue = min(minValue, child.getGameValue());
         }
         this.gameValue = minValue;        
+    }
+
+    boolean hasChildren() {
+       if(children==null) return false;
+       if(children.isEmpty()) return false;
+       return true;
+    }
+
+    private void decreaseDepth() {
+       this.depth -= 1;
+       if(this.children!=null){
+           for(ChessTreeNode child : children){
+               child.decreaseDepth();
+           }
+       }
     }
 
     

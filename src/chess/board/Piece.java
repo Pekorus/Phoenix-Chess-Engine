@@ -14,7 +14,7 @@ import java.util.Objects;
  */
 public class Piece {
     
-    private final PieceType piecetype;
+    private PieceType piecetype;
     private Coordinate coordinate;
     private final ChessColor color;
     private int moveCounter;
@@ -89,6 +89,14 @@ public class Piece {
             return false;
         }
         return true;
+    }
+
+    public void setPiecetype(PieceType piecetype) {
+        this.piecetype = piecetype;
+    }
+
+    public void setCoordinate(Coordinate coordinate) {
+        this.coordinate = coordinate;
     }
 
 

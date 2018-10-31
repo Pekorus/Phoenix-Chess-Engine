@@ -52,14 +52,17 @@ public class ChessAI implements Player {
     public void update(ChessGame game, Move lastMove, Object arg) {
         if(lastMove!=null){
             ownGame.executeMove(lastMove);
+            if(currentTree.hasChildren()) 
+                currentTree= currentTree.getSubTreeByMove(lastMove);
         }
     }    
 
     private double evaluateBoard(){
-        int material, firepower;
-    
+
+        if(rules.isCheckmate(ownColor.getInverse())) return Double.MAX_VALUE;
+        int material, firepower=0;        
         material= materialValue(ownPieces)-materialValue(enemyPieces);
-        firepower= firePower(ownPieces)-firePower(enemyPieces);
+        //firepower= firePower(ownPieces)-firePower(enemyPieces);
     
         return material+FIREPOWER*firepower;
     }
@@ -108,13 +111,24 @@ public class ChessAI implements Player {
     private Move findNextMove() {
         builtTree(currentTree);
         ArrayList<Move> bestMoves = bestMovesFromTree(currentTree);
-        Random random = new Random();
-        return bestMoves.get(random.nextInt(bestMoves.size()));
+        //Random random = new Random();
+        //return bestMoves.get(random.nextInt(bestMoves.size()));
+        return bestMoves.get(0);
     }
 
     private void builtTree(ChessTreeNode chessTree) {
         //recursive building of the tree
-        if(chessTree.getDepth()<SEARCH_DEPTH){
+        if(chessTree.hasChildren()){
+           for(ChessTreeNode node : chessTree.getChildren()){
+                ownGame.executeMoveWithoutValidation(node.getMove());
+                builtTree(node);
+                ownGame.unexecuteMove(node.getMove());
+                
+           } 
+            if(ownGame.getPlayersTurn()==ownColor) chessTree.evaluateNodeMax();
+            else chessTree.evaluateNodeMin();
+        }
+        else if(chessTree.getDepth()<SEARCH_DEPTH){
             ArrayList<Move> allMoves;
             if(ownGame.getPlayersTurn()==ownColor) 
                 allMoves = allPossibleMoves(ownPieces);

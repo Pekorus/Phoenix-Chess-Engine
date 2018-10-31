@@ -39,15 +39,8 @@ public class Board {
         switch(move.getMoveType()){
             case NORMAL:
             move(piece, coordFrom, coordTo);
-            //TODO: promote method
             if(move.getPromoteTo()!=null){
-                Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
-                                        coordTo);    
-                auxPiece.setMoveCounter(piece.getMoveCounter());
-                auxPiece.increaseMoveCounter();
-                this.setField(auxPiece, coordTo);
-                removePieceFromList(piece);
-                addPieceToList(auxPiece);
+                piece.setPiecetype(move.getPromoteTo());
             }
             break;
             
@@ -56,13 +49,7 @@ public class Board {
             optPiece.setCoord(null);            
             takenPieces.push(optPiece);
             if(move.getPromoteTo()!=null){
-                Piece auxPiece = new Piece(move.getPromoteTo(), piece.isColor(),
-                                            coordTo);    
-                auxPiece.setMoveCounter(piece.getMoveCounter());                
-                auxPiece.increaseMoveCounter();
-                this.setField(auxPiece, coordTo);
-                removePieceFromList(piece);
-                addPieceToList(auxPiece);
+                piece.setPiecetype(move.getPromoteTo());
             }
             //remove taken piece from piece list
             removePieceFromList(optPiece);
@@ -121,12 +108,7 @@ public class Board {
             //promotion
             //TODO: unpromote method
             if(move.getPromoteTo()!=null){
-                removePieceFromList(piece);
-                Piece pawn = new Piece(PAWN, piece.isColor(), coordFrom);
-                pawn.setMoveCounter(piece.getMoveCounter());
-                pawn.decreaseMoveCounter();
-                addPieceToList(pawn);
-                setField(pawn, coordFrom);
+                piece.setPiecetype(PAWN);
             }
             break;
             
@@ -139,12 +121,7 @@ public class Board {
             addPieceToList(takenPieces.pop());           
             //promotion
             if(move.getPromoteTo()!=null){
-                removePieceFromList(piece);                
-                Piece pawn = new Piece(PAWN, piece.isColor(), coordFrom);
-                pawn.setMoveCounter(piece.getMoveCounter());
-                pawn.decreaseMoveCounter();
-                addPieceToList(piece);
-                setField(pawn, coordFrom);                
+                piece.setPiecetype(PAWN);              
             }
             break;
             

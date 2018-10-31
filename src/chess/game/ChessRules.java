@@ -204,7 +204,7 @@ public class ChessRules {
         return rook.getMoveCounter()==0; 
     }
 
-    /*checks if a given coordinate is attacked by pieces of opposite specified color 
+    /*checks if a given coordinate is attacked by pieces of specified color 
         on current boardstate*/
     private LinkedList<Piece> isAttackedBy(Coordinate checkedCoord, 
                                                             ChessColor color) {
@@ -214,7 +214,7 @@ public class ChessRules {
        Piece auxPiece;
 
         //attacked by a king?
-        if(board.getKing(color).getCoord().distance(checkedCoord)==1)
+        if(checkedCoord.distance(board.getKing(color).getCoord())==1)
             attackerList.add(board.getKing(color));
 
         //attacked by a bishop, rook or queen?
@@ -260,7 +260,7 @@ public class ChessRules {
        return attackerList;
     }
 
-    protected boolean isCheckmate(ChessColor color){
+    public boolean isCheckmate(ChessColor color){
         
         Piece king = board.getKing(color);
         Coordinate kingCoord = king.getCoord();

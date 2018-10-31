@@ -8,6 +8,7 @@ package chess.move;
 import chess.board.PieceType;
 import chess.coordinate.Coordinate;
 import static chess.move.MoveType.CASTLE;
+import java.util.Objects;
 
 /**
  *
@@ -78,6 +79,45 @@ public class Move {
         }   
         if(promoteTo!=null) return ""+coordFrom+moveType.toString()+coordTo+promoteTo;
         return ""+pieceType+coordFrom+moveType.toString()+coordTo;      
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Move other = (Move) obj;
+        if (this.pieceType != other.pieceType) {
+            return false;
+        }
+        if (!Objects.equals(this.coordFrom, other.coordFrom)) {
+            return false;
+        }
+        if (!Objects.equals(this.coordTo, other.coordTo)) {
+            return false;
+        }
+        if (this.moveType != other.moveType) {
+            return false;
+        }
+        if (!Objects.equals(this.optPieceCoord, other.optPieceCoord)) {
+            return false;
+        }
+        if (this.promoteTo != other.promoteTo) {
+            return false;
+        }
+        return true;
     }
 
     
