@@ -36,8 +36,7 @@ public class GameController {
         whitePlayer.getNextMove();
     }
             
-    public void nextMove(Move move){
-        System.out.println(move);        
+    public void nextMove(Move move){        
         if(checkmate || draw);
         else if(game.executeMove(move)){
             checkmate = game.isCheckmate();
