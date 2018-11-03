@@ -15,11 +15,11 @@ import chess.game.ChessRules;
 import chess.game.GameController;
 import chess.game.Player;
 import chess.move.Move;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
+import static java.lang.Boolean.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -58,7 +58,7 @@ public class ChessAI implements Player {
     public void update(ChessGame game, Move lastMove, Object arg) {
         if(lastMove!=null){
             ownGame.executeMove(lastMove);
-            //if(currentTree.hasChildren()) currentTree= currentTree.getSubTreeByMove(lastMove);
+            if(currentTree.hasChildren()) currentTree= currentTree.getSubTreeByMove(lastMove);
         }
     }    
 
@@ -115,7 +115,7 @@ public class ChessAI implements Player {
     }
 
     private Move findNextMove() {
-        this.currentTree= new ChessTreeNode(null,0, null);
+        //this.currentTree= new ChessTreeNode(null,0, null);
         builtTree(currentTree, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, TRUE);
         ArrayList<Move> bestMoves = bestMovesFromTree(currentTree);
         //Random random = new Random();
@@ -126,34 +126,35 @@ public class ChessAI implements Player {
     private double builtTree(ChessTreeNode chessTree, double alpha, double beta, boolean maximizing) {
         
         if(chessTree.getDepth()<SEARCH_DEPTH){
-            ArrayList<Move> allMoves;
-            double auxValue;           
-            if(maximizing){
-                allMoves = allPossibleMoves(ownPieces);
-                auxValue = Double.NEGATIVE_INFINITY;
-            }
-            else{
-                allMoves= allPossibleMoves(enemyPieces);
-                auxValue = Double.POSITIVE_INFINITY;
-            }
-            
-            //build all nodes for possible moves of current tree (recursive)
-            ChessTreeNode newNode;
-
-            for(Move move : allMoves){
-                ownGame.executeMoveWithoutValidation(move);
-                newNode = new ChessTreeNode(move, 0, chessTree);
+            //try to reuse already calculated possible moves 
+            ArrayList<Move> allMoves;            
+            //calculate all possible moves if not already done
+            if(!chessTree.hasChildren()){
+                if(maximizing) allMoves = allPossibleMoves(ownPieces);
+                else allMoves= allPossibleMoves(enemyPieces);
+                for(Move move : allMoves){
+                    chessTree.addChildNode(new ChessTreeNode(move,Double.NEGATIVE_INFINITY,chessTree));
+                }
+            }            
+            //sort all moves to improve cutoff of alpha-beta-pruning
+            else Collections.sort(chessTree.getChildren());
+         
+            //value which will be used in alpha-beta-pruning
+            double auxValue;               
+            if(maximizing) auxValue = Double.NEGATIVE_INFINITY;
+            else auxValue = Double.POSITIVE_INFINITY;
+            //build nodes recursive with a cutoff thorugh alpha-beta-pruning
+            for(ChessTreeNode node : chessTree.getChildren()){
+                ownGame.executeMoveWithoutValidation(node.getMove());
                 if(maximizing){                    
-                    auxValue = max(auxValue, builtTree(newNode, alpha, beta, FALSE));
-                    chessTree.addChildNode(newNode);
-                    ownGame.unexecuteMove(move);                    
+                    auxValue = max(auxValue, builtTree(node, alpha, beta, FALSE));
+                    ownGame.unexecuteMove(node.getMove());                    
                     alpha = max(alpha, auxValue);
                     if(alpha >= beta) break;
                 }
                 else{
-                    auxValue = min(auxValue, builtTree(newNode, alpha, beta, TRUE));
-                    chessTree.addChildNode(newNode);
-                    ownGame.unexecuteMove(move);                    
+                    auxValue = min(auxValue, builtTree(node, alpha, beta, TRUE));
+                    ownGame.unexecuteMove(node.getMove());                    
                     beta = min(beta, auxValue);
                     if(alpha >= beta) break;         
                 }
@@ -221,6 +222,10 @@ public class ChessAI implements Player {
         System.out.println("Evaluated Positions: "+evaluatedPositions);
         evaluatedPositions=0;
         controller.nextMove(nextMove);
+    }
+
+    private void bestSort(ArrayList<ChessTreeNode> children, ChessTreeNode chessTree, boolean maximizing) {
+       
     }
     
 }

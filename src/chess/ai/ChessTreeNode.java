@@ -14,14 +14,13 @@ import java.util.ArrayList;
  *
  * @author Phoenix
  */
-public class ChessTreeNode {
+public class ChessTreeNode implements Comparable{
     
     private Move move;
     private double gameValue;
     private int depth;
     private ChessTreeNode parent;
     private final ArrayList<ChessTreeNode> children;
-    
     
     public ChessTreeNode(Move move, double gameValue, ChessTreeNode parent) {
         this.move = move;
@@ -112,8 +111,12 @@ public class ChessTreeNode {
                child.decreaseDepth();
            }
        }
-    }
+    } 
 
-    
-    
+    public int compareTo(Object o) {
+       ChessTreeNode node = (ChessTreeNode) o;
+       if(this.gameValue< node.gameValue) return 1;
+       else if(this.gameValue > node.gameValue) return -1;
+       else return 0;
+    }
 }
