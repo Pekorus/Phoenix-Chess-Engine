@@ -22,12 +22,15 @@ public class Board {
     private final ArrayList<Piece> blackPieces= new ArrayList<>();
     private final ArrayList<Piece> whitePieces= new ArrayList<>();    
     private final Stack<Piece> takenPieces= new Stack<>();
+    private final int[] pawnStructWhite = {1,1,1,1,1,1,1,1};
+    private final int[] pawnStructBlack = {1,1,1,1,1,1,1,1};
     private Piece whiteKing, blackKing;
+    
     
     public Board() {
         this.board = new Piece[8][8];
         createStartPosition();                    
-        createPieceLists();
+        createPieceLists();      
     }
     
     public void executeMove(Move move){
@@ -41,6 +44,7 @@ public class Board {
             move(piece, coordFrom, coordTo);
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(move.getPromoteTo());
+                decreasePawn(piece.isColor(), coordTo.getY());
             }
             break;
             
@@ -48,15 +52,30 @@ public class Board {
             move(piece, coordFrom, coordTo);
             optPiece.setCoord(null);            
             takenPieces.push(optPiece);
+            //remove taken piece from piece list
+            removePieceFromList(optPiece);            
+            
+            //update PawnStruct
+            if(optPiece.getPiecetype()==PAWN){
+                decreasePawn(optPiece.isColor(), coordTo.getY());
+            }    
+            if(piece.getPiecetype()==PAWN){
+                decreasePawn(piece.isColor(), coordFrom.getY());
+                increasePawn(piece.isColor(), coordTo.getY());
+            }
+            //promotion
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(move.getPromoteTo());
+                decreasePawn(piece.isColor(), coordTo.getY());
             }
-            //remove taken piece from piece list
-            removePieceFromList(optPiece);
             break;
             
             case ENPASSANT:          
             move(piece, coordFrom, coordTo);            
+            //update pawnStruct
+            decreasePawn(piece.isColor(), coordFrom.getY());
+            increasePawn(piece.isColor(), coordTo.getY());            
+            decreasePawn(optPiece.isColor(), move.getOptPieceCoord().getY());
             //clear pawn that is taken by en passant
             this.clearField(move.getOptionalPieceCoord());            
             optPiece.setCoord(null);          
@@ -109,24 +128,39 @@ public class Board {
             //TODO: unpromote method
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(PAWN);
+                increasePawn(piece.isColor(), coordTo.getY());
             }
             break;
             
             case TAKE:           
             move(piece, coordTo, coordFrom);
             //reset taken piece
-            this.setField(takenPieces.peek(), coordTo);            
-            takenPieces.peek().setCoord(coordTo);            
+            Piece takenPiece = takenPieces.pop();
+            this.setField(takenPiece, coordTo);            
+            takenPiece.setCoord(coordTo);            
             //insert taken piece back to list
-            addPieceToList(takenPieces.pop());           
+            addPieceToList(takenPiece);           
             //promotion
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(PAWN);              
+                increasePawn(piece.isColor(), coordTo.getY());
+            }
+            //update pawnStruct
+            if(takenPiece.getPiecetype()==PAWN){
+                increasePawn(takenPiece.isColor(), coordTo.getY());
+            }
+            if(piece.getPiecetype()==PAWN){
+                increasePawn(piece.isColor(), coordFrom.getY());
+                decreasePawn(piece.isColor(), coordTo.getY());
             }
             break;
             
             case ENPASSANT: 
             move(piece, coordTo, coordFrom);    
+            //update pawnStruct
+            decreasePawn(piece.isColor(), coordTo.getY());
+            increasePawn(piece.isColor(), coordFrom.getY());            
+            increasePawn(piece.isColor().getInverse(), coordTo.getY());
             //reset taken pawn
             this.setField(takenPieces.peek(), move.getOptionalPieceCoord());            
             takenPieces.peek().setCoord(move.getOptionalPieceCoord());                       
@@ -224,4 +258,30 @@ public class Board {
         if(color==WHITE) return whitePieces;
         else return blackPieces;
     }
+
+    private void decreasePawn(ChessColor color, int y) {
+        if(color==WHITE) pawnStructWhite[y]--;
+        else pawnStructBlack[y]--;
+    }
+
+    private void increasePawn(ChessColor color, int y) {
+        if(color==WHITE) pawnStructWhite[y]++;
+        else pawnStructBlack[y]++;
+    }
+
+    public int[] getPawnStructWhite() {
+        return pawnStructWhite;
+    }
+
+    public int[] getPawnStructBlack() {
+        return pawnStructBlack;
+    }
+
+    public int getPawnStructWhite(int file) {
+        return pawnStructWhite[file];
+    }
+
+    public int getPawnStructBlack(int file) {
+        return pawnStructBlack[file];
+    }    
 }

@@ -21,6 +21,7 @@ import static java.lang.Boolean.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 
@@ -233,6 +234,8 @@ public class ChessAI implements Player {
         Move nextMove = findNextMove();
         System.out.println("GameValue: "+currentTree.getGameValue());
         System.out.println("Evaluated Positions: "+evaluatedPositions);
+        System.out.println("PawnStructWhite: "+Arrays.toString(board.getPawnStructWhite()));
+        System.out.println("PawnStructBlack: "+Arrays.toString(board.getPawnStructBlack()));        
         evaluatedPositions=0;
         controller.nextMove(nextMove);
     }
