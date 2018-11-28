@@ -24,6 +24,7 @@ public class Board {
     private final Stack<Piece> takenPieces= new Stack<>();
     private final int[] pawnStructWhite = {1,1,1,1,1,1,1,1};
     private final int[] pawnStructBlack = {1,1,1,1,1,1,1,1};
+    private boolean whiteCastled, blackCastled;
     private Piece whiteKing, blackKing;
     
     
@@ -31,6 +32,8 @@ public class Board {
         this.board = new Piece[8][8];
         createStartPosition();                    
         createPieceLists();      
+        whiteCastled = false;
+        blackCastled = false;
     }
     
     public void executeMove(Move move){
@@ -93,6 +96,7 @@ public class Board {
                             getCoordInDir(coordFrom.straightLineDir(coordTo));
             move(rook, rookFrom, rookTo);
             rook.increaseMoveCounter();
+            inverseCastleflag(piece.isColor());
             break;            
         }
         piece.increaseMoveCounter();
@@ -179,6 +183,7 @@ public class Board {
             
             move(rook, rookTo, rookFrom);  
             rook.decreaseMoveCounter();
+            inverseCastleflag(piece.isColor());
             break;           
         }
         piece.decreaseMoveCounter();
@@ -279,4 +284,14 @@ public class Board {
         if(color==WHITE) return pawnStructWhite[file];
         else return pawnStructBlack[file];
     }  
+
+    private void inverseCastleflag(ChessColor color) {
+        if(color==WHITE) whiteCastled = !whiteCastled;
+        else blackCastled = !blackCastled;
+    }    
+
+    public boolean hasCastled(ChessColor color) {
+        if(color==WHITE) return whiteCastled;
+        else return blackCastled;
+    } 
 }

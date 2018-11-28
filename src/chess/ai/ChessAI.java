@@ -31,7 +31,7 @@ import java.util.Random;
  */
 public class ChessAI implements Player {
 
-    private static final int SEARCH_DEPTH = 4; 
+    private static final int SEARCH_DEPTH = 5; 
     private static final int DOUBLE_BISHOP_BONUS = 20;
     private static final int DOUBLE_ROOK_FILE_BONUS = 20;
     private static final int OPEN_ROOK_FILE_BONUS = 10;
@@ -39,6 +39,7 @@ public class ChessAI implements Player {
     private static final int PASSED_PAWN_BONUS = 10;
     private static final int DOUBLE_PAWN_MALUS = 5;
     private static final int ISOLATED_PAWN_MALUS = 5;
+    private static final int CASTLING_BONUS = 20;
     
     private static final int[][] KNIGHT_BONUS = {{ -15, -10, -5, -5},
                                                  { -10,  -5,  0,  5},
@@ -79,8 +80,9 @@ public class ChessAI implements Player {
 
     private double evaluateBoard(){
 
-        int value;        
-        value= pieceValue(ownPieces)-pieceValue(enemyPieces);
+        int value=0;        
+        value += castlingBonus(ownColor);
+        value += pieceValue(ownPieces)-pieceValue(enemyPieces);
         evaluatedPositions++;
         return 0.01*(double)value;
     }
@@ -283,5 +285,12 @@ public class ChessAI implements Player {
        if(rook.isColor()==BLACK) rank = 7-rank;
        if(rank==6) value += ROOK_SEVENTH_RANK_BONUS;       
        return value;
+    }
+
+    private int castlingBonus(ChessColor ownColor) {
+        int bonus = 0;
+        if(board.hasCastled(ownColor)) bonus+= CASTLING_BONUS;
+        if(board.hasCastled(ownColor.getInverse())) bonus-=CASTLING_BONUS; 
+        return bonus;
     }
 }
