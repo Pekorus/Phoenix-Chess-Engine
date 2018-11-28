@@ -269,19 +269,14 @@ public class Board {
         else pawnStructBlack[y]++;
     }
 
-    public int[] getPawnStructWhite() {
-        return pawnStructWhite;
+    public int[] getPawnStruct(ChessColor color) {
+        if(color==WHITE) return pawnStructWhite;
+        else return pawnStructBlack;
     }
 
-    public int[] getPawnStructBlack() {
-        return pawnStructBlack;
-    }
-
-    public int getPawnStructWhite(int file) {
-        return pawnStructWhite[file];
-    }
-
-    public int getPawnStructBlack(int file) {
-        return pawnStructBlack[file];
-    }    
+    public int getPawnStruct(ChessColor color, int file) {
+        if(file<0 || file>7) return 0;
+        if(color==WHITE) return pawnStructWhite[file];
+        else return pawnStructBlack[file];
+    }  
 }

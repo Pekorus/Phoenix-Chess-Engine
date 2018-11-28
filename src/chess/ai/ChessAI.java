@@ -34,7 +34,12 @@ public class ChessAI implements Player {
     private static final int SEARCH_DEPTH = 4; 
     private static final int DOUBLE_BISHOP_BONUS = 20;
     private static final int DOUBLE_ROOK_FILE_BONUS = 20;
+    private static final int OPEN_ROOK_FILE_BONUS = 10;
     private static final int ROOK_SEVENTH_RANK_BONUS = 25;
+    private static final int PASSED_PAWN_BONUS = 10;
+    private static final int DOUBLE_PAWN_MALUS = 5;
+    private static final int ISOLATED_PAWN_MALUS = 5;
+    
     private static final int[][] KNIGHT_BONUS = {{ -15, -10, -5, -5},
                                                  { -10,  -5,  0,  5},
                                                  {  -5,   0, 10, 10},
@@ -74,10 +79,10 @@ public class ChessAI implements Player {
 
     private double evaluateBoard(){
 
-        int pieceValue;        
-        pieceValue= pieceValue(ownPieces)-pieceValue(enemyPieces);
+        int value;        
+        value= pieceValue(ownPieces)-pieceValue(enemyPieces);
         evaluatedPositions++;
-        return 0.01*(double)pieceValue;
+        return 0.01*(double)value;
     }
 
     private int pieceValue(ArrayList<Piece> pieces) {
@@ -114,7 +119,7 @@ public class ChessAI implements Player {
                     otherRookFile = rookFile;
                     break; 
                 case KING:
-                    value +=1000;
+                    value +=10000;
             }
         }
         return value;
@@ -234,8 +239,8 @@ public class ChessAI implements Player {
         Move nextMove = findNextMove();
         System.out.println("GameValue: "+currentTree.getGameValue());
         System.out.println("Evaluated Positions: "+evaluatedPositions);
-        System.out.println("PawnStructWhite: "+Arrays.toString(board.getPawnStructWhite()));
-        System.out.println("PawnStructBlack: "+Arrays.toString(board.getPawnStructBlack()));        
+        System.out.println("PawnStructWhite: "+Arrays.toString(board.getPawnStruct(WHITE)));
+        System.out.println("PawnStructBlack: "+Arrays.toString(board.getPawnStruct(BLACK)));        
         evaluatedPositions=0;
         controller.nextMove(nextMove);
     }
@@ -249,14 +254,32 @@ public class ChessAI implements Player {
     }
 
     private int pawnBonus(Piece pawn) {
+        int bonus = 0;
         int rank = pawn.getCoord().getX();
-        if(pawn.isColor()==WHITE) return 2*rank;
-        else return 2*(7-rank);
+        int file = pawn.getCoord().getY();
+        //doubled pawns
+        if(board.getPawnStruct(pawn.isColor(), file)>1) bonus -=DOUBLE_PAWN_MALUS;
+        //isolated pawn
+        if(board.getPawnStruct(ownColor, file-1)==0&&
+                board.getPawnStruct(ownColor, file+1)==0)
+            bonus -= ISOLATED_PAWN_MALUS;
+        //pawn rank
+        //if(pawn.isColor()==WHITE) bonus += 2*rank;
+        //else bonus+= 2*(7-rank);
+    
+        return bonus;
     }
 
     private int rookBonus(Piece rook) {
        int value = 0;
        int rank = rook.getCoord().getX();
+       int file = rook.getCoord().getY();
+       
+       //open file
+       if(board.getPawnStruct(ownColor, file)==0 && 
+               board.getPawnStruct(ownColor.getInverse(), file)==0)
+            value += OPEN_ROOK_FILE_BONUS;   
+       //seventh rank
        if(rook.isColor()==BLACK) rank = 7-rank;
        if(rank==6) value += ROOK_SEVENTH_RANK_BONUS;       
        return value;
