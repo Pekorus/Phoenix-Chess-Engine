@@ -7,9 +7,11 @@ package chess.ai;
 
 import chess.board.Board;
 import chess.board.ChessColor;
+import static chess.board.ChessColor.*;
 import chess.board.Piece;
 import static chess.board.PieceType.KING;
 import static chess.board.PieceType.PAWN;
+import chess.coordinate.Coordinate;
 import chess.game.ChessGame;
 import chess.game.ChessRules;
 import chess.game.GameController;
@@ -28,8 +30,15 @@ import java.util.Random;
  */
 public class ChessAI implements Player {
 
-    private static final int SEARCH_DEPTH = 4;
-    private static final double FIREPOWER = 0.01; 
+    private static final int SEARCH_DEPTH = 4; 
+    private static final int DOUBLE_BISHOP_BONUS = 20;
+    private static final int DOUBLE_ROOK_FILE_BONUS = 20;
+    private static final int ROOK_SEVENTH_RANK_BONUS = 25;
+    private static final int[][] KNIGHT_BONUS = {{ -15, -10, -5, -5},
+                                                 { -10,  -5,  0,  5},
+                                                 {  -5,   0, 10, 10},
+                                                 {   0,   5, 10, 15}};
+    
     private int evaluatedPositions=0;
     
     private final GameController controller;
@@ -49,7 +58,7 @@ public class ChessAI implements Player {
         this.rules = ownGame.getRules();        
         this.ownColor = ownColor;
         this.ownPieces = board.getPiecesList(ownColor);
-        this.enemyPieces = board.getPiecesList(ownColor.getInverse());
+        this.enemyPieces = board.getPiecesList(ownColor.getInverse());       
         //create root of tree
         this.currentTree= new ChessTreeNode(null,0, null);
     }
@@ -64,48 +73,52 @@ public class ChessAI implements Player {
 
     private double evaluateBoard(){
 
-        //if(rules.isCheckmate(ownColor.getInverse())) return Double.MAX_VALUE;
-        int material, firepower=0, development;        
-        material= materialValue(ownPieces)-materialValue(enemyPieces);
-        //development= development(ownPieces)-development(enemyPieces);
-        firepower= firePower(ownPieces)-firePower(enemyPieces);
+        int pieceValue;        
+        pieceValue= pieceValue(ownPieces)-pieceValue(enemyPieces);
         evaluatedPositions++;
-        return material+FIREPOWER*firepower;
+        return 0.01*(double)pieceValue;
     }
 
-    private int materialValue(ArrayList<Piece> pieces) {
-        int materialValue=0;
+    private int pieceValue(ArrayList<Piece> pieces) {
+        int value=0;
+        int bishopCount=0;
+        int otherRookFile=-1;
+        
         for(Piece piece : pieces){
             switch(piece.getPiecetype()){
                 case PAWN:
-                    materialValue +=1;                    
+                    value +=100;                    
+                    value += pawnBonus(piece);
                     break;
                 case QUEEN:
-                    materialValue +=9;
+                    value +=900;
+                    //int distance = piece.getCoord().distance(
+                    //    board.getKing(piece.isColor().getInverse()).getCoord());
+                    //value += (8-distance);
                     break;
                 case BISHOP:
+                    value +=300;
+                    bishopCount++;
+                    if(bishopCount>=2) value+=DOUBLE_BISHOP_BONUS;
+                    break;
                 case KNIGHT:
-                    materialValue +=3;
+                    value+=310;
+                    value+= knightBonus(piece.getCoord());
                     break;
                 case ROOK:
-                    materialValue +=5;
+                    value +=500;
+                    int rookFile = piece.getCoord().getY();
+                    if(otherRookFile==rookFile) value+=DOUBLE_ROOK_FILE_BONUS;
+                    value += rookBonus(piece);
+                    otherRookFile = rookFile;
                     break; 
                 case KING:
-                    materialValue +=100;
+                    value +=1000;
             }
         }
-        return materialValue;
-    }    
-
-    private int firePower(ArrayList<Piece> pieces) {
-        int firePower=0;
-        for(Piece piece : pieces){
-           if(piece.getPiecetype()!=KING && piece.getPiecetype()!=PAWN)
-               firePower += rules.getPossibleMoves(piece).size();
-        }
-        return firePower;
-    }
-
+        return value;
+    }     
+    
     private ArrayList<Move> allPossibleMoves(ArrayList<Piece> pieces) {
         ArrayList<Move> allMoves = new ArrayList<>();
         for(Piece piece : pieces){
@@ -224,8 +237,25 @@ public class ChessAI implements Player {
         controller.nextMove(nextMove);
     }
 
-    private void bestSort(ArrayList<ChessTreeNode> children, ChessTreeNode chessTree, boolean maximizing) {
-       
+    private int knightBonus(Coordinate coord) {
+        int quadrX = coord.getX(), quadrY = coord.getY();
+        //change coordinates to first quadrant (up left)
+        if(quadrX>=4) quadrX = 7- quadrX;
+        if(quadrY>=4) quadrY = 7- quadrY;        
+        return KNIGHT_BONUS[quadrX][quadrY];
     }
-    
+
+    private int pawnBonus(Piece pawn) {
+        int rank = pawn.getCoord().getX();
+        if(pawn.isColor()==WHITE) return 2*rank;
+        else return 2*(7-rank);
+    }
+
+    private int rookBonus(Piece rook) {
+       int value = 0;
+       int rank = rook.getCoord().getX();
+       if(rook.isColor()==BLACK) rank = 7-rank;
+       if(rank==6) value += ROOK_SEVENTH_RANK_BONUS;       
+       return value;
+    }
 }
