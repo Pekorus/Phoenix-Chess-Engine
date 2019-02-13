@@ -37,14 +37,16 @@ public class ChessGuiController implements ActionListener, Player {
     private Coordinate pressedCoord1 = null, pressedCoord2 = null;
     private Coordinate paintedCoord1, paintedCoord2;
 
-    public ChessGuiController(GameController gameControl,ChessColor ownColor, 
+    public ChessGuiController(GameController gameControl,MainView mainFrame, 
+            ChessColor ownColor, 
             String playerName, String opponentName) throws IOException {
         this.gameControl = gameControl;
         this.ownColor = ownColor;
         this.ownName = playerName;
         this.opponentName = opponentName;
-        this.view = new ChessGuiView(this, ownColor);
-        view.setVisible(true);
+        this.view = new ChessGuiView(mainFrame, this, ownColor);
+        //mainFrame.add(view);
+        //view.setVisible(true);
     }
 
     @Override

@@ -31,7 +31,7 @@ import java.util.Random;
  */
 public class ChessAI implements Player {
 
-    private static final int SEARCH_DEPTH = 5; 
+    private static final int SEARCH_DEPTH = 4; 
     private static final int DOUBLE_BISHOP_BONUS = 20;
     private static final int DOUBLE_ROOK_FILE_BONUS = 20;
     private static final int OPEN_ROOK_FILE_BONUS = 10;

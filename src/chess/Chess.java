@@ -6,6 +6,7 @@
 package chess;
 
 import chess.game.GameController;
+import chess.gui.MainView;
 import java.io.IOException;
 
 /**
@@ -20,7 +21,8 @@ public class Chess {
      */
     public static void main(String[] args) throws IOException {
        
-        GameController controller = new GameController();
+        MainView mainFrame = new MainView(700,900);
+        GameController controller = new GameController(mainFrame);
         controller.startGame();
 
     }

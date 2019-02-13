@@ -9,6 +9,7 @@ import chess.ai.ChessAI;
 import chess.board.ChessColor;
 import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
+import chess.gui.MainView;
 import chess.move.Move;
 import java.io.IOException;
 
@@ -23,10 +24,11 @@ public class GameController {
     Player blackPlayer;
     Boolean checkmate= false, draw=false;
     
-    public GameController() throws IOException {
+    public GameController(MainView mainView) throws IOException {
         game = new ChessGame();        
-        whitePlayer = new ChessGuiController(this, WHITE, "Player1", "ChessAI");
-        //blackPlayer = new ChessGuiController(this, BLACK, "Player1", "Player2");        
+        whitePlayer = new ChessGuiController(this, mainView, WHITE, "Player1", "ChessAI");
+        //MainView mainView2= new MainView(700,900);
+        //blackPlayer = new ChessGuiController(this, mainView2, BLACK, "Player1", "Player2");        
         blackPlayer = new ChessAI(this, BLACK);
 
     }    
