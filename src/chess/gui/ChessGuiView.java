@@ -41,8 +41,6 @@ public class ChessGuiView extends JFrame{
 
     //frames, panels, dialogs
     private final MainView mainView;
-    //private final int frameHeight = 700;
-    //private final int frameWidth = 900;
     private final JPanel borderPanel = new JPanel(new BorderLayout());
     private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
     private final JPanel downPanel= new JPanel();
@@ -51,7 +49,6 @@ public class ChessGuiView extends JFrame{
     private final JLabel resultLabel = new JLabel();
     private final JPanel displayMovesPanel= new JPanel();
     private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
-    //private final JMenuBar mainBar = new JMenuBar();
     final JDialog promoteDialog = new JDialog();
     
     //buttons
@@ -72,8 +69,6 @@ public class ChessGuiView extends JFrame{
         this.mainView = mainView;
 
         //create view components
-        //createMainFrame();        
-        //createMenuBar();
         createPromotionDialog();
         createChessboardPanel();
         createRightPanel();
@@ -91,7 +86,6 @@ public class ChessGuiView extends JFrame{
         borderPanel.add(downPanel, BorderLayout.PAGE_END);
         mainView.add(borderPanel);
         mainView.setVisible(true);
-        //pack();
     }
 
     public void update(ChessGame game, Object arg) {
@@ -180,13 +174,6 @@ public class ChessGuiView extends JFrame{
         spriteArray[1][5] = new ImageIcon(whitePawn);
     }
 
-   /* private void createMenuBar() {
-        JMenu gameMenu = new JMenu("Game");
-        JMenuItem newGame = new JMenuItem("New Game");
-        gameMenu.add(newGame);
-        mainBar.add(gameMenu);
-    }*/
-
     public void setVisible(Boolean b) {
         mainView.setVisible(b);
     }
@@ -244,13 +231,6 @@ public class ChessGuiView extends JFrame{
         knightButton.setIcon(getSprite(KNIGHT, color));
         rookButton.setIcon(getSprite(ROOK, color));
     }
-
-   /* private void createMainFrame() {
-        mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        mainFrame.setResizable(false);
-        mainFrame.setSize(frameWidth, frameHeight);
-        mainFrame.setLocationRelativeTo(null);
-    }*/
 
     private void createChessboardPanel() {
         for (int i = 0; i < 8; i++) {

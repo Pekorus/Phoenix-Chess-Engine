@@ -5,6 +5,8 @@
  */
 package chess.gui;
 
+import chess.game.ChessGameType;
+import static chess.game.ChessGameType.*;
 import chess.game.GameController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,10 +24,12 @@ public class MainController implements ActionListener, MenuListener {
 
     MainView mainView;
     GameController gameController;
+    ChessGameType gameType;
     
     public MainController() throws IOException {
         this.mainView = new MainView(this, 740, 900);
         this.gameController = new GameController(mainView);
+        this.gameType = WHITEPLAYER;
     }
     
     
