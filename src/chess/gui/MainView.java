@@ -5,8 +5,12 @@
  */
 package chess.gui;
 
+import static chess.gui.ChessGuiView.iconOnlyButton;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.GridLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -20,6 +24,7 @@ import javax.swing.WindowConstants;
  */
 public class MainView{
     
+    //fields for main frame
     private final MainController mainControl;
     private final JFrame mainFrame;
     private final int frameHeight;
@@ -27,9 +32,14 @@ public class MainView{
     private final JPanel mainPanel;
     private final CardLayout cards;
     
+    //fields for menu bar
     JMenuBar mainBar = new JMenuBar();
     JMenu gameMenu, options, about;
     JMenuItem newGame, closeProgram;
+    
+    //fields for game type dialog
+    final JDialog gameTypeDialog = new JDialog();
+    JButton whiteColorButton, blackColorButton, randomColorButton;
     
     public MainView(MainController mainControl, int frameHeight, int frameWidth) {
         this.mainControl = mainControl;
@@ -46,12 +56,14 @@ public class MainView{
         mainFrame.add(mainPanel);
         
         createMenuBar();
+        createGameSettingDialog();
+        
         mainFrame.setVisible(true);
     }
  
         private void createMenuBar() {
         gameMenu = new JMenu("Game");
-            newGame = new JMenuItem("New Game");
+            newGame = new JMenuItem("New Game...");
             newGame.addActionListener(mainControl);
             gameMenu.add(newGame);
             
@@ -87,12 +99,38 @@ public class MainView{
         return frameHeight;
     }
 
-    int getWidth()  {
+    int getWidth() {
         return frameWidth;
     }
 
     void removeGamePanel() {
         cards.next(mainPanel);
         mainPanel.remove(0);
+    }
+
+    private void createGameSettingDialog() {
+        
+        gameTypeDialog.setLocationRelativeTo(mainFrame);
+        
+        JPanel gameTypePanel = new JPanel(new GridLayout(1, 3));
+        gameTypeDialog.add(gameTypePanel);
+        gameTypeDialog.setTitle("Game Settings");
+        gameTypeDialog.setSize(400, 150);
+        gameTypeDialog.setModal(true);
+        
+        //TODO: add icons
+        whiteColorButton = new JButton("White");
+        iconOnlyButton(whiteColorButton);
+        blackColorButton = new JButton("Black");
+        iconOnlyButton(blackColorButton);
+        randomColorButton = new JButton("Random");
+        iconOnlyButton(randomColorButton);
+        whiteColorButton.addActionListener(mainControl);
+        blackColorButton.addActionListener(mainControl);
+        randomColorButton.addActionListener(mainControl);
+
+        gameTypePanel.add(whiteColorButton);
+        gameTypePanel.add(blackColorButton);
+        gameTypePanel.add(randomColorButton);
     }
 }

@@ -24,12 +24,21 @@ public class GameController {
     Player blackPlayer;
     Boolean checkmate= false, draw=false;
     
-    public GameController(MainView mainView) throws IOException {
+    public GameController(MainView mainView, ChessGameType gameType) throws IOException {
         game = new ChessGame();        
-        whitePlayer = new ChessGuiController(this, mainView, WHITE, "Player1", "ChessAI");
-        //MainView mainView2= new MainView(700,900);
-        //blackPlayer = new ChessGuiController(this, mainView2, BLACK, "Player1", "Player2");        
-        blackPlayer = new ChessAI(this, BLACK);
+        
+        switch(gameType){            
+            case WHITEPLAYER:
+            whitePlayer = new ChessGuiController(this, mainView, WHITE, "Player1", "ChessAI");                
+            blackPlayer = new ChessAI(this, BLACK);
+            break;
+        
+            case BLACKPLAYER:
+            blackPlayer = new ChessGuiController(this, mainView, BLACK, "ChessAI", "Player2");                
+            whitePlayer = new ChessAI(this, WHITE);                
+            break;
+        }
+        //MainView mainView2= new MainView(700,900);        
     }    
     
     public void startGame(){

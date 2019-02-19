@@ -45,8 +45,6 @@ public class ChessGuiController implements ActionListener, Player {
         this.ownName = playerName;
         this.opponentName = opponentName;
         this.view = new ChessGuiView(mainFrame, this, ownColor);
-        //mainFrame.add(view);
-        //view.setVisible(true);
     }
 
     @Override

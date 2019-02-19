@@ -28,8 +28,8 @@ public class MainController implements ActionListener, MenuListener {
     
     public MainController() throws IOException {
         this.mainView = new MainView(this, 740, 900);
-        this.gameController = new GameController(mainView);
         this.gameType = WHITEPLAYER;
+        this.gameController = new GameController(mainView, gameType);
     }
     
     
@@ -39,11 +39,29 @@ public class MainController implements ActionListener, MenuListener {
        
         if(source == mainView.newGame){
            try {
+               mainView.gameTypeDialog.setLocationRelativeTo(mainView.getFrame());
+               mainView.gameTypeDialog.setVisible(true);
                restartGame();
            } catch (IOException ex) {
                Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
            }
         }
+       
+       if(source == mainView.whiteColorButton){
+           gameType = WHITEPLAYER;
+           mainView.gameTypeDialog.setVisible(false);
+       } 
+       
+       if(source == mainView.blackColorButton){
+           gameType = BLACKPLAYER;
+           mainView.gameTypeDialog.setVisible(false);
+       }       
+
+       if(source == mainView.randomColorButton){
+           //TODO: randomize
+           gameType = WHITEPLAYER;
+           mainView.gameTypeDialog.setVisible(false);
+       }
        
        if(source == mainView.closeProgram){
            System.exit(0);
@@ -78,7 +96,7 @@ public class MainController implements ActionListener, MenuListener {
     }
 
     private void restartGame() throws IOException {
-        this.gameController = new GameController(mainView);
+        this.gameController = new GameController(mainView, gameType);
         gameController.startGame();
         mainView.removeGamePanel();     
     }

@@ -79,7 +79,6 @@ public class ChessGuiView extends JFrame{
                 getResource("/images/Chess_pieces.png"));
         createSpriteArray();
 
-        promoteDialog.setLocationRelativeTo(mainView.getFrame());
         //border panel
         borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
         borderPanel.add(rightSidePanel, BorderLayout.LINE_END);
@@ -117,7 +116,7 @@ public class ChessGuiView extends JFrame{
         }
     }
 
-    private ImageIcon getSprite(PieceType pieceType, ChessColor color) {
+    public ImageIcon getSprite(PieceType pieceType, ChessColor color) {
         int aux = 0;
         if (color == WHITE) {
             aux = 1;
@@ -179,12 +178,14 @@ public class ChessGuiView extends JFrame{
     }
 
     private void createPromotionDialog() {
+        
         JPanel promotePanel = new JPanel(new GridLayout(1, 4));
         promoteDialog.add(promotePanel);
         promoteDialog.setTitle("Pawn Promotion");
         promoteDialog.setSize(400, 150);
         promoteDialog.setModal(true);
-
+        promoteDialog.setLocationRelativeTo(mainView.getFrame());
+        
         queenButton = new JButton(getSprite(QUEEN, WHITE));
         iconOnlyButton(queenButton);
         bishopButton = new JButton(getSprite(BISHOP, WHITE));
@@ -204,7 +205,7 @@ public class ChessGuiView extends JFrame{
         promotePanel.add(rookButton);
     }
 
-    private void iconOnlyButton(JButton button) {
+    static void iconOnlyButton(JButton button) {
         button.setBorder(null);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
