@@ -176,5 +176,4 @@ public class ChessGuiController implements ActionListener, Player {
     public void getNextMove() {
     }
 
-
 }

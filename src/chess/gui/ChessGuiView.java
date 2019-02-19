@@ -87,7 +87,6 @@ public class ChessGuiView extends JFrame{
         promoteDialog.setLocationRelativeTo(mainView.getFrame());
         //border panel
         borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
-        //borderPanel.add(mainBar, BorderLayout.PAGE_START);
         borderPanel.add(rightSidePanel, BorderLayout.LINE_END);
         borderPanel.add(downPanel, BorderLayout.PAGE_END);
         mainView.add(borderPanel);
@@ -341,5 +340,9 @@ public class ChessGuiView extends JFrame{
         if(winner==WHITE) resultLabel.setText("1   -   0");
         else if(winner==BLACK) resultLabel.setText("0   -   1");
         else resultLabel.setText("0.5   -   0.5");
+    }
+
+    void closeGame() {
+       //mainView.removeGamePanel(borderPanel);
     }
 }
