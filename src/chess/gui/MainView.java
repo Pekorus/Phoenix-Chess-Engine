@@ -24,7 +24,7 @@ public class MainView{
     private final JFrame mainFrame;
     private final int frameHeight;
     private final int frameWidth;
-    private JPanel mainPanel;
+    private final JPanel mainPanel;
     private final CardLayout cards;
     
     JMenuBar mainBar = new JMenuBar();
@@ -93,17 +93,6 @@ public class MainView{
 
     void removeGamePanel() {
         cards.next(mainPanel);
-        //mainFrame.remove(mainPanel);
-        //mainFrame.add(mainPanel);
-        //cards.last(mainPanel);
-        refresh();
-        //mainFrame.getContentPane().removeAll();
-        //mainFrame.getGlassPane().repaint();
-    }
-
-    void refresh() {
-        //mainFrame.pack();
-        //mainFrame.revalidate();
-        //mainFrame.repaint();
+        mainPanel.remove(0);
     }
 }

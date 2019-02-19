@@ -341,8 +341,4 @@ public class ChessGuiView extends JFrame{
         else if(winner==BLACK) resultLabel.setText("0   -   1");
         else resultLabel.setText("0.5   -   0.5");
     }
-
-    void closeGame() {
-       //mainView.removeGamePanel(borderPanel);
-    }
 }

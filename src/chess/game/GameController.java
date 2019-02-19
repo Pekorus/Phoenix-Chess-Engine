@@ -22,7 +22,7 @@ public class GameController {
     ChessGame game;
     Player whitePlayer;
     Player blackPlayer;
-    Boolean checkmate= false, draw=false, closeGame=false;
+    Boolean checkmate= false, draw=false;
     
     public GameController(MainView mainView) throws IOException {
         game = new ChessGame();        
@@ -57,10 +57,5 @@ public class GameController {
         if(playersTurn==WHITE) whitePlayer.getNextMove();
         else blackPlayer.getNextMove();
     }
-
-    public void closeGame() {
-        closeGame = true;
-    }
-
-    
+  
 }
