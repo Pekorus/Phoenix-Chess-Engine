@@ -40,6 +40,20 @@ public enum Direction {
             rookList.add(Direction.W);
         return rookList;    
     }
+
+    public Direction oppositeDirection(){
+        switch(this){
+            case N:  return S;
+            case NE: return SW;
+            case E:  return W;
+            case SE: return NW;
+            case S:  return N;
+            case SW: return NE;
+            case W:  return E;
+            case NW: return SE;
+        }
+    return null;
+    }
     
     public int getOffsetX() {
         return offsetX;

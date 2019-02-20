@@ -124,7 +124,7 @@ public class ChessRules {
         if(piece.getMoveCounter()!=0) return false;
         if(!castleCoords.contains(coordTo)) return false;
         ChessColor enemyColor= ownColor.getInverse();
-        if(!isAttackedBy(coordFrom, enemyColor).isEmpty()) return false;        
+        if(!isAttackedBy(coordFrom, enemyColor, false).isEmpty()) return false;        
         Coordinate rookCoord = coordTo.getRookCastleCoord();
         if(!rookCastleCheck(rookCoord)) return false;
         //check if all fields between king and rook are empty and not in check
@@ -132,7 +132,7 @@ public class ChessRules {
         Coordinate auxCoord = coordFrom.getCoordInDir(dir);
         for(int i=0; i<2; i++){
             if(board.isOccupied(auxCoord)) return false;
-            if(!isAttackedBy(auxCoord, enemyColor).isEmpty()) return false;
+            if(!isAttackedBy(auxCoord, enemyColor, false).isEmpty()) return false;
             auxCoord = auxCoord.getCoordInDir(dir);
         }
         //large castling
@@ -142,7 +142,7 @@ public class ChessRules {
     
         board.executeMove(move);
         Piece king = board.getKing(game.getPlayersTurn());
-        if(!isAttackedBy(king.getCoord(), ownColor.getInverse()).isEmpty()){
+        if(!isAttackedBy(king.getCoord(), ownColor.getInverse(), false).isEmpty()){
             board.unexecuteMove(move);
             return false;
         }    
@@ -205,9 +205,11 @@ public class ChessRules {
     }
 
     /*checks if a given coordinate is attacked by pieces of specified color 
-        on current boardstate*/
+    on current boardstate. Boolean mode switches between ignoring enemy King
+    as blocker of a line (needed in isCheckmate method). mode = false is
+    default and enemy King is also counted for blocking lines    */
     private LinkedList<Piece> isAttackedBy(Coordinate checkedCoord, 
-                                                            ChessColor color) {
+                                              ChessColor color, boolean mode) {
        LinkedList<Piece> attackerList = new LinkedList<>();
        List<Coordinate> knightList = checkedCoord.createKnightCoordinates();
        Coordinate auxCoord;
@@ -220,13 +222,21 @@ public class ChessRules {
         //attacked by a bishop, rook or queen?
         for(Direction dir : Direction.values()){
            auxCoord = checkedCoord.getCoordInDir(dir);
-           while(auxCoord!=null && !board.isOccupied(auxCoord)){
-               auxCoord = auxCoord.getCoordInDir(dir);
+           
+           while(auxCoord!=null){ 
+                if(mode && board.isOccupied(auxCoord)){
+                    auxPiece = board.getPieceOnCoord(auxCoord);
+                    if(auxPiece.isColor()== color || auxPiece.getPiecetype()!=KING)
+                        break;
+                }
+                else if(board.isOccupied(auxCoord)) break;
+                
+                auxCoord = auxCoord.getCoordInDir(dir);
            }
            if(auxCoord!=null){
                 auxPiece = board.getPieceOnCoord(auxCoord);
                 PieceType PT = auxPiece.getPiecetype();
-                if(auxPiece.isColor()!= color.getInverse()){ 
+                if(auxPiece.isColor()== color){ 
                    if((checkedCoord.coordinatesOnDiag(auxCoord) && 
                            (PT == BISHOP || PT == QUEEN)) ||
                       (checkedCoord.coordinatesOnLine(auxCoord) &&
@@ -265,8 +275,7 @@ public class ChessRules {
         Piece king = board.getKing(color);
         Coordinate kingCoord = king.getCoord();
         ChessColor enemyColor = color.getInverse();
-        LinkedList<Piece> pieceCheckList = isAttackedBy(kingCoord, 
-                                                                    enemyColor);
+        LinkedList<Piece> pieceCheckList = isAttackedBy(kingCoord, enemyColor, false);
         LinkedList<Piece> threatensCheckGiver;
         LinkedList<Piece> pieceBlocking;
         Piece givesCheck;
@@ -278,14 +287,18 @@ public class ChessRules {
             auxCoord = kingCoord.getCoordInDir(dir);
             if(auxCoord!=null && (!board.isOccupied(auxCoord)||
                 board.getPieceOnCoord(auxCoord).isColor()!=king.isColor()) && 
-                             isAttackedBy(auxCoord, enemyColor).isEmpty())
+                             isAttackedBy(auxCoord, enemyColor, true).isEmpty()){
+                /* if king moves, he could have blocked the attack from R,Q or B
+                for the new field which he isn't after moving, so isAttackedBy
+                has to ignore the enemy King in that case (mode=true)*/
                 return false;
+            }    
         }
         //if the king cant move and double check is given -> checkmate
         if(pieceCheckList.size()>=2) return true;
         //is it possible to take the piece giving check?
         givesCheck = pieceCheckList.getFirst();
-        threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color);
+        threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color, false);
         for(Piece threat : threatensCheckGiver){
             if(validateMove(new Move(threat.getPiecetype(), threat.getCoord(),
                     givesCheck.getCoord(), TAKE,
@@ -316,7 +329,7 @@ public class ChessRules {
     private LinkedList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color){
         //pawns can give check to a field without being able to move to it,
         //also they can go to fields without giving check to the field
-        LinkedList<Piece> potentialOccupants = isAttackedBy(coord, color);
+        LinkedList<Piece> potentialOccupants = isAttackedBy(coord, color, false);
         LinkedList<Piece> occupants = canPawnMoveCoord(coord, color);
         
         for(Piece auxPiece : potentialOccupants){
@@ -399,7 +412,7 @@ public class ChessRules {
     private boolean isStalemate() {
         ChessColor playersTurn = game.getPlayersTurn();
         if(!isAttackedBy(board.getKing(playersTurn).getCoord(),
-                playersTurn.getInverse()).isEmpty())
+                playersTurn.getInverse(), false).isEmpty())
             return false;
         for(Piece piece : board.getPiecesList(playersTurn)){
             if(!getPossibleMoves(piece).isEmpty()) return false;
