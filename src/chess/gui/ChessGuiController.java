@@ -70,21 +70,14 @@ public class ChessGuiController implements ActionListener, Player {
             for (int j = 0; j < 8; j++) {
                 if (source == view.buttonArray[i][j]) {
                     int a = i, b = j;
+                    //translate coordinates if playing white(rotated board)
                     if (ownColor == WHITE) {
                         a = 7 - i;
                         b = 7 - j;
                     }
-                    if (pressedCoord1 == null && view.pieceArray[a][b] != null) {
-                        pressedCoord1 = new Coordinate(a, b);
-                        paintedCoord1 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord1);
-                    } else if (pressedCoord1 != null && pressedCoord2 == null) {
-                        pressedCoord2 = new Coordinate(a, b);
-                        paintedCoord2 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord2);
-                        createMove();
-                        gameControl.nextMove(nextMove);
-                    } else if (pressedCoord1 != null && pressedCoord2 != null) {
+                    
+                    //Reset after move input
+                    if (pressedCoord1 != null && pressedCoord2 != null) {
                         nextMove = null;
                         view.restoreFieldColor(paintedCoord1);
                         view.restoreFieldColor(paintedCoord2);
@@ -92,6 +85,26 @@ public class ChessGuiController implements ActionListener, Player {
                         pressedCoord2 = null;
                         paintedCoord1 = null;
                         paintedCoord2 = null;
+                    }
+                    Piece clickedPiece = view.pieceArray[a][b];
+                    if (pressedCoord1 == null && clickedPiece != null 
+                                && clickedPiece.isColor() ==ownColor) {
+                        pressedCoord1 = new Coordinate(a, b);
+                        paintedCoord1 = new Coordinate(i, j);
+                        view.paintFieldColor(paintedCoord1);
+                    } else if (pressedCoord1 != null && pressedCoord2 ==null && 
+                            clickedPiece!= null&&clickedPiece.isColor()==ownColor) {
+                        view.restoreFieldColor(paintedCoord1);
+                        pressedCoord1 = new Coordinate(a, b);
+                        paintedCoord1 = new Coordinate(i, j);
+                        view.paintFieldColor(paintedCoord1);
+                        gameControl.nextMove(nextMove);                                        
+                    } else if(pressedCoord1 != null && pressedCoord2 == null) {
+                        pressedCoord2 = new Coordinate(a, b);
+                        paintedCoord2 = new Coordinate(i, j);
+                        view.paintFieldColor(paintedCoord2);
+                        createMove();
+                        gameControl.nextMove(nextMove);
                     }
                 }
             }

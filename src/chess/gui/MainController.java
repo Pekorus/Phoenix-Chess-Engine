@@ -32,8 +32,7 @@ public class MainController implements ActionListener, MenuListener {
         this.gameType = WHITEPLAYER;
         this.gameController = new GameController(mainView, gameType);
     }
-    
-    
+       
     @Override
     public void actionPerformed(ActionEvent e) {
        Object source = e.getSource();
