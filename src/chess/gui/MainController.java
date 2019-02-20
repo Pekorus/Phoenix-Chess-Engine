@@ -11,6 +11,7 @@ import chess.game.GameController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.MenuEvent;
@@ -58,8 +59,10 @@ public class MainController implements ActionListener, MenuListener {
        }       
 
        if(source == mainView.randomColorButton){
-           //TODO: randomize
+           Random rand = new Random();
+           int aux = rand.nextInt(2);
            gameType = WHITEPLAYER;
+           if(aux==0) gameType = BLACKPLAYER;
            mainView.gameTypeDialog.setVisible(false);
        }
        
