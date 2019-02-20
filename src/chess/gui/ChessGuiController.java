@@ -70,6 +70,7 @@ public class ChessGuiController implements ActionListener, Player {
             for (int j = 0; j < 8; j++) {
                 if (source == view.buttonArray[i][j]) {
                     int a = i, b = j;
+                    
                     //translate coordinates if playing white(rotated board)
                     if (ownColor == WHITE) {
                         a = 7 - i;

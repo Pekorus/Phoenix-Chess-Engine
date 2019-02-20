@@ -47,11 +47,11 @@ public class GameController {
     }
             
     public void nextMove(Move move){        
-        if(checkmate || draw);
-        else if(game.executeMove(move)){
+        if(game.executeMove(move)){
             checkmate = game.isCheckmate();
             draw = game.isDraw();
             notifyObservers(move);
+            if(checkmate || draw) return;
             demandNextMove(game.getPlayersTurn());        
         }
         else demandNextMove(game.getPlayersTurn());
