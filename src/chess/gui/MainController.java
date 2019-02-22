@@ -21,7 +21,7 @@ import javax.swing.event.MenuListener;
  *
  * @author Phoenix
  */
-public class MainController implements ActionListener, MenuListener {
+public class MainController implements ActionListener{
 
     MainView mainView;
     GameController gameController;
@@ -64,8 +64,18 @@ public class MainController implements ActionListener, MenuListener {
            if(aux==0) gameType = BLACKPLAYER;
            mainView.gameTypeDialog.setVisible(false);
        }
+
+        if(source == mainView.options){
+        mainView.optionsDialog.setLocationRelativeTo(mainView.getFrame());
+        mainView.optionsDialog.setVisible(true);
+        }
+        
+        if(source == mainView.about){
+        mainView.aboutDialog.setLocationRelativeTo(mainView.getFrame());
+        mainView.aboutDialog.setVisible(true);
+        }             
        
-       if(source == mainView.closeProgram){
+        if(source == mainView.closeProgram){
            System.exit(0);
        }
     }
@@ -76,25 +86,6 @@ public class MainController implements ActionListener, MenuListener {
 
     public void start() {
         if(gameController!=null) gameController.startGame();               
-    }
-
-    @Override
-    public void menuSelected(MenuEvent e) {
-        Object source = e.getSource();
-        
-        if(source == mainView.options){
-        }
-        
-        if(source == mainView.about){
-        }        
-    }
-
-    @Override
-    public void menuDeselected(MenuEvent e) {       
-    }
-
-    @Override
-    public void menuCanceled(MenuEvent e) {
     }
 
     private void restartGame() throws IOException {

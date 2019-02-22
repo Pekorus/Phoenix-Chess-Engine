@@ -34,7 +34,7 @@ public class GameController {
             break;
         
             case BLACKPLAYER:
-            blackPlayer = new ChessGuiController(this, mainView, BLACK, "ChessAI", "Player2");                
+            blackPlayer = new ChessGuiController(this, mainView, BLACK, "ChessAI", "Player1");                
             whitePlayer = new ChessAI(this, WHITE);                
             break;
         }

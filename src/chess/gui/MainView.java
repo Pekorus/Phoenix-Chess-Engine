@@ -12,10 +12,12 @@ import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 /**
@@ -34,12 +36,18 @@ public class MainView{
     
     //fields for menu bar
     JMenuBar mainBar = new JMenuBar();
-    JMenu gameMenu, options, about;
-    JMenuItem newGame, closeProgram;
+    JMenu gameMenu;
+    JMenuItem newGame, closeProgram, options, about;
     
     //fields for game type dialog
     final JDialog gameTypeDialog = new JDialog();
     JButton whiteColorButton, blackColorButton, randomColorButton;
+    
+    //fields for options dialog
+    final JDialog optionsDialog = new JDialog();
+    
+    //about dialog
+    final JDialog aboutDialog = new JDialog();
     
     public MainView(MainController mainControl, int frameHeight, int frameWidth) {
         this.mainControl = mainControl;
@@ -57,6 +65,8 @@ public class MainView{
         
         createMenuBar();
         createGameSettingDialog();
+        createOptionsDialog();
+        createAboutDialog();
         
         mainFrame.setVisible(true);
     }
@@ -67,18 +77,18 @@ public class MainView{
             newGame.addActionListener(mainControl);
             gameMenu.add(newGame);
             
+            options = new JMenuItem("Options");
+            gameMenu.add(options);
+            options.addActionListener(mainControl);            
+
+            about = new JMenuItem("About");
+            gameMenu.add(about);
+            about.addActionListener(mainControl);       
+
             closeProgram = new JMenuItem("Exit");
             closeProgram.addActionListener(mainControl);
             gameMenu.add(closeProgram);
         mainBar.add(gameMenu);
-    
-        options = new JMenu("Options");
-        mainBar.add(options);
-        options.addMenuListener(mainControl);
-        
-        about = new JMenu("About");
-        mainBar.add(about);
-        about.addMenuListener(mainControl);
         
         mainFrame.setJMenuBar(mainBar);
     }
@@ -110,7 +120,7 @@ public class MainView{
 
     private void createGameSettingDialog() {
         
-        gameTypeDialog.setLocationRelativeTo(mainFrame);
+        //gameTypeDialog.setLocationRelativeTo(mainFrame);
         
         JPanel gameTypePanel = new JPanel(new GridLayout(1, 3));
         gameTypeDialog.add(gameTypePanel);
@@ -132,5 +142,27 @@ public class MainView{
         gameTypePanel.add(whiteColorButton);
         gameTypePanel.add(blackColorButton);
         gameTypePanel.add(randomColorButton);
+    }
+
+    private void createOptionsDialog(){
+        
+        optionsDialog.setTitle("Game Options");
+        optionsDialog.setSize(400, 150);
+        optionsDialog.setModal(true);        
+    
+        JLabel optionsLabel = new JLabel("not supported yet", SwingConstants.CENTER);
+        optionsDialog.add(optionsLabel);
+    }
+    
+    private void createAboutDialog(){
+
+        aboutDialog.setTitle("About");
+        aboutDialog.setSize(400, 150);
+        aboutDialog.setModal(true);
+        
+        JLabel versionLabel = new JLabel ("<html>Chess made by Phoenix<br/>"
+                + "Version: 0.5.0<br/>Send bug reports to deimama@deiemail.com"
+                + "</html>", SwingConstants.CENTER);
+        aboutDialog.add(versionLabel); 
     }
 }
