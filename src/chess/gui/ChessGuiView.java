@@ -8,7 +8,6 @@ package chess.gui;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
-import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.game.ChessGame;
@@ -20,10 +19,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.LinkedList;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import static javax.swing.BoxLayout.Y_AXIS;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -58,12 +54,7 @@ public class ChessGuiView extends JFrame{
     JButton knightButton;
     JButton rookButton;
 
-    //sprites
-    BufferedImage spriteSheet;
-    ImageIcon[][] spriteArray = new ImageIcon[2][6];
-
-    public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor)
-            throws IOException {
+    public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor){
         this.ownColor = ownColor;
         this.guiController = guiController;
         this.mainView = mainView;
@@ -73,11 +64,6 @@ public class ChessGuiView extends JFrame{
         createChessboardPanel();
         createRightPanel();
         createDisplayMovesScroll();
-        
-        //load sprite sheet and process it
-        spriteSheet = ImageIO.read(getClass().
-                getResource("/images/Chess_pieces.png"));
-        createSpriteArray();
 
         //border panel
         borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
@@ -108,69 +94,12 @@ public class ChessGuiView extends JFrame{
                 if (pieces[i][j] == null) {
                     buttonArray[a][b].setIcon(null);
                 } else {
-                    ImageIcon sprite = getSprite(pieces[i][j].getPiecetype(),
+                    ImageIcon sprite = mainView.getSprite(pieces[i][j].getPiecetype(),
                             pieces[i][j].isColor());
                     buttonArray[a][b].setIcon(sprite);
                 }
             }
         }
-    }
-
-    public ImageIcon getSprite(PieceType pieceType, ChessColor color) {
-        int aux = 0;
-        if (color == WHITE) {
-            aux = 1;
-        }
-
-        switch (pieceType) {
-            case KING:
-                return (spriteArray[aux][0]);
-
-            case QUEEN:
-                return (spriteArray[aux][1]);
-
-            case BISHOP:
-                return (spriteArray[aux][2]);
-
-            case KNIGHT:
-                return (spriteArray[aux][3]);
-
-            case ROOK:
-                return (spriteArray[aux][4]);
-
-            case PAWN:
-                return (spriteArray[aux][5]);
-        }
-        return null;
-    }
-
-    private void createSpriteArray() {
-        BufferedImage whiteKing = spriteSheet.getSubimage(5, 5, 75, 75);
-        BufferedImage whiteQueen = spriteSheet.getSubimage(88, 5, 75, 75);
-        BufferedImage whiteBishop = spriteSheet.getSubimage(171, 5, 75, 75);
-        BufferedImage whiteKnight = spriteSheet.getSubimage(254, 5, 75, 75);
-        BufferedImage whiteRook = spriteSheet.getSubimage(338, 5, 75, 75);
-        BufferedImage whitePawn = spriteSheet.getSubimage(420, 5, 75, 75);
-
-        BufferedImage blackKing = spriteSheet.getSubimage(5, 89, 75, 75);
-        BufferedImage blackQueen = spriteSheet.getSubimage(88, 89, 75, 75);
-        BufferedImage blackBishop = spriteSheet.getSubimage(171, 89, 75, 75);
-        BufferedImage blackKnight = spriteSheet.getSubimage(254, 89, 75, 75);
-        BufferedImage blackRook = spriteSheet.getSubimage(338, 89, 75, 75);
-        BufferedImage blackPawn = spriteSheet.getSubimage(420, 89, 75, 75);
-
-        spriteArray[0][0] = new ImageIcon(blackKing);
-        spriteArray[0][1] = new ImageIcon(blackQueen);
-        spriteArray[0][2] = new ImageIcon(blackBishop);
-        spriteArray[0][3] = new ImageIcon(blackKnight);
-        spriteArray[0][4] = new ImageIcon(blackRook);
-        spriteArray[0][5] = new ImageIcon(blackPawn);
-        spriteArray[1][0] = new ImageIcon(whiteKing);
-        spriteArray[1][1] = new ImageIcon(whiteQueen);
-        spriteArray[1][2] = new ImageIcon(whiteBishop);
-        spriteArray[1][3] = new ImageIcon(whiteKnight);
-        spriteArray[1][4] = new ImageIcon(whiteRook);
-        spriteArray[1][5] = new ImageIcon(whitePawn);
     }
 
     public void setVisible(Boolean b) {
@@ -186,13 +115,13 @@ public class ChessGuiView extends JFrame{
         promoteDialog.setModal(true);
         promoteDialog.setLocationRelativeTo(mainView.getFrame());
         
-        queenButton = new JButton(getSprite(QUEEN, WHITE));
+        queenButton = new JButton(mainView.getSprite(QUEEN, WHITE));
         iconOnlyButton(queenButton);
-        bishopButton = new JButton(getSprite(BISHOP, WHITE));
+        bishopButton = new JButton(mainView.getSprite(BISHOP, WHITE));
         iconOnlyButton(bishopButton);
-        knightButton = new JButton(getSprite(KNIGHT, WHITE));
+        knightButton = new JButton(mainView.getSprite(KNIGHT, WHITE));
         iconOnlyButton(knightButton);
-        rookButton = new JButton(getSprite(ROOK, WHITE));
+        rookButton = new JButton(mainView.getSprite(ROOK, WHITE));
         iconOnlyButton(rookButton);
         queenButton.addActionListener(guiController);
         bishopButton.addActionListener(guiController);
@@ -227,10 +156,10 @@ public class ChessGuiView extends JFrame{
     }
 
     public void setPromoteDialogColor(ChessColor color) {
-        queenButton.setIcon(getSprite(QUEEN, color));
-        bishopButton.setIcon(getSprite(BISHOP, color));
-        knightButton.setIcon(getSprite(KNIGHT, color));
-        rookButton.setIcon(getSprite(ROOK, color));
+        queenButton.setIcon(mainView.getSprite(QUEEN, color));
+        bishopButton.setIcon(mainView.getSprite(BISHOP, color));
+        knightButton.setIcon(mainView.getSprite(KNIGHT, color));
+        rookButton.setIcon(mainView.getSprite(ROOK, color));
     }
 
     private void createChessboardPanel() {
@@ -322,4 +251,5 @@ public class ChessGuiView extends JFrame{
         else if(winner==BLACK) resultLabel.setText("0   -   1");
         else resultLabel.setText("0.5   -   0.5");
     }
+
 }

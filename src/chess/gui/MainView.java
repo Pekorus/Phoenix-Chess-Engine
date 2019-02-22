@@ -5,10 +5,20 @@
  */
 package chess.gui;
 
+import chess.board.ChessColor;
+import static chess.board.ChessColor.BLACK;
+import static chess.board.ChessColor.WHITE;
+import chess.board.PieceType;
+import static chess.board.PieceType.KING;
 import static chess.gui.ChessGuiView.iconOnlyButton;
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -48,8 +58,12 @@ public class MainView{
     
     //about dialog
     final JDialog aboutDialog = new JDialog();
+
+    //sprites
+    BufferedImage spriteSheet;
+    ImageIcon[][] spriteArray = new ImageIcon[2][6];
     
-    public MainView(MainController mainControl, int frameHeight, int frameWidth) {
+    public MainView(MainController mainControl, int frameHeight, int frameWidth) throws IOException {
         this.mainControl = mainControl;
         this.mainFrame = new JFrame("Schaaach");
         this.frameHeight = frameHeight;
@@ -62,7 +76,13 @@ public class MainView{
         mainFrame.setSize(frameWidth, frameHeight);
         mainFrame.setLocationRelativeTo(null);
         mainFrame.add(mainPanel);
+
+        //load sprite sheet and process it
+        spriteSheet = ImageIO.read(getClass().
+                getResource("/images/Chess_pieces.png"));
+        createSpriteArray();
         
+        //create components of frame
         createMenuBar();
         createGameSettingDialog();
         createOptionsDialog();
@@ -120,28 +140,35 @@ public class MainView{
 
     private void createGameSettingDialog() {
         
-        //gameTypeDialog.setLocationRelativeTo(mainFrame);
-        
-        JPanel gameTypePanel = new JPanel(new GridLayout(1, 3));
-        gameTypeDialog.add(gameTypePanel);
         gameTypeDialog.setTitle("Game Settings");
         gameTypeDialog.setSize(400, 150);
         gameTypeDialog.setModal(true);
+                
+        JPanel gameTypePanel = new JPanel(new BorderLayout());
         
-        //TODO: add icons
-        whiteColorButton = new JButton("White");
+        JLabel chooseColor = new JLabel ("<html> <br/>Choose color:<br/> </html>", SwingConstants.CENTER);
+        gameTypePanel.add(chooseColor, BorderLayout.NORTH);
+        
+        JPanel colorChoiceButtons = new JPanel(new GridLayout(1, 3));
+        gameTypePanel.add(colorChoiceButtons, BorderLayout.CENTER);
+
+        whiteColorButton = new JButton(getSprite(KING,WHITE));
         iconOnlyButton(whiteColorButton);
-        blackColorButton = new JButton("Black");
+        
+        blackColorButton = new JButton(getSprite(KING,BLACK));
         iconOnlyButton(blackColorButton);
+        
         randomColorButton = new JButton("Random");
         iconOnlyButton(randomColorButton);
         whiteColorButton.addActionListener(mainControl);
         blackColorButton.addActionListener(mainControl);
         randomColorButton.addActionListener(mainControl);
 
-        gameTypePanel.add(whiteColorButton);
-        gameTypePanel.add(blackColorButton);
-        gameTypePanel.add(randomColorButton);
+        colorChoiceButtons.add(whiteColorButton);
+        colorChoiceButtons.add(blackColorButton);
+        colorChoiceButtons.add(randomColorButton);
+    
+        gameTypeDialog.add(gameTypePanel);
     }
 
     private void createOptionsDialog(){
@@ -164,5 +191,61 @@ public class MainView{
                 + "Version: 0.5.0<br/>Send bug reports to deimama@deiemail.com"
                 + "</html>", SwingConstants.CENTER);
         aboutDialog.add(versionLabel); 
+    }
+
+    private void createSpriteArray() {
+    
+        BufferedImage whiteKing = spriteSheet.getSubimage(5, 5, 75, 75);
+        BufferedImage whiteQueen = spriteSheet.getSubimage(88, 5, 75, 75);
+        BufferedImage whiteBishop = spriteSheet.getSubimage(171, 5, 75, 75);
+        BufferedImage whiteKnight = spriteSheet.getSubimage(254, 5, 75, 75);
+        BufferedImage whiteRook = spriteSheet.getSubimage(338, 5, 75, 75);
+        BufferedImage whitePawn = spriteSheet.getSubimage(420, 5, 75, 75);
+
+        BufferedImage blackKing = spriteSheet.getSubimage(5, 89, 75, 75);
+        BufferedImage blackQueen = spriteSheet.getSubimage(88, 89, 75, 75);
+        BufferedImage blackBishop = spriteSheet.getSubimage(171, 89, 75, 75);
+        BufferedImage blackKnight = spriteSheet.getSubimage(254, 89, 75, 75);
+        BufferedImage blackRook = spriteSheet.getSubimage(338, 89, 75, 75);
+        BufferedImage blackPawn = spriteSheet.getSubimage(420, 89, 75, 75);
+
+        spriteArray[0][0] = new ImageIcon(blackKing);
+        spriteArray[0][1] = new ImageIcon(blackQueen);
+        spriteArray[0][2] = new ImageIcon(blackBishop);
+        spriteArray[0][3] = new ImageIcon(blackKnight);
+        spriteArray[0][4] = new ImageIcon(blackRook);
+        spriteArray[0][5] = new ImageIcon(blackPawn);
+        spriteArray[1][0] = new ImageIcon(whiteKing);
+        spriteArray[1][1] = new ImageIcon(whiteQueen);
+        spriteArray[1][2] = new ImageIcon(whiteBishop);
+        spriteArray[1][3] = new ImageIcon(whiteKnight);
+        spriteArray[1][4] = new ImageIcon(whiteRook);
+        spriteArray[1][5] = new ImageIcon(whitePawn);
+    }
+
+    public ImageIcon getSprite(PieceType pieceType, ChessColor color) {
+        int aux = 0;
+        if (color == WHITE) aux = 1;
+        
+        switch (pieceType) {
+            case KING:
+                return (spriteArray[aux][0]);
+
+            case QUEEN:
+                return (spriteArray[aux][1]);
+
+            case BISHOP:
+                return (spriteArray[aux][2]);
+
+            case KNIGHT:
+                return (spriteArray[aux][3]);
+
+            case ROOK:
+                return (spriteArray[aux][4]);
+
+            case PAWN:
+                return (spriteArray[aux][5]);
+        }
+        return null;
     }
 }
