@@ -17,6 +17,8 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -62,6 +64,7 @@ public class MainView{
     //sprites
     BufferedImage spriteSheet;
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
+    ImageIcon randomColorIcon;
     
     public MainView(MainController mainControl, int frameHeight, int frameWidth) throws IOException {
         this.mainControl = mainControl;
@@ -78,9 +81,7 @@ public class MainView{
         mainFrame.add(mainPanel);
 
         //load sprite sheet and process it
-        spriteSheet = ImageIO.read(getClass().
-                getResource("/images/Chess_pieces.png"));
-        createSpriteArray();
+        createSprites();
         
         //create components of frame
         createMenuBar();
@@ -158,7 +159,7 @@ public class MainView{
         blackColorButton = new JButton(getSprite(KING,BLACK));
         iconOnlyButton(blackColorButton);
         
-        randomColorButton = new JButton("Random");
+        randomColorButton = new JButton(randomColorIcon);
         iconOnlyButton(randomColorButton);
         whiteColorButton.addActionListener(mainControl);
         blackColorButton.addActionListener(mainControl);
@@ -193,8 +194,14 @@ public class MainView{
         aboutDialog.add(versionLabel); 
     }
 
-    private void createSpriteArray() {
+    private void createSprites() {
     
+        try {
+            spriteSheet = ImageIO.read(getClass().
+                    getResource("/images/Chess_pieces.png"));
+        } catch (IOException ex) {
+            Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+        }        
         BufferedImage whiteKing = spriteSheet.getSubimage(5, 5, 75, 75);
         BufferedImage whiteQueen = spriteSheet.getSubimage(88, 5, 75, 75);
         BufferedImage whiteBishop = spriteSheet.getSubimage(171, 5, 75, 75);
@@ -221,6 +228,13 @@ public class MainView{
         spriteArray[1][3] = new ImageIcon(whiteKnight);
         spriteArray[1][4] = new ImageIcon(whiteRook);
         spriteArray[1][5] = new ImageIcon(whitePawn);
+
+        try {
+        randomColorIcon =new ImageIcon(ImageIO.read(getClass().
+                                    getResource("/images/random_icon.png")));
+        } catch (IOException ex) {
+            Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public ImageIcon getSprite(PieceType pieceType, ChessColor color) {
