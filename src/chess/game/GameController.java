@@ -46,7 +46,8 @@ public class GameController {
         whitePlayer.getNextMove();
     }
             
-    public void nextMove(Move move){        
+    public void nextMove(ChessColor color, Move move){        
+        if(color != game.getPlayersTurn()) return;
         if(game.executeMove(move)){
             checkmate = game.isCheckmate();
             draw = game.isDraw();

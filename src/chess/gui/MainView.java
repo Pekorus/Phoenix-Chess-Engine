@@ -17,8 +17,6 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -28,6 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
@@ -60,7 +59,7 @@ public class MainView{
     
     //about dialog
     final JDialog aboutDialog = new JDialog();
-
+    
     //sprites
     BufferedImage spriteSheet;
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
@@ -155,14 +154,14 @@ public class MainView{
 
         whiteColorButton = new JButton(getSprite(KING,WHITE));
         iconOnlyButton(whiteColorButton);
+        whiteColorButton.addActionListener(mainControl);
         
         blackColorButton = new JButton(getSprite(KING,BLACK));
         iconOnlyButton(blackColorButton);
+        blackColorButton.addActionListener(mainControl);
         
         randomColorButton = new JButton(randomColorIcon);
         iconOnlyButton(randomColorButton);
-        whiteColorButton.addActionListener(mainControl);
-        blackColorButton.addActionListener(mainControl);
         randomColorButton.addActionListener(mainControl);
 
         colorChoiceButtons.add(whiteColorButton);
@@ -200,7 +199,7 @@ public class MainView{
             spriteSheet = ImageIO.read(getClass().
                     getResource("/images/Chess_pieces.png"));
         } catch (IOException ex) {
-            Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+           loadError("Chess_Pieces.png");
         }        
         BufferedImage whiteKing = spriteSheet.getSubimage(5, 5, 75, 75);
         BufferedImage whiteQueen = spriteSheet.getSubimage(88, 5, 75, 75);
@@ -233,7 +232,7 @@ public class MainView{
         randomColorIcon =new ImageIcon(ImageIO.read(getClass().
                                     getResource("/images/random_icon.png")));
         } catch (IOException ex) {
-            Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+           loadError("random_icon.png");
         }
     }
 
@@ -261,5 +260,13 @@ public class MainView{
                 return (spriteArray[aux][5]);
         }
         return null;
+    }
+
+    private void loadError(String string) {
+        JOptionPane.showMessageDialog(mainFrame, "Could not load data. "
+                +string+" seems to be missing. Game will be shut down.", 
+                "Loading Failure", JOptionPane.ERROR_MESSAGE);
+    
+        System.exit(1);
     }
 }

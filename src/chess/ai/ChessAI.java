@@ -24,6 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
 /**
  *
@@ -50,13 +55,12 @@ public class ChessAI implements Player {
     
     private final GameController controller;
     private final ChessGame ownGame;
-    private ChessRules rules;
-    private Board board;
+    private final ChessRules rules;
+    private final Board board;
     private ArrayList<Piece> ownPieces;
     private ArrayList<Piece> enemyPieces;
-    private ChessColor ownColor;
+    private final ChessColor ownColor;
     private ChessTreeNode currentTree;
-    
     
     public ChessAI(GameController controller, ChessColor ownColor) {
         this.controller = controller;
@@ -238,13 +242,31 @@ public class ChessAI implements Player {
 
     @Override
     public void getNextMove() {
-        Move nextMove = findNextMove();
-        System.out.println("GameValue: "+currentTree.getGameValue());
-        System.out.println("Evaluated Positions: "+evaluatedPositions);
-        System.out.println("PawnStructWhite: "+Arrays.toString(board.getPawnStruct(WHITE)));
-        System.out.println("PawnStructBlack: "+Arrays.toString(board.getPawnStruct(BLACK)));        
-        evaluatedPositions=0;
-        controller.nextMove(nextMove);
+        SwingWorker moveCalculation = new SwingWorker<Move, Void>() {
+            @Override
+            public Move doInBackground() {
+                Move nextMove = findNextMove();
+                return nextMove;
+            }
+
+            @Override
+            public void done() {
+                System.out.println("GameValue: " + currentTree.getGameValue());
+                System.out.println("Evaluated Positions: " + evaluatedPositions);
+                System.out.println("PawnStructWhite: " + Arrays.toString(board.getPawnStruct(WHITE)));
+                System.out.println("PawnStructBlack: " + Arrays.toString(board.getPawnStruct(BLACK)));
+                evaluatedPositions = 0;
+                try {
+                    controller.nextMove(ownColor, get());
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ChessAI.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ExecutionException ex) {
+                    Logger.getLogger(ChessAI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        moveCalculation.execute();
+        //Move nextMove = findNextMove();
     }
 
     private int knightBonus(Coordinate coord) {

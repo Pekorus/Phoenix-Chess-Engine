@@ -19,7 +19,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import static javax.swing.BoxLayout.Y_AXIS;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -100,8 +103,8 @@ public class ChessGuiView extends JFrame{
                 }
             }
         }
-    }
-
+    }    
+            
     public void setVisible(Boolean b) {
         mainView.setVisible(b);
     }

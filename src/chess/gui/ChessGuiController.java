@@ -99,13 +99,13 @@ public class ChessGuiController implements ActionListener, Player {
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
                         view.paintFieldColor(paintedCoord1);
-                        gameControl.nextMove(nextMove);                                        
+                        gameControl.nextMove(ownColor, nextMove);                                        
                     } else if(pressedCoord1 != null && pressedCoord2 == null) {
                         pressedCoord2 = new Coordinate(a, b);
                         paintedCoord2 = new Coordinate(i, j);
                         view.paintFieldColor(paintedCoord2);
                         createMove();
-                        gameControl.nextMove(nextMove);
+                        gameControl.nextMove(ownColor, nextMove);
                     }
                 }
             }
