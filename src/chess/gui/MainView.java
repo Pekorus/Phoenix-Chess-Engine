@@ -186,8 +186,8 @@ public class MainView{
         aboutDialog.setSize(400, 150);
         aboutDialog.setModal(true);
         
-        JLabel versionLabel = new JLabel ("<html>Chess made by Phoenix<br/>"
-                + "Version: 0.5.1<br/>Send bug reports to deimama@deiemail.com"
+        JLabel versionLabel = new JLabel ("<html>Chess made by Peter Korusiewicz<br/>"
+                + "Version: 0.5.5<br/>Send bug reports to peter.korusiewicz@gmail.com"
                 + "</html>", SwingConstants.CENTER);
         aboutDialog.add(versionLabel); 
     }
