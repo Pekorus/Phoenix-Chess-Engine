@@ -29,12 +29,12 @@ public class GameController {
         
         switch(gameType){            
             case WHITEPLAYER:
-            whitePlayer = new ChessGuiController(this, mainView, WHITE, "Player1", "ChessAI");                
+            whitePlayer = new ChessGuiController(this, mainView, WHITE, "Human", "ChessAI");                
             blackPlayer = new ChessAI(this, BLACK);
             break;
         
             case BLACKPLAYER:
-            blackPlayer = new ChessGuiController(this, mainView, BLACK, "ChessAI", "Player1");                
+            blackPlayer = new ChessGuiController(this, mainView, BLACK, "Human", "ChessAI");                
             whitePlayer = new ChessAI(this, WHITE);                
             break;
         }
