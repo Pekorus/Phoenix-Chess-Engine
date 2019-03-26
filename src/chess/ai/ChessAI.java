@@ -27,7 +27,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 /**
@@ -57,8 +56,8 @@ public class ChessAI implements Player {
     private final ChessGame ownGame;
     private final ChessRules rules;
     private final Board board;
-    private ArrayList<Piece> ownPieces;
-    private ArrayList<Piece> enemyPieces;
+    private final ArrayList<Piece> ownPieces;
+    private final ArrayList<Piece> enemyPieces;
     private final ChessColor ownColor;
     private ChessTreeNode currentTree;
     
@@ -134,7 +133,8 @@ public class ChessAI implements Player {
     private ArrayList<Move> allPossibleMoves(ArrayList<Piece> pieces) {
         ArrayList<Move> allMoves = new ArrayList<>();
         for(Piece piece : pieces){
-            allMoves.addAll(rules.getPossibleMoves(piece));
+        //System.out.println(piece+"");
+        allMoves.addAll(rules.getPossibleMoves(piece));
         }
     return allMoves;
     }
@@ -155,8 +155,8 @@ public class ChessAI implements Player {
             ArrayList<Move> allMoves;            
             //calculate all possible moves if not already done
             if(!chessTree.hasChildren()){
-                if(maximizing) allMoves = allPossibleMoves(ownPieces);
-                else allMoves= allPossibleMoves(enemyPieces);
+                if(maximizing) allMoves = allPossibleMoves((ArrayList<Piece>) ownPieces);
+                else allMoves= allPossibleMoves((ArrayList<Piece>) enemyPieces);
                 for(Move move : allMoves){
                     chessTree.addChildNode(new ChessTreeNode(move,Double.NEGATIVE_INFINITY,chessTree));
                 }

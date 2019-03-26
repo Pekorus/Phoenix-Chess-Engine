@@ -41,19 +41,19 @@ public class ChessRules {
     
     public boolean validateMove(Move move, ChessGame game) {
         
-        //preparation and fail safes
+        //preparation and fail safes (commented out to improve AI performance)
         if(move==null) return false;
         Piece piece = game.getBoard().getPieceOnCoord(move.getCoordFrom());        
-        if (piece==null) return false;
+        //if (piece==null) return false;
         PieceType pieceType = piece.getPiecetype();
-        if(pieceType==null) return false;
+        //if(pieceType==null) return false;
         ChessColor ownColor= piece.isColor();
         if(ownColor!= game.getPlayersTurn()) return false;
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        if(coordFrom==null) return false;
-        if(coordTo==null) return false;
-        if(!coordFrom.equals(piece.getCoord())) return false;
+        //if(coordFrom==null) return false;
+        //if(coordTo==null) return false;
+        //if(!coordFrom.equals(piece.getCoord())) return false;
         
         switch(move.getMoveType()){
             case NORMAL:
@@ -102,8 +102,9 @@ public class ChessRules {
         }
         break;    
         
-        case ENPASSANT:            
-        Piece optPiece = game.getBoard().getPieceOnCoord(move.getOptPieceCoord());
+        case ENPASSANT:                    
+        Piece optPiece = game.getBoard().getPieceOnCoord(
+                          move.getCoordTo().takenCoordEP(piece.isColor()));
         if(optPiece==null) return false;
         if(pieceType!=PAWN) return false;
         if(optPiece.getPiecetype()!=PAWN) return false;
@@ -139,7 +140,6 @@ public class ChessRules {
         if(coordTo.getY()==2 && board.isOccupied(auxCoord)) return false;
         break;       
         }
-    
         board.executeMove(move);
         Piece king = board.getKing(game.getPlayersTurn());
         if(!isAttackedBy(king.getCoord(), ownColor.getInverse(), false).isEmpty()){
@@ -301,8 +301,7 @@ public class ChessRules {
         threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color, false);
         for(Piece threat : threatensCheckGiver){
             if(validateMove(new Move(threat.getPiecetype(), threat.getCoord(),
-                    givesCheck.getCoord(), TAKE,
-                                      givesCheck.getCoord(), null), game)) 
+                    givesCheck.getCoord(), TAKE), game)) 
             return false;
         }
         //is it possible to block the check from queen, rook, bishop?
@@ -527,6 +526,28 @@ public class ChessRules {
                 auxMove=createValidMove(piece,doubleStep, null);
                 if(auxMove!=null) moveList.add(auxMove);               
             }
+            
+            //en passant
+            if(board.enPassantPossible()){
+                //TODO: EnPASSANTDIRECTION in dir klasse
+                ArrayList<Direction> enPassantDir = new ArrayList<>();                            
+                if(pieceColor==WHITE){ 
+                    enPassantDir.add(SW);
+                    enPassantDir.add(SE);
+                }
+                else{ 
+                    enPassantDir.add(NW);
+                    enPassantDir.add(NE);
+                }
+                for(Direction auxDir : enPassantDir){
+                    auxCoord = startCoord.getCoordInDir(auxDir);                
+                    if(auxCoord!=null){
+                        auxMove=createValidMove(piece,auxCoord, ENPASSANT);
+                        if(auxMove!=null) moveList.add(auxMove);
+                    }                
+                }
+            }
+            
             break;          
         }
         return moveList;
@@ -556,15 +577,17 @@ public class ChessRules {
         if(!board.isOccupied(coordTo)){
             if(arg==CASTLE) createdMove=new Move(piece.getPiecetype(),piece.getCoord(),
                     coordTo, CASTLE);
-            else createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, NORMAL, null, 
+            else if(arg==ENPASSANT) createdMove = new Move(piece.getPiecetype(),piece.getCoord(),
+                    coordTo, ENPASSANT);
+            else createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, NORMAL, 
                                                              (PieceType) arg);
         }
         else{
-            if(arg==CASTLE) return null;
-            createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, TAKE, 
-                              coordTo, (PieceType) arg);
+            if(arg==CASTLE || arg==ENPASSANT) return null;
+            createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, TAKE, (PieceType) arg);
         }   
     if(validateMove(createdMove, game)) return createdMove;
     return null;
     }
+
 }

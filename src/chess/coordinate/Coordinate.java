@@ -5,6 +5,8 @@
  */
 package chess.coordinate;
 
+import chess.board.ChessColor;
+import static chess.board.ChessColor.WHITE;
 import static chess.coordinate.Direction.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
@@ -162,5 +164,10 @@ public class Coordinate {
         return ""+((char) (104-this.y))+(this.x+1);     
     }
 
-    
+    public Coordinate takenCoordEP(ChessColor color) {
+        if(color==WHITE){
+            return this.getCoordInDir(N);
+        }
+        else return this.getCoordInDir(S);
+    }    
 }

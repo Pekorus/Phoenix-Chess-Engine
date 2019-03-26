@@ -115,7 +115,6 @@ public class ChessGuiController implements ActionListener, Player {
     private void createMove() {
         Piece piece1 = view.pieceArray[pressedCoord1.getX()][pressedCoord1.getY()];
         Piece piece2 = view.pieceArray[pressedCoord2.getX()][pressedCoord2.getY()];
-        Coordinate auxCoord;
 
         if (piece1 == null) {
             return;
@@ -127,12 +126,11 @@ public class ChessGuiController implements ActionListener, Player {
                     && pawnPromotionValid()){
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialog.setVisible(true);
-                nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, TAKE,
-                        pressedCoord2, nextPromotion);
+                nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, TAKE, nextPromotion);
             } //usual taking
             else {
                 nextMove = new Move(piece1.getPiecetype(), pressedCoord1,
-                        pressedCoord2, TAKE, pressedCoord2, null);
+                        pressedCoord2, TAKE, null);
             }
         } //CASTLE
         else if (piece1.getPiecetype() == KING
@@ -141,9 +139,7 @@ public class ChessGuiController implements ActionListener, Player {
         } /* ENPASSANT */ 
         else if (piece1.getPiecetype() == PAWN
                 && pressedCoord1.diagonalLineDir(pressedCoord2) != null) {
-            auxCoord = pressedCoord1.enPassantTake(pressedCoord2);
-            nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, ENPASSANT,
-                    auxCoord, null);
+            nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, ENPASSANT, null);
         } //NORMAL
         else {
             //pawn promotion
@@ -152,7 +148,7 @@ public class ChessGuiController implements ActionListener, Player {
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialog.setVisible(true);
                 nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2,
-                        NORMAL, null, nextPromotion);
+                        NORMAL, nextPromotion);
             } //usual move
             else {
                 nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, NORMAL);

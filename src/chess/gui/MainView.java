@@ -6,8 +6,7 @@
 package chess.gui;
 
 import chess.board.ChessColor;
-import static chess.board.ChessColor.BLACK;
-import static chess.board.ChessColor.WHITE;
+import static chess.board.ChessColor.*;
 import chess.board.PieceType;
 import static chess.board.PieceType.KING;
 import static chess.gui.ChessGuiView.iconOnlyButton;
@@ -188,7 +187,7 @@ public class MainView{
         aboutDialog.setModal(true);
         
         JLabel versionLabel = new JLabel ("<html>Chess made by Phoenix<br/>"
-                + "Version: 0.5.0<br/>Send bug reports to deimama@deiemail.com"
+                + "Version: 0.5.1<br/>Send bug reports to deimama@deiemail.com"
                 + "</html>", SwingConstants.CENTER);
         aboutDialog.add(versionLabel); 
     }

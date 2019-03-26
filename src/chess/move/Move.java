@@ -20,7 +20,6 @@ public class Move {
     private final Coordinate coordFrom;
     private final Coordinate coordTo;
     private final MoveType moveType;
-    private final Coordinate optPieceCoord;
     private final PieceType promoteTo;
     
     public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
@@ -29,17 +28,15 @@ public class Move {
         this.coordFrom = coordFrom;
         this.coordTo = coordTo;
         this.moveType = moveType;
-        this.optPieceCoord = null;
         this.promoteTo = null;
     }
 
-    public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
-            MoveType moveType, Coordinate optionalCoord, PieceType promoteTo) {
+   public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
+            MoveType moveType, PieceType promoteTo) {
         this.pieceType = pieceType;
         this.coordFrom = coordFrom;
         this.coordTo = coordTo;
         this.moveType = moveType; 
-        this.optPieceCoord = optionalCoord;
         this.promoteTo=promoteTo;
     }
     
@@ -57,14 +54,6 @@ public class Move {
 
     public MoveType getMoveType() {
         return moveType;
-    }
-    
-    public Coordinate getOptionalPieceCoord(){
-        return optPieceCoord;
-    }   
-
-    public Coordinate getOptPieceCoord() {
-        return optPieceCoord;
     }
 
     public PieceType getPromoteTo() {
@@ -109,9 +98,6 @@ public class Move {
             return false;
         }
         if (this.moveType != other.moveType) {
-            return false;
-        }
-        if (!Objects.equals(this.optPieceCoord, other.optPieceCoord)) {
             return false;
         }
         if (this.promoteTo != other.promoteTo) {

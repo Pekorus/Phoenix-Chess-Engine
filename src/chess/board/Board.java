@@ -40,7 +40,7 @@ public class Board {
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Piece piece = getPieceOnCoord(coordFrom);
-        Piece optPiece = getPieceOnCoord(move.getOptPieceCoord());
+        Piece optPiece;
         
         switch(move.getMoveType()){
             case NORMAL:
@@ -52,6 +52,7 @@ public class Board {
             break;
             
             case TAKE:          
+            optPiece = getPieceOnCoord(coordTo);
             move(piece, coordFrom, coordTo);
             optPiece.setCoord(null);            
             takenPieces.push(optPiece);
@@ -78,9 +79,10 @@ public class Board {
             //update pawnStruct
             decreasePawn(piece.isColor(), coordFrom.getY());
             increasePawn(piece.isColor(), coordTo.getY());            
-            decreasePawn(optPiece.isColor(), move.getOptPieceCoord().getY());
+            decreasePawn(piece.isColor().getInverse(), coordTo.getY());
             //clear pawn that is taken by en passant
-            this.clearField(move.getOptionalPieceCoord());            
+            optPiece = getPieceOnCoord(coordTo.takenCoordEP(piece.isColor())); 
+            this.clearField(coordTo.takenCoordEP(piece.isColor()));            
             optPiece.setCoord(null);          
             takenPieces.push(optPiece);            
             removePieceFromList(optPiece);
@@ -166,8 +168,9 @@ public class Board {
             increasePawn(piece.isColor(), coordFrom.getY());            
             increasePawn(piece.isColor().getInverse(), coordTo.getY());
             //reset taken pawn
-            this.setField(takenPieces.peek(), move.getOptionalPieceCoord());            
-            takenPieces.peek().setCoord(move.getOptionalPieceCoord());                       
+            Coordinate optCoord = coordTo.takenCoordEP(piece.isColor());
+            this.setField(takenPieces.peek(), optCoord);            
+            takenPieces.peek().setCoord(optCoord);                       
             addPieceToList(takenPieces.pop());
             break;
             
@@ -294,4 +297,9 @@ public class Board {
         if(color==WHITE) return whiteCastled;
         else return blackCastled;
     } 
+
+    public boolean enPassantPossible() {
+        return true;
+
+    }
 }

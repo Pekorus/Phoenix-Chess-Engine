@@ -99,7 +99,10 @@ public class Piece {
         this.coordinate = coordinate;
     }
 
-
+    @Override
+    public String toString() {
+        return "Piece{" + "piecetype=" + piecetype + ", coordinate=" + coordinate + ", color=" + color + ", moveCounter=" + moveCounter + '}';
+    }
     
     
 }
