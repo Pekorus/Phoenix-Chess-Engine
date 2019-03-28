@@ -28,7 +28,9 @@ public class Board {
     private boolean whiteCastled, blackCastled;
     private Piece whiteKing, blackKing;
     
+    //fields for hashing, hashValue is updated in execute/unexecute move
     private long[][][] zobrisMatrix;
+    private long hashValue;
     
     public Board() {
         this.board = new Piece[8][8];
@@ -37,6 +39,7 @@ public class Board {
         whiteCastled = false;
         blackCastled = false;
         initializeZobrisMatrix(1);
+        hashValue = this.zobrisHashBoard();
     }
     
     public void executeMove(Move move){
@@ -47,21 +50,33 @@ public class Board {
         
         switch(move.getMoveType()){
             case NORMAL:
+            updateHashValue(piece, coordFrom);                        
             move(piece, coordFrom, coordTo);
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(move.getPromoteTo());
                 decreasePawn(piece.isColor(), coordTo.getY());
             }
+            updateHashValue(piece, coordTo);
             break;
             
             case TAKE:          
+            updateHashValue(piece, coordFrom);
             optPiece = getPieceOnCoord(coordTo);
             move(piece, coordFrom, coordTo);
             optPiece.setCoord(null);            
             takenPieces.push(optPiece);
             //remove taken piece from piece list
             removePieceFromList(optPiece);            
+           
+            //promotion
+            if(move.getPromoteTo()!=null){
+                piece.setPiecetype(move.getPromoteTo());
+                decreasePawn(piece.isColor(), coordTo.getY());
+            }            
             
+            updateHashValue(piece, coordTo);            
+            updateHashValue(optPiece, coordTo);           
+           
             //update PawnStruct
             if(optPiece.getPiecetype()==PAWN){
                 decreasePawn(optPiece.isColor(), coordTo.getY());
@@ -70,25 +85,27 @@ public class Board {
                 decreasePawn(piece.isColor(), coordFrom.getY());
                 increasePawn(piece.isColor(), coordTo.getY());
             }
-            //promotion
-            if(move.getPromoteTo()!=null){
-                piece.setPiecetype(move.getPromoteTo());
-                decreasePawn(piece.isColor(), coordTo.getY());
-            }
             break;
             
             case ENPASSANT:          
             move(piece, coordFrom, coordTo);            
+            //clear pawn that is taken by en passant
+            Coordinate optCoord = coordTo.takenCoordEP(piece.isColor());
+            optPiece = getPieceOnCoord(optCoord); 
+            this.clearField(optCoord);            
+            optPiece.setCoord(null);          
+            takenPieces.push(optPiece);            
+            removePieceFromList(optPiece);
+            
+            //updateHashValue
+            updateHashValue(piece, coordFrom);
+            updateHashValue(piece, coordTo);            
+            updateHashValue(optPiece, optCoord); 
+            
             //update pawnStruct
             decreasePawn(piece.isColor(), coordFrom.getY());
             increasePawn(piece.isColor(), coordTo.getY());            
             decreasePawn(piece.isColor().getInverse(), coordTo.getY());
-            //clear pawn that is taken by en passant
-            optPiece = getPieceOnCoord(coordTo.takenCoordEP(piece.isColor())); 
-            this.clearField(coordTo.takenCoordEP(piece.isColor()));            
-            optPiece.setCoord(null);          
-            takenPieces.push(optPiece);            
-            removePieceFromList(optPiece);
             break;
             
             case CASTLE:
@@ -102,6 +119,12 @@ public class Board {
             move(rook, rookFrom, rookTo);
             rook.increaseMoveCounter();
             inverseCastleflag(piece.isColor());
+            
+            //update hash value
+            updateHashValue(piece, coordFrom);
+            updateHashValue(piece, coordTo);            
+            updateHashValue(rook, rookFrom); 
+            updateHashValue(rook, rookTo);            
             break;            
         }
         piece.increaseMoveCounter();
@@ -131,17 +154,19 @@ public class Board {
         
         switch(move.getMoveType()){
             case NORMAL:
+            updateHashValue(piece, coordTo);
             //reverse move
             move(piece, coordTo, coordFrom);
             //promotion
-            //TODO: unpromote method
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(PAWN);
                 increasePawn(piece.isColor(), coordTo.getY());
             }
+            updateHashValue(piece, coordFrom);
             break;
             
             case TAKE:           
+            updateHashValue(piece, coordTo);            
             move(piece, coordTo, coordFrom);
             //reset taken piece
             Piece takenPiece = takenPieces.pop();
@@ -154,6 +179,10 @@ public class Board {
                 piece.setPiecetype(PAWN);              
                 increasePawn(piece.isColor(), coordTo.getY());
             }
+
+            updateHashValue(piece, coordFrom);
+            updateHashValue(takenPiece, coordTo);
+            
             //update pawnStruct
             if(takenPiece.getPiecetype()==PAWN){
                 increasePawn(takenPiece.isColor(), coordTo.getY());
@@ -166,15 +195,21 @@ public class Board {
             
             case ENPASSANT: 
             move(piece, coordTo, coordFrom);    
+            //reset taken pawn
+            Coordinate optCoord = coordTo.takenCoordEP(piece.isColor());
+            Piece takenPawn = takenPieces.pop();
+            this.setField(takenPawn, optCoord);            
+            takenPawn.setCoord(optCoord);                       
+            addPieceToList(takenPawn);
+            
+            updateHashValue(piece, coordTo);
+            updateHashValue(piece, coordFrom);            
+            updateHashValue(takenPawn, optCoord);             
+            
             //update pawnStruct
             decreasePawn(piece.isColor(), coordTo.getY());
             increasePawn(piece.isColor(), coordFrom.getY());            
-            increasePawn(piece.isColor().getInverse(), coordTo.getY());
-            //reset taken pawn
-            Coordinate optCoord = coordTo.takenCoordEP(piece.isColor());
-            this.setField(takenPieces.peek(), optCoord);            
-            takenPieces.peek().setCoord(optCoord);                       
-            addPieceToList(takenPieces.pop());
+            increasePawn(piece.isColor().getInverse(), coordTo.getY());            
             break;
             
             case CASTLE:
@@ -190,6 +225,11 @@ public class Board {
             move(rook, rookTo, rookFrom);  
             rook.decreaseMoveCounter();
             inverseCastleflag(piece.isColor());
+            
+            updateHashValue(piece, coordTo);
+            updateHashValue(piece, coordFrom);            
+            updateHashValue(rook, rookTo); 
+            updateHashValue(rook, rookFrom);              
             break;           
         }
         piece.decreaseMoveCounter();
@@ -235,7 +275,7 @@ public class Board {
             this.clearField(coordFrom);
             //set figure to new field
             this.setField(piece, coordTo);
-            piece.setCoord(coordTo);
+            piece.setCoord(coordTo);  
     }
 
     public Piece getKing(ChessColor color) {
@@ -324,7 +364,7 @@ public class Board {
     }
     
     /* hash method */
-    public long zobrisHashBoard(){
+    private long zobrisHashBoard(){
         long hash = 0;
         for(int i=0; i<8; i++){
            for(int j=0; j<8; j++){ 
@@ -383,6 +423,14 @@ public class Board {
             }            
         }
         return index;
+    }
+
+    public long getHashValue() {
+        return hashValue;
+    }
+
+    private void updateHashValue(Piece piece, Coordinate coord) {
+        hashValue ^= zobrisMatrix[coord.getX()][coord.getY()][pieceIndex(piece)];
     }
     
 }        

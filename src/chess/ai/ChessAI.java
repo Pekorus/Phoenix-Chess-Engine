@@ -21,7 +21,6 @@ import static java.lang.Boolean.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -252,8 +251,7 @@ public class ChessAI implements Player {
             public void done() {
                 System.out.println("GameValue: " + currentTree.getGameValue());
                 System.out.println("Evaluated Positions: " + evaluatedPositions);
-                System.out.println("Hash value of position: " + board.zobrisHashBoard());
-                System.out.println("Hash value of position: " + Long.toHexString(board.zobrisHashBoard()));
+                System.out.println("Hash value of position: " + Long.toHexString(board.getHashValue()));
                 evaluatedPositions = 0;
                 try {
                     controller.nextMove(ownColor, get());
