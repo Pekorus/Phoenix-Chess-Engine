@@ -10,6 +10,7 @@ import static chess.board.ChessColor.*;
 import static chess.board.PieceType.PAWN;
 import chess.coordinate.Coordinate;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Stack;
 
 /**
@@ -27,6 +28,7 @@ public class Board {
     private boolean whiteCastled, blackCastled;
     private Piece whiteKing, blackKing;
     
+    private long[][][] zobrisMatrix;
     
     public Board() {
         this.board = new Piece[8][8];
@@ -34,6 +36,7 @@ public class Board {
         createPieceLists();      
         whiteCastled = false;
         blackCastled = false;
+        initializeZobrisMatrix(1);
     }
     
     public void executeMove(Move move){
@@ -299,7 +302,87 @@ public class Board {
     } 
 
     public boolean enPassantPossible() {
+        //TODO
         return true;
-
     }
-}
+
+    /* Using Zobris hashing to generate hash code for a chess board state.*/ 
+    private void initializeZobrisMatrix(long seed){
+        
+        /*matrix represents every combination of a chess square (8x8) and 
+        every piece with an index (0-11) specified in method "pieceIndex" */
+        Random randomLong = new Random();
+        zobrisMatrix = new long[8][8][12];
+        //randomLong.setSeed(seed);
+        for(int i=0; i<8; i++){
+           for(int j=0; j<8; j++){ 
+               for(int k=0; k<12; k++){
+                   zobrisMatrix[i][j][k] = randomLong.nextLong();
+               }    
+           }
+        }
+    }
+    
+    /* hash method */
+    public long zobrisHashBoard(){
+        long hash = 0;
+        for(int i=0; i<8; i++){
+           for(int j=0; j<8; j++){ 
+               if(board[i][j]!= null)hash ^= zobrisMatrix[i][j][pieceIndex(board[i][j])];
+           }       
+        }
+        return hash;
+    }   
+    
+    /* auxiliary method to retrieve index of given piece on board for Zobris 
+        matrix*/
+    private int pieceIndex(Piece piece) {
+        int index = -1;
+        if(piece.isColor()==WHITE){
+            switch(piece.getPiecetype()){
+                case KING:
+                   index = 0;
+                   break; 
+                case QUEEN:
+                    index = 1;
+                    break;
+                case BISHOP:
+                    index = 2;
+                    break;
+                case KNIGHT:
+                    index = 3;
+                    break;
+                case ROOK:
+                    index = 4;
+                    break;
+                case PAWN:
+                    index = 5;
+                    break;
+            }
+        }
+        else{
+            switch(piece.getPiecetype()){
+                case KING:
+                   index = 6;
+                   break; 
+                case QUEEN:
+                    index = 7;
+                    break;
+                case BISHOP:
+                    index = 8;
+                    break;
+                case KNIGHT:
+                    index = 9;
+                    break;
+                case ROOK:
+                    index = 10;
+                    break;
+                case PAWN:
+                    index = 11;
+                    break;
+            }            
+        }
+        return index;
+    }
+    
+}        

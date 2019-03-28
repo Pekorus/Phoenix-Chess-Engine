@@ -252,8 +252,8 @@ public class ChessAI implements Player {
             public void done() {
                 System.out.println("GameValue: " + currentTree.getGameValue());
                 System.out.println("Evaluated Positions: " + evaluatedPositions);
-                System.out.println("PawnStructWhite: " + Arrays.toString(board.getPawnStruct(WHITE)));
-                System.out.println("PawnStructBlack: " + Arrays.toString(board.getPawnStruct(BLACK)));
+                System.out.println("Hash value of position: " + board.zobrisHashBoard());
+                System.out.println("Hash value of position: " + Long.toHexString(board.zobrisHashBoard()));
                 evaluatedPositions = 0;
                 try {
                     controller.nextMove(ownColor, get());

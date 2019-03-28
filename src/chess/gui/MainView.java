@@ -36,6 +36,8 @@ import javax.swing.WindowConstants;
  */
 public class MainView{
     
+    private static final String version = "0.5.9";
+    
     //fields for main frame
     private final MainController mainControl;
     private final JFrame mainFrame;
@@ -187,7 +189,7 @@ public class MainView{
         aboutDialog.setModal(true);
         
         JLabel versionLabel = new JLabel ("<html>Chess made by Peter Korusiewicz<br/>"
-                + "Version: 0.5.5<br/>Send bug reports to peter.korusiewicz@gmail.com"
+                + "Version: "+version+"<br/>Send bug reports to peter.korusiewicz@gmail.com"
                 + "</html>", SwingConstants.CENTER);
         aboutDialog.add(versionLabel); 
     }

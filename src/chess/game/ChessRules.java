@@ -420,7 +420,8 @@ public class ChessRules {
     }
 
     private boolean isThreeRepetition() {
-        //TODO:
+        //TODO
+        
         return false;
     }
 
