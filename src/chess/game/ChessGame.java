@@ -26,6 +26,7 @@ public class ChessGame{
     private int drawTurnTimer;
     private final ChessRules rules;
     private final LinkedList<Move> moveList= new LinkedList<>();
+    private final LinkedList<Long> recentPositions;
     
     public ChessGame() {
         this.board = new Board(); 
@@ -34,6 +35,8 @@ public class ChessGame{
         this.drawTurnTimer=0;
         this.rules = new ChessRules(this);
         this.playersTurn = WHITE;
+        this.recentPositions = new LinkedList<>();
+        recentPositions.add(board.getHashValue());
     }    
 
     public boolean executeMove(Move move){
@@ -41,6 +44,7 @@ public class ChessGame{
         if(!rules.validateMove(move, this)) return false;
         board.executeMove(move);
         moveList.add(move);
+        recentPositions.add(board.getHashValue());
         drawTurnTimer++;
         if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
@@ -52,6 +56,7 @@ public class ChessGame{
     public void executeMoveWithoutValidation(Move move){
         board.executeMove(move);
         moveList.add(move);
+        recentPositions.add(board.getHashValue());
         drawTurnTimer++;
         if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
@@ -61,6 +66,7 @@ public class ChessGame{
     public void unexecuteMove(Move move){
         board.unexecuteMove(move);
         moveList.remove(move);
+        recentPositions.removeLast();
         drawTurnTimer--;
         //TODO: draw turn timer reset
         if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
@@ -129,4 +135,10 @@ public class ChessGame{
     public ChessRules getRules(){
         return rules;
     }
+
+    public LinkedList<Long> getRecentPositions() {
+        return recentPositions;
+    }
+
+    
 }

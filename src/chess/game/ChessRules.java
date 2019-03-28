@@ -420,9 +420,16 @@ public class ChessRules {
     }
 
     private boolean isThreeRepetition() {
-        //TODO
-        
-        return false;
+        LinkedList<Long> positions = game.getRecentPositions();
+        long hashValue = positions.removeLast();
+        boolean ret = false;
+        if(!positions.contains(hashValue)){
+            positions.add(hashValue);
+            return false;
+        }
+        ret=positions.indexOf(hashValue)!= positions.lastIndexOf(hashValue);
+        positions.add(hashValue);
+        return ret;
     }
 
     private ArrayList<Piece> hasMinorPiece(ArrayList<Piece> pieceList) {
