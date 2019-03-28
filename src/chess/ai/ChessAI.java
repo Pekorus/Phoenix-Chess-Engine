@@ -133,8 +133,7 @@ public class ChessAI implements Player {
     private ArrayList<Move> allPossibleMoves(ArrayList<Piece> pieces) {
         ArrayList<Move> allMoves = new ArrayList<>();
         for(Piece piece : pieces){
-        //System.out.println(piece+"");
-        allMoves.addAll(rules.getPossibleMoves(piece));
+            allMoves.addAll(rules.getPossibleMoves(piece));
         }
     return allMoves;
     }
@@ -288,8 +287,8 @@ public class ChessAI implements Player {
                 board.getPawnStruct(ownColor, file+1)==0)
             bonus -= ISOLATED_PAWN_MALUS;
         //pawn rank
-        //if(pawn.isColor()==WHITE) bonus += 2*rank;
-        //else bonus+= 2*(7-rank);
+        //if(pawn.isColor()==WHITE) bonus += 3*rank;
+        //else bonus+= 3*(7-rank);
     
         return bonus;
     }

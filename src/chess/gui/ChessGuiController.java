@@ -146,6 +146,7 @@ public class ChessGuiController implements ActionListener, Player {
             if (piece1.getPiecetype() == PAWN && piece1.isColor()==ownColor
                     && pawnPromotionValid()) {
                 view.setPromoteDialogColor(piece1.isColor());
+                view.promoteDialogSetLocation();
                 view.promoteDialog.setVisible(true);
                 nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2,
                         NORMAL, nextPromotion);

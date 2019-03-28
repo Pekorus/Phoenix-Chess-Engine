@@ -113,7 +113,6 @@ public class ChessGuiView extends JFrame{
         promoteDialog.setTitle("Pawn Promotion");
         promoteDialog.setSize(400, 150);
         promoteDialog.setModal(true);
-        promoteDialog.setLocationRelativeTo(mainView.getFrame());
         
         queenButton = new JButton(mainView.getSprite(QUEEN, WHITE));
         iconOnlyButton(queenButton);
@@ -252,4 +251,7 @@ public class ChessGuiView extends JFrame{
         else resultLabel.setText("0.5   -   0.5");
     }
 
+    void promoteDialogSetLocation() {
+        promoteDialog.setLocationRelativeTo(mainView.getFrame());
+    }    
 }
