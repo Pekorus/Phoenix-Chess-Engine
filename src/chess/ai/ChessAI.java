@@ -75,7 +75,7 @@ public class ChessAI implements Player {
     @Override
     public void update(ChessGame game, Move lastMove, Object arg) {
         if(lastMove!=null){
-            ownGame.executeMove(lastMove);
+            ownGame.executeMove(lastMove, false);
             if(currentTree.hasChildren()) currentTree= currentTree.getSubTreeByMove(lastMove);
         }
     }    
@@ -168,7 +168,7 @@ public class ChessAI implements Player {
             else auxValue = Double.POSITIVE_INFINITY;
             //build nodes recursive with a cutoff thorugh alpha-beta-pruning
             for(ChessTreeNode node : chessTree.getChildren()){
-                ownGame.executeMoveWithoutValidation(node.getMove());
+                ownGame.executeMove(node.getMove(), false);
                 if(maximizing){                    
                     auxValue = max(auxValue, builtTree(node, alpha, beta, FALSE));
                     ownGame.unexecuteMove(node.getMove());                    
@@ -255,9 +255,7 @@ public class ChessAI implements Player {
                 evaluatedPositions = 0;
                 try {
                     controller.nextMove(ownColor, get());
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(ChessAI.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ExecutionException ex) {
+                } catch (InterruptedException | ExecutionException ex) {
                     Logger.getLogger(ChessAI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }

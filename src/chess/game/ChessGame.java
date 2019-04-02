@@ -39,28 +39,17 @@ public class ChessGame{
         recentPositions.add(board.getHashValue());
     }    
 
-    public boolean executeMove(Move move){
-        //class game rules
-        if(!rules.validateMove(move, this)) return false;
+    public boolean executeMove(Move move, boolean validationMode){
+        if(validationMode && !rules.validateMove(move, this)) return false;
         board.executeMove(move);
         moveList.add(move);
         recentPositions.add(board.getHashValue());
+        if(recentPositions.size()>20) recentPositions.removeFirst();
         drawTurnTimer++;
         if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
         this.nextPlayer();        
         return true;
-    }
-
-    //improve performance in AI
-    public void executeMoveWithoutValidation(Move move){
-        board.executeMove(move);
-        moveList.add(move);
-        recentPositions.add(board.getHashValue());
-        drawTurnTimer++;
-        if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
-            drawTurnTimer=0;
-        this.nextPlayer(); 
     }
     
     public void unexecuteMove(Move move){

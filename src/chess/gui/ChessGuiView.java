@@ -18,6 +18,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.util.LinkedList;
 import javax.swing.*;
@@ -29,7 +31,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
  *
  * @author Phoenix
  */
-public class ChessGuiView extends JFrame{
+public class ChessGuiView extends JFrame {
 
     private final ChessGuiController guiController;
     private final ChessColor ownColor;
@@ -38,15 +40,15 @@ public class ChessGuiView extends JFrame{
     //frames, panels, dialogs
     private final MainView mainView;
     private final JPanel borderPanel = new JPanel(new BorderLayout());
-    private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));   
-    private final JPanel downPanel= new JPanel();
+    private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));
+    private final JPanel downPanel = new JPanel();
     //right side
     private final JPanel rightSidePanel = new JPanel();
     private final JLabel resultLabel = new JLabel();
-    private final JPanel displayMovesPanel= new JPanel();
+    private final JPanel displayMovesPanel = new JPanel();
     private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
     final JDialog promoteDialog = new JDialog();
-    
+
     //buttons
     final JButton[][] buttonArray = new JButton[8][8];
     JButton queenButton;
@@ -54,7 +56,7 @@ public class ChessGuiView extends JFrame{
     JButton knightButton;
     JButton rookButton;
 
-    public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor){
+    public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor) {
         this.ownColor = ownColor;
         this.guiController = guiController;
         this.mainView = mainView;
@@ -77,7 +79,7 @@ public class ChessGuiView extends JFrame{
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
         updateMovesDisplay(game.getMoveList());
-        if(game.getWinner()!= null || game.getDraw()!=null){
+        if (game.getWinner() != null || game.getDraw() != null) {
             setResultLabel(game.getWinner());
             showGameEndDialog(game.getWinner(), game.getDraw());
         }
@@ -100,20 +102,20 @@ public class ChessGuiView extends JFrame{
                 }
             }
         }
-    }    
-            
+    }
+
     public void setVisible(Boolean b) {
         mainView.setVisible(b);
     }
 
     private void createPromotionDialog() {
-        
+
         JPanel promotePanel = new JPanel(new GridLayout(1, 4));
         promoteDialog.add(promotePanel);
         promoteDialog.setTitle("Pawn Promotion");
         promoteDialog.setSize(400, 150);
         promoteDialog.setModal(true);
-        
+
         queenButton = new JButton(mainView.getSprite(QUEEN, WHITE));
         iconOnlyButton(queenButton);
         bishopButton = new JButton(mainView.getSprite(BISHOP, WHITE));
@@ -175,53 +177,88 @@ public class ChessGuiView extends JFrame{
                 chessBoardPanel.add(buttonArray[i][j]);
             }
         }
-        chessBoardPanel.setPreferredSize(new Dimension(650,650));
+        chessBoardPanel.setPreferredSize(new Dimension(650, 650));
     }
 
     private void showGameEndDialog(ChessColor winner, DrawType draw) {
-        if(winner!=null) JOptionPane.showMessageDialog(mainView.getFrame(), 
-           winner+" Player has won!", "Game ended",JOptionPane.WARNING_MESSAGE);
-        else{
-        JOptionPane.showMessageDialog(mainView.getFrame(), 
-                        "Game ended in a draw ("+draw+")", "Game ended",
-                                                   JOptionPane.WARNING_MESSAGE);    
+        if (winner != null) {
+            JOptionPane.showMessageDialog(mainView.getFrame(),
+                    winner + " Player has won!", "Game ended", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(mainView.getFrame(),
+                    "Game ended in a draw (" + draw + ")", "Game ended",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 
     private void createDisplayMovesScroll() {
-        displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel, 
-                                                            BoxLayout.Y_AXIS));       
-        displayMovesScroll.setPreferredSize(new Dimension(200, 300));
+        displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel,
+                BoxLayout.Y_AXIS));
+        displayMovesScroll.setPreferredSize(new Dimension(220, 300));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
-        JLabel label1, label2, label3;
-        int newestMove = moveList.size()-1;
-        
-        if(newestMove==-1) ; 
-        else if(newestMove%2==0){
-                JPanel triPanel= new JPanel(new GridLayout(1,3));
-                triPanel.setMaximumSize(new Dimension(200, 20));
-                label1 = new JLabel((newestMove/2+1)+".");
-                label1.setBackground(Color.red);
-                label1.setMaximumSize(new Dimension(20, 20));
-                label1.setAlignmentY(Component.RIGHT_ALIGNMENT);
-                label1.setFont(new Font("Arial", Font.PLAIN, 16));
-                label2 = new JLabel(moveList.getLast().toString());
-                label2.setFont(new Font("Arial", Font.PLAIN, 16));                
-                label2.setMaximumSize(new Dimension(90, 20));
-                label2.setAlignmentY(Component.LEFT_ALIGNMENT);                
-                triPanel.add(label1);
-                triPanel.add(label2);
-                displayMovesPanel.add(triPanel);   
+        JLabel label1, label2, label3, dummyLabel;
+        int newestMove = moveList.size() - 1;
+        GridBagConstraints numberConstr, move1Constr, move2Constr;
+
+        if (newestMove == -1) ; else if (newestMove % 2 == 0) {
+            JPanel triPanel = new JPanel(new GridBagLayout());
+            triPanel.setMaximumSize(new Dimension(220, 20));
+
+            label1 = new JLabel(Integer.toString(newestMove / 2 + 1) + ".", 
+                                                        SwingConstants.CENTER);
+            /*if(newestMove/2%2==0){
+                label1.setOpaque(true);
+                label1.setBackground(Color.LIGHT_GRAY);
+            }*/
+            label1.setPreferredSize(new Dimension(40, 20));
+            label1.setFont(new Font("Arial", Font.BOLD, 16));
+            numberConstr = new GridBagConstraints();
+            numberConstr.gridx = 0;
+            numberConstr.gridy = newestMove / 2;
+            triPanel.add(label1, numberConstr);
+
+            label2 = new JLabel(" " + moveList.getLast().toString());
+            label2.setFont(new Font("Arial", Font.BOLD, 16));
+            label2.setPreferredSize(new Dimension(80, 20));
+            move1Constr = new GridBagConstraints();
+            move1Constr.gridx = 1;
+            move1Constr.gridy = newestMove / 2;
+            triPanel.add(label2, move1Constr);
+
+            //dummy label to be removed when black move is added
+            dummyLabel = new JLabel();
+            dummyLabel.setPreferredSize(new Dimension(80, 20));
+            move1Constr.gridx = 2;
+            triPanel.add(dummyLabel, move1Constr);
+
+            if (newestMove / 2 % 2 == 1) {
+                label1.setOpaque(true);
+                label1.setBackground(Color.LIGHT_GRAY);
+                label2.setOpaque(true);
+                label2.setBackground(Color.LIGHT_GRAY);
+                dummyLabel.setOpaque(true);
+                dummyLabel.setBackground(Color.LIGHT_GRAY);
             }
-            else{
-                JPanel lastPanel = (JPanel)displayMovesPanel.
-                            getComponent(displayMovesPanel.getComponentCount()-1);
-                label3 = new JLabel(moveList.getLast().toString());
-                label3.setFont(new Font("Arial", Font.PLAIN, 16));
-                lastPanel.add(label3);  
+
+            displayMovesPanel.add(triPanel);
+        } else {
+            JPanel lastPanel = (JPanel) displayMovesPanel.
+                    getComponent(displayMovesPanel.getComponentCount() - 1);
+            label3 = new JLabel(moveList.getLast().toString());
+            label3.setFont(new Font("Arial", Font.BOLD, 16));
+            label3.setPreferredSize(new Dimension(80, 20));
+            move2Constr = new GridBagConstraints();
+            move2Constr.gridx = 2;
+            move2Constr.gridy = newestMove / 2;
+            if (newestMove / 2 % 2 == 1) {
+                label3.setOpaque(true);
+                label3.setBackground(Color.LIGHT_GRAY);
             }
+            lastPanel.remove(lastPanel.getComponentCount() - 1);
+            lastPanel.add(label3, move2Constr);
+        }
         displayMovesPanel.repaint();
     }
 
@@ -229,29 +266,36 @@ public class ChessGuiView extends JFrame{
         rightSidePanel.setLayout(new BoxLayout(rightSidePanel, Y_AXIS));
         createDisplayMovesScroll();
         JLabel playerNames;
-        if(ownColor==WHITE)playerNames = new JLabel(guiController.getOwnName()+
-                                         " - "+guiController.getOpponentName());
-        else playerNames = new JLabel(guiController.getOpponentName()+
-                                         " - "+guiController.getOwnName());
-        playerNames.setFont(new Font("Arial", Font.BOLD, 18));        
+        if (ownColor == WHITE) {
+            playerNames = new JLabel(guiController.getOwnName()
+                    + " - " + guiController.getOpponentName());
+        } else {
+            playerNames = new JLabel(guiController.getOpponentName()
+                    + " - " + guiController.getOwnName());
+        }
+        playerNames.setFont(new Font("Arial", Font.BOLD, 18));
         playerNames.setAlignmentX(Component.CENTER_ALIGNMENT);
-        rightSidePanel.add(playerNames);        
-        
+        rightSidePanel.add(playerNames);
+
         resultLabel.setText(" ");
-        resultLabel.setFont(new Font("Arial", Font.BOLD, 18)); 
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 18));
         resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         rightSidePanel.add(resultLabel);
         rightSidePanel.add(displayMovesScroll);
-        rightSidePanel.setPreferredSize(new Dimension(200, mainView.getHeight()));        
+        rightSidePanel.setPreferredSize(new Dimension(200, mainView.getHeight()));
     }
 
     private void setResultLabel(ChessColor winner) {
-        if(winner==WHITE) resultLabel.setText("1   -   0");
-        else if(winner==BLACK) resultLabel.setText("0   -   1");
-        else resultLabel.setText("0.5   -   0.5");
+        if (winner == WHITE) {
+            resultLabel.setText("1   -   0");
+        } else if (winner == BLACK) {
+            resultLabel.setText("0   -   1");
+        } else {
+            resultLabel.setText("0.5   -   0.5");
+        }
     }
 
     void promoteDialogSetLocation() {
         promoteDialog.setLocationRelativeTo(mainView.getFrame());
-    }    
+    }
 }
