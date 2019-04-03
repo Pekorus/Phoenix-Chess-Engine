@@ -18,7 +18,6 @@ import chess.move.Move;
 import static chess.move.MoveType.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
 /**
  *
@@ -38,8 +37,7 @@ public class ChessGuiController implements ActionListener, Player {
     private Coordinate paintedCoord1, paintedCoord2;
 
     public ChessGuiController(GameController gameControl,MainView mainFrame, 
-            ChessColor ownColor, 
-            String playerName, String opponentName) throws IOException {
+            ChessColor ownColor, String playerName, String opponentName) {
         this.gameControl = gameControl;
         this.ownColor = ownColor;
         this.ownName = playerName;

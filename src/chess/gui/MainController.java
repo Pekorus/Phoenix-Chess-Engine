@@ -10,10 +10,7 @@ import static chess.game.ChessGameType.*;
 import chess.game.GameController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -25,10 +22,10 @@ public class MainController implements ActionListener{
     GameController gameController;
     ChessGameType gameType;
     
-    public MainController() throws IOException {
+    public MainController() {
         this.mainView = new MainView(this, 740, 900);
-        this.gameType = WHITEPLAYER;
-        this.gameController = new GameController(mainView, gameType);
+        this.gameType = null;
+        this.gameController = new GameController(mainView, WHITEPLAYER);
     }
        
     @Override
@@ -36,13 +33,11 @@ public class MainController implements ActionListener{
        Object source = e.getSource();
        
         if(source == mainView.newGame){
-           try {
                mainView.gameTypeDialog.setLocationRelativeTo(mainView.getFrame());
                mainView.gameTypeDialog.setVisible(true);
-               restartGame();
-           } catch (IOException ex) {
-               Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
-           }
+               if(gameType != null){
+                   restartGame();
+               }
         }
        
        if(source == mainView.whiteColorButton){
@@ -86,8 +81,9 @@ public class MainController implements ActionListener{
         if(gameController!=null) gameController.startGame();               
     }
 
-    private void restartGame() throws IOException {
+    private void restartGame() {
         this.gameController = new GameController(mainView, gameType);
+        gameType = null;
         gameController.startGame();
         mainView.removeGamePanel();     
     }

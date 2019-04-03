@@ -432,5 +432,12 @@ public class Board {
     private void updateHashValue(Piece piece, Coordinate coord) {
         hashValue ^= zobrisMatrix[coord.getX()][coord.getY()][pieceIndex(piece)];
     }
+
+    public PieceType getPieceTypeOnCoord(Coordinate coord) {
+        Piece piece = board[coord.getX()][coord.getY()];
+        if(piece != null) return piece.getPiecetype();
+        
+        return null;
+    }
     
 }        

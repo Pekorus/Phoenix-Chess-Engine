@@ -17,12 +17,12 @@ import java.util.ArrayList;
 public class ChessTreeNode implements Comparable{
     
     private Move move;
-    private double gameValue;
+    private int gameValue;
     private int depth;
     private ChessTreeNode parent;
     private final ArrayList<ChessTreeNode> children;
     
-    public ChessTreeNode(Move move, double gameValue, ChessTreeNode parent) {
+    public ChessTreeNode(Move move, int gameValue, ChessTreeNode parent) {
         this.move = move;
         this.gameValue = gameValue;
         this.parent = parent;
@@ -58,7 +58,7 @@ public class ChessTreeNode implements Comparable{
         return move;
     }
 
-    public double getGameValue() {
+    public int getGameValue() {
         return gameValue;
     }
 
@@ -78,12 +78,12 @@ public class ChessTreeNode implements Comparable{
         this.move = move;
     }
 
-    public void setGameValue(double gameValue) {
+    public void setGameValue(int gameValue) {
         this.gameValue = gameValue;
     }
 
     void evaluateNodeMax() {
-        double maxValue= -Double.MAX_VALUE;
+        int maxValue= -Integer.MAX_VALUE;
         for(ChessTreeNode child : children){
            maxValue = max(maxValue, child.getGameValue());
         }
@@ -91,7 +91,7 @@ public class ChessTreeNode implements Comparable{
     }
 
     void evaluateNodeMin() {
-        double minValue= Double.MAX_VALUE;
+        int minValue= Integer.MAX_VALUE;
         for(ChessTreeNode child : children){
            minValue = min(minValue, child.getGameValue());
         }
@@ -113,6 +113,7 @@ public class ChessTreeNode implements Comparable{
        }
     } 
 
+    @Override
     public int compareTo(Object o) {
        ChessTreeNode node = (ChessTreeNode) o;
        if(this.gameValue< node.gameValue) return 1;

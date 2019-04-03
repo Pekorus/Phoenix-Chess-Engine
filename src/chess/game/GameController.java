@@ -11,7 +11,6 @@ import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.gui.MainView;
 import chess.move.Move;
-import java.io.IOException;
 
 /**
  *
@@ -24,7 +23,7 @@ public class GameController {
     Player blackPlayer;
     Boolean checkmate= false, draw=false;
     
-    public GameController(MainView mainView, ChessGameType gameType) throws IOException {
+    public GameController(MainView mainView, ChessGameType gameType) {
         game = new ChessGame();        
         
         switch(gameType){            
@@ -51,7 +50,7 @@ public class GameController {
         if(color != game.getPlayersTurn()) return;
         if(game.executeMove(move, true)){
             checkmate = game.isCheckmate();
-            draw = game.isDraw();
+            draw = game.setDraw();
             notifyObservers(move);
             if(checkmate || draw) return;
             demandNextMove(game.getPlayersTurn());        

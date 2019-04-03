@@ -37,7 +37,7 @@ import javax.swing.WindowConstants;
 public class MainView{
     
     //string to update version number
-    private static final String version = "0.6.1";
+    private static final String VERSION = "0.6.8";
     
     //fields for main frame
     private final MainController mainControl;
@@ -67,7 +67,7 @@ public class MainView{
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
     ImageIcon randomColorIcon;
     
-    public MainView(MainController mainControl, int frameHeight, int frameWidth) throws IOException {
+    public MainView(MainController mainControl, int frameHeight, int frameWidth){
         this.mainControl = mainControl;
         this.mainFrame = new JFrame("Schaaach");
         this.frameHeight = frameHeight;
@@ -190,7 +190,7 @@ public class MainView{
         aboutDialog.setModal(true);
         
         JLabel versionLabel = new JLabel ("<html>Chess made by Peter Korusiewicz<br/>"
-                + "Version: "+version+"<br/>Send bug reports to peter.korusiewicz@gmail.com"
+                + "Version: "+VERSION+"<br/>Send bug reports to peter.korusiewicz@gmail.com"
                 + "</html>", SwingConstants.CENTER);
         aboutDialog.add(versionLabel); 
     }

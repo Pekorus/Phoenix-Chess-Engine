@@ -75,11 +75,15 @@ public class ChessGame{
         return false;
     }
 
-    public boolean isDraw() {
-        draw= rules.isDraw();
+    public boolean setDraw() {
+        draw= rules.isDraw(true);
         return draw!=null;       
     }
-
+    
+    public boolean isDraw(boolean mode){
+        return rules.isDraw(mode)!= null;
+    }
+    
     public ChessColor getWinner() {
         return winner;
     }
@@ -127,6 +131,10 @@ public class ChessGame{
 
     public LinkedList<Long> getRecentPositions() {
         return recentPositions;
+    }
+
+    public boolean isStalemate() {
+        return rules.isStalemate();
     }
 
     

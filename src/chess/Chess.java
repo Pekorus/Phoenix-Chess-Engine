@@ -6,7 +6,6 @@
 package chess;
 
 import chess.gui.MainController;
-import java.io.IOException;
 
 /**
  *
@@ -16,13 +15,11 @@ public class Chess {
 
     /**
      * @param args the command line arguments
-     * @throws java.io.IOException
+     * 
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
        
         MainController mainControl = new MainController();
         mainControl.start();
-
-    }
-    
+    }    
 }

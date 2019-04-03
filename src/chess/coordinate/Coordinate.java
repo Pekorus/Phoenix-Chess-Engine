@@ -10,6 +10,7 @@ import static chess.board.ChessColor.WHITE;
 import static chess.coordinate.Direction.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -128,6 +129,21 @@ public class Coordinate {
                                         +Math.pow(this.y-coordTo.y,2));
     }
 
+    public ArrayList<Coordinate> getAllDiagCoord(){
+        ArrayList<Coordinate> list = new ArrayList<>();
+        Coordinate auxCoord;
+        auxCoord = this.getCoordInDir(NW);
+        if(auxCoord!=null) list.add(auxCoord);
+        auxCoord = this.getCoordInDir(NE);
+        if(auxCoord!=null) list.add(auxCoord);
+        auxCoord = this.getCoordInDir(SW);
+        if(auxCoord!=null) list.add(auxCoord);
+        auxCoord = this.getCoordInDir(SE);
+        if(auxCoord!=null) list.add(auxCoord);
+        
+        return list;
+    }
+    
     public Coordinate getRookCastleCoord(){
         if(this.x==0 && this.y==1) return new Coordinate(0,0);
         if(this.x==0 && this.y==5) return new Coordinate(0,7);

@@ -326,8 +326,8 @@ public class ChessRules {
     }
     
     private LinkedList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color){
-        //pawns can give check to a field without being able to move to it,
-        //also they can go to fields without giving check to the field
+        /* pawns can give check to a field without being able to move to it,
+          also they can go to fields without giving check to the field */
         LinkedList<Piece> potentialOccupants = isAttackedBy(coord, color, false);
         LinkedList<Piece> occupants = canPawnMoveCoord(coord, color);
         
@@ -381,34 +381,39 @@ public class ChessRules {
     return false;
     }
 
-    public DrawType isDraw(){
-        if(isTechnicalDraw()) return TECHNICAL;
-        if(isStalemate()) return STALEMATE;
+    /* Checks if the given position is a draw. Argument "mode" controls checking
+    of stalemate. "False" is used in AI to improve performance
+    */ 
+    public DrawType isDraw(boolean mode){
         if(game.getDrawTurnTimer()>=100) return FIFTYTURNS;
         if(isThreeRepetition()) return THREEFOLD;
+        if(isTechnicalDraw()) return TECHNICAL;
+        if(mode && isStalemate()) return STALEMATE;
     return null;
     }
 
-    private boolean isTechnicalDraw() {
+    private boolean isTechnicalDraw() {        
+        //fast return (improves preformance in AI)        
         ArrayList<Piece> whitePieces = board.getPiecesList(WHITE);
+        if(whitePieces.size()>2) return false;
         ArrayList<Piece> blackPieces = board.getPiecesList(BLACK);        
+        if(blackPieces.size()>2) return false; 
         int countWhite = whitePieces.size();
         int countBlack = blackPieces.size();
-        if(countWhite<=2 && countBlack <=2){
-            if(countWhite==1 && countBlack==1) return true;            
-            if(countWhite+countBlack==3){
-               if(!hasMinorPiece(whitePieces).isEmpty() || 
+
+        if(countWhite==1 && countBlack==1) return true;            
+        if(countWhite+countBlack==3){
+            if(!hasMinorPiece(whitePieces).isEmpty() || 
                                 !hasMinorPiece(blackPieces).isEmpty()) 
-                   return true;              
-            }
+                return true;              
+        }
         //remaining: both sides have king+piece
         //TODO: king+bishop against king+bishop with same color is techn. draw      
-        //TODO: king+2knights against king??
-        } 
+        //TODO: king+2knights against king?? 
         return false;
     }
 
-    private boolean isStalemate() {
+    public boolean isStalemate() {
         ChessColor playersTurn = game.getPlayersTurn();
         if(!isAttackedBy(board.getKing(playersTurn).getCoord(),
                 playersTurn.getInverse(), false).isEmpty())
@@ -597,5 +602,4 @@ public class ChessRules {
     if(validateMove(createdMove, game)) return createdMove;
     return null;
     }
-
 }
