@@ -5,6 +5,7 @@
  */
 package chess.ai;
 
+import static chess.ai.EvaluationFlag.*;
 import chess.board.Board;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
@@ -16,6 +17,7 @@ import chess.game.ChessRules;
 import chess.game.GameController;
 import chess.game.Player;
 import chess.move.Move;
+import static chess.move.MoveType.TAKE;
 import static java.lang.Boolean.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -34,9 +36,12 @@ import javax.swing.SwingWorker;
 public class ChessAI implements Player {
 
     //constants to control general AI behaviour
-    private static final int SEARCH_DEPTH = 4;
-    private static final int TRANSPOSITION_TABLE_SIZE = 10000;
-
+    private static final byte SEARCH_DEPTH = 4;
+    private static final int  MAX_QUIET_SEARCH = 4;
+    private static final boolean QUIET_SEARCH_ON = true;
+    private static final int  TRANSPOSITION_TABLE_SIZE = 10000000;
+    private static final int MAX_EV_POSITIONS = 500000;
+    
     //constants for board evaluation
     private static final int BISHOP_BASIC_VALUE = 310;
     private static final int BISHOP_DOUBLE_BONUS = 20;
@@ -62,7 +67,7 @@ public class ChessAI implements Player {
     private static final int CASTLING_BONUS = 30;
 
     private static final int[][] KNIGHT_BONUS_MATRIX
-            = {{-15, -10, -5, -5},
+            = {{-15, -5, -5, -5},
             {-10, -5, 0, 5},
             {-5, 0, 10, 10},
             {0, 5, 10, 15}};
@@ -72,13 +77,20 @@ public class ChessAI implements Player {
             {20, 20, 30, 30, 30, 30, 20, 20},
             {15, 15, 20, 25, 25, 20, 15, 15},
             {0, 0, 15, 20, 20, 15, 0, 0},
-            {0, 0, 10, 15, 15, 10, 0, 0},
+            {0, 0, 10, 16, 16, 10, 0, 0},
             {0, 0, 0, 5, 5, 0, 0, 0},
             {0, 0, 0, 0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0, 0, 0, 0}};
 
     private int evaluatedPositions = 0;
-
+    private int alphaCuts = 0;
+    private int betaCuts = 0;
+    private int quietAlphaCuts = 0;
+    private int quietBetaCuts = 0;        
+    private int visitedNodes = 0;
+    private int visitedQuietNodes = 0;
+    private int transpositionsUsed = 0;
+    
     private final GameController controller;
     private final ChessGame ownGame;
     private final ChessRules rules;
@@ -86,8 +98,9 @@ public class ChessAI implements Player {
     private final ArrayList<Piece> ownPieces;
     private final ArrayList<Piece> enemyPieces;
     private final ChessColor ownColor;
+    private final ChessTransTable transTable;
     private ChessTreeNode currentTree;
-
+    
     public ChessAI(GameController controller, ChessColor ownColor) {
         this.controller = controller;
         this.ownGame = new ChessGame();
@@ -96,6 +109,7 @@ public class ChessAI implements Player {
         this.ownColor = ownColor;
         this.ownPieces = board.getPiecesList(ownColor);
         this.enemyPieces = board.getPiecesList(ownColor.getInverse());
+        this.transTable = new ChessTransTable(TRANSPOSITION_TABLE_SIZE);
         //create root of tree
         this.currentTree = new ChessTreeNode(null, 0, null);
     }
@@ -183,73 +197,146 @@ public class ChessAI implements Player {
 
     private Move findNextMove() {
         //this.currentTree= new ChessTreeNode(null,0, null);
-        builtTree(currentTree, Integer.MIN_VALUE, Integer.MAX_VALUE, TRUE);
+        builtTreeAndEvaluate(currentTree, Integer.MIN_VALUE, Integer.MAX_VALUE, TRUE);
         ArrayList<Move> bestMoves = bestMovesFromTree(currentTree);
+        //transTable.clear();
         //Random random = new Random();
         //return bestMoves.get(random.nextInt(bestMoves.size()));
         return bestMoves.get(0);
     }
 
-    private int builtTree(ChessTreeNode chessTree, int alpha, int beta, boolean maximizing) {
+    /* Builds and evaluates the tree for this position and returns its value
+    */ 
+    private int builtTreeAndEvaluate(ChessTreeNode chessTree, int alpha, 
+            int beta, boolean maximizing) {
+        
+        visitedNodes++;
+        
+        /* value of the position to be returned after evaluation */
+        int gameValue;
+        /* store best Move found in evaluation of this node, the value of the 
+        position resulting from bestMove and the evaluation flag to be stored 
+        in the transposition table
+        */
+        Move bestMove = null;
+        int bestValue = Integer.MAX_VALUE;
+        if(maximizing) bestValue = Integer.MIN_VALUE;
+        EvaluationFlag evalFlag = EXACT; 
+        
+        /* check if position is already in transposition table */
+        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
+        Move tableBestMove = null;
+        if(auxEntry!=null){
+            /* if the searched number of plies is lower than the current
+               SEARCH_DEPTH, the value can't be used. Instead the best move 
+               calculated in this position is used to improve alpha-beta-
+               pruning by being evaluated first. S_D - chessTree.getDepth 
+               describes how many plies are needed to evaluate the position
+               from this node. Also prevent that no evaluation happens if 
+               node is root when a position on the board occurs a second time.
+            */
+            if(chessTree.getDepth()!=0 && auxEntry.getDepth() == SEARCH_DEPTH-chessTree.getDepth()){
+                chessTree.setGameValue(auxEntry.getValue());
+                transpositionsUsed++;
+                return auxEntry.getValue();
+            }
+            else tableBestMove = auxEntry.getBestMove();
+        }
 
+        /* depth < SEARCH_DEPTH => inner node, else leaf of tree */
         if (chessTree.getDepth() < SEARCH_DEPTH) {
-            //try to reuse already calculated possible moves 
-            ArrayList<Move> allMoves;
-            //calculate all possible moves if not already done
+                
+            /* Create all possible moves as children of the node 
+               if not already done.
+            */
             if (!chessTree.hasChildren()) {
                 if (maximizing) {
-                    allMoves = allPossibleMoves((ArrayList<Piece>) ownPieces);
+                    createChildrenFromPieceList(chessTree, ownPieces);
                 } else {
-                    allMoves = allPossibleMoves((ArrayList<Piece>) enemyPieces);
+                    createChildrenFromPieceList(chessTree, enemyPieces);
                 }
-                for (Move move : allMoves) {
-                    chessTree.addChildNode(new ChessTreeNode(move, Integer.MIN_VALUE, chessTree));
-                }
-            } //sort all moves to improve cutoff of alpha-beta-pruning
+
+            } /* sort all moves to improve cutoff of alpha-beta-pruning */
             else {
-                Collections.sort(chessTree.getChildren());
+                if(SEARCH_DEPTH-chessTree.getDepth() > 2) Collections.sort(chessTree.getChildren());
             }
 
+            /* Move best move from table to front of node list if it is a valid
+                move.
+            */
+            chessTree.moveNodeToFront(tableBestMove);
+            
             //if the node has no legal moves => stalemate or mate
             if (!chessTree.hasChildren() && ownGame.isStalemate()) {
                 chessTree.setGameValue(0);
                 return 0;
             }
 
-            //value which will be used in alpha-beta-pruning
-            int auxValue;
+            /* value which will be used in alpha-beta-pruning */
             if (maximizing) {
-                auxValue = Integer.MIN_VALUE;
+                gameValue = Integer.MIN_VALUE;
             } else {
-                auxValue = Integer.MAX_VALUE;
+                gameValue = Integer.MAX_VALUE;
             }
-            //build nodes recursive with a cutoff through alpha-beta-pruning
+
+            /* restrict number of evaluated positions, but make sure that tree 
+               is searched to a depth of at least SEARCH_DEPTH-1  */
+             if(evaluatedPositions >= MAX_EV_POSITIONS && chessTree.getDepth() ==SEARCH_DEPTH-1){
+                if(QUIET_SEARCH_ON) gameValue = quiescenceSearch(chessTree, alpha, beta, maximizing);
+                chessTree.setGameValue(gameValue);
+                return gameValue;
+             }
+
+            /* build nodes recursively with a cutoff through alpha-beta-pruning 
+            */
             for (ChessTreeNode node : chessTree.getChildren()) {
                 ownGame.executeMove(node.getMove(), false);
                 if (maximizing) {
-                    auxValue = max(auxValue, builtTree(node, alpha, beta, FALSE));
+                    gameValue = max(gameValue, builtTreeAndEvaluate(node, alpha, beta, FALSE));
                     ownGame.unexecuteMove(node.getMove());
-                    alpha = max(alpha, auxValue);
+                    alpha = max(alpha, gameValue);
                     if (alpha >= beta) {
+                        evalFlag = BETA;
+                        betaCuts++;
                         break;
                     }
+                    /* evaluation was between alpha and beta => exact flag */
+                    if(gameValue > bestValue){
+                        bestValue = gameValue;
+                        bestMove = node.getMove();
+                    }                
+                    
                 } else {
-                    auxValue = min(auxValue, builtTree(node, alpha, beta, TRUE));
+                    gameValue = min(gameValue, builtTreeAndEvaluate(node, alpha, beta, TRUE));
                     ownGame.unexecuteMove(node.getMove());
-                    beta = min(beta, auxValue);
+                    beta = min(beta, gameValue);
                     if (alpha >= beta) {
+                        evalFlag = ALPHA;
+                        alphaCuts++;
                         break;
                     }
+                /* evaluation was between alpha and beta => exact flag */
+                    if(gameValue < bestValue){
+                        bestValue = gameValue;
+                        bestMove = node.getMove();
+                    }                
                 }
+
             }
-            chessTree.setGameValue(auxValue);
-            return auxValue;
         } //depth==SEARCH_DEPTH
         else {
-            int gameValue = evaluateBoard();
-            chessTree.setGameValue(gameValue);
-            return gameValue;
+            /* only evaluate quiet positions to avoid horizon effect */
+            if(QUIET_SEARCH_ON) gameValue = quiescenceSearch(chessTree, alpha, beta, maximizing);
+            else gameValue = evaluateBoard();
         }
+        
+        /* store position in transposition table */
+        transTable.insertEntry(new TransTableEntry(board.getHashValue(), 
+                gameValue, (byte) (SEARCH_DEPTH-chessTree.getDepth()), bestMove,
+                evalFlag));
+       
+        chessTree.setGameValue(gameValue);        
+        return gameValue;
     }
 
     private ArrayList<Move> bestMovesFromTree(ChessTreeNode chessTree) {
@@ -274,9 +361,7 @@ public class ChessAI implements Player {
 
             @Override
             public void done() {
-                System.out.println("GameValue: " + 0.01 * currentTree.getGameValue());
-                System.out.println("Evaluated Positions: " + evaluatedPositions);
-                evaluatedPositions = 0;
+                printAndResetAnalytics();
                 try {
                     controller.nextMove(ownColor, get());
                 } catch (InterruptedException | ExecutionException ex) {
@@ -367,4 +452,119 @@ public class ChessAI implements Player {
     private boolean evaluateDraw() {
         return ownGame.isDraw(false);
     }
+
+    private ArrayList<Move> bestVariation() {
+        ArrayList<Move> list = new ArrayList<>();
+        TransTableEntry auxEntry;
+        int counter = -1;
+        
+        for(int i=0; i<5; i++) {
+            auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
+            //TODO: quick fix! sometimes null pointer exception in line 449
+            if(auxEntry==null) break;
+            if(auxEntry.getBestMove()==null) break;
+            list.add(auxEntry.getBestMove());
+            board.executeMove(auxEntry.getBestMove());
+            counter++;
+        }
+    
+        for(int i=counter; i>=0; i--) {
+            board.unexecuteMove(list.get(i));
+        }
+    
+        return list;
+    }
+
+    private void printAndResetAnalytics(){
+                System.out.println("Best variation: "+bestVariation());
+                System.out.println("Game value: " + String.format("%.2f" ,0.01 * currentTree.getGameValue()));
+                System.out.println("Evaluated positions: " + evaluatedPositions);
+                System.out.println("Alpha cuts: " + alphaCuts + 
+                        ", Quiet Alpha cuts: " + quietAlphaCuts);
+                System.out.println("Beta cuts: " + betaCuts + 
+                        ", Quiet Beta cuts: " + quietBetaCuts);             
+                System.out.println("Visited nodes: " + visitedNodes +
+                        ", visited quiet nodes: " + visitedQuietNodes);                
+                System.out.println("Transpositions used: "+transpositionsUsed);
+                System.out.println(" ");                
+                evaluatedPositions = 0;
+                alphaCuts = 0; betaCuts =0;
+                quietAlphaCuts = 0; quietBetaCuts =0;
+                visitedNodes = 0; visitedQuietNodes =0;        
+    }
+
+    private int quiescenceSearch(ChessTreeNode chessTree, int alpha, int beta, boolean maximizing) {
+        
+        int posValue = evaluateBoard();
+        int gameValue;
+        
+        if(maximizing){
+            /* beta cutoff */
+            if(posValue >= beta) return beta;
+            alpha = max(alpha, posValue);
+        }
+        else{
+            /* alpha cutoff */
+            if(posValue <= alpha) return alpha;
+            beta = min(beta, posValue);
+        }
+    
+        if (chessTree.getDepth() < SEARCH_DEPTH + MAX_QUIET_SEARCH) {        
+            
+            /* Calculate all possible moves if not already done.
+            */
+            if (!chessTree.hasChildren()) {
+                if (maximizing) {
+                    createChildrenFromPieceList(chessTree, ownPieces);
+                } else {
+                    createChildrenFromPieceList(chessTree, enemyPieces);
+                }
+            } 
+                
+            boolean anyMove = false;        
+            
+            for (ChessTreeNode node : chessTree.getChildren()) {
+                
+                Move currentMove = node.getMove();                
+                if(currentMove.getMoveType()==TAKE){
+                    visitedQuietNodes++;
+                    anyMove = true;
+                    ownGame.executeMove(currentMove, false);
+                    if(maximizing){
+                        gameValue = quiescenceSearch(node, alpha, beta, FALSE);
+                        ownGame.unexecuteMove(currentMove);                        
+                        /* beta cutoff */
+                        if(gameValue >= beta){
+                            quietBetaCuts++;
+                            return beta;
+                        }
+                        alpha = max(gameValue, alpha);
+                    }                    
+                    else{
+                        gameValue = quiescenceSearch(node, alpha, beta, TRUE);
+                        ownGame.unexecuteMove(currentMove);                        
+                        /* alpha cutoff */
+                        if(gameValue <= alpha){
+                            quietAlphaCuts++;
+                            return alpha;
+                        }
+                        beta = min(gameValue, beta);                        
+                    }
+                }
+            }
+            if(!anyMove) return posValue;
+            if(maximizing) return alpha;
+            else return beta;
+        }
+        else return posValue;
+    
+    }
+
+    private void createChildrenFromPieceList(ChessTreeNode chessTree, ArrayList<Piece> pieces) {
+        ArrayList<Move> allMoves= allPossibleMoves((ArrayList<Piece>) pieces);      
+        for (Move move : allMoves) {
+            chessTree.addChildNode(new ChessTreeNode(move, Integer.MIN_VALUE, chessTree));
+        }         
+    }    
+
 }

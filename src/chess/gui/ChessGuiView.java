@@ -56,6 +56,10 @@ public class ChessGuiView extends JFrame {
     JButton knightButton;
     JButton rookButton;
 
+    //colors to be used for painting chess squares
+    private final Color lightColor = Color.getHSBColor(0.52175f, 0.4f, 0.9f);
+    private final Color darkColor = Color.getHSBColor(0.52175f, 0.4f, 0.6f);
+    
     public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor) {
         this.ownColor = ownColor;
         this.guiController = guiController;
@@ -80,6 +84,7 @@ public class ChessGuiView extends JFrame {
         this.drawBoard(pieceArray);
         updateMovesDisplay(game.getMoveList());
         if (game.getWinner() != null || game.getDraw() != null) {
+            
             setResultLabel(game.getWinner());
             showGameEndDialog(game.getWinner(), game.getDraw());
         }
@@ -143,10 +148,18 @@ public class ChessGuiView extends JFrame {
     }
 
     public void paintFieldColor(Coordinate coord) {
-        buttonArray[coord.getX()][coord.getY()].setBackground(Color.cyan);
+        if(coord==null) return;
+        int x = coord.getX();
+        int y = coord.getY();
+        if ((x + y) % 2 == 0) {
+            buttonArray[x][y].setBackground(lightColor);
+        } else {
+            buttonArray[x][y].setBackground(darkColor);
+        }        
     }
 
     public void restoreFieldColor(Coordinate coord) {
+        if(coord==null) return;
         int x = coord.getX();
         int y = coord.getY();
         if ((x + y) % 2 == 0) {
@@ -298,4 +311,5 @@ public class ChessGuiView extends JFrame {
     void promoteDialogSetLocation() {
         promoteDialog.setLocationRelativeTo(mainView.getFrame());
     }
+
 }

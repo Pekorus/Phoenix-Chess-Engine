@@ -102,7 +102,8 @@ public class ChessGame{
     }    
 
     public Move getLastMove() {
-        return moveList.getLast();
+        if(!moveList.isEmpty()) return moveList.getLast();
+        return null;
     }
 
     public LinkedList<Move> getMoveList() {

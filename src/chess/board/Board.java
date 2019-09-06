@@ -45,7 +45,7 @@ public class Board {
     public void executeMove(Move move){
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        Piece piece = getPieceOnCoord(coordFrom);
+        Piece piece = getPieceOnCoord(coordFrom);        
         Piece optPiece;
         
         switch(move.getMoveType()){

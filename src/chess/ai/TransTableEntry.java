@@ -6,6 +6,7 @@
 package chess.ai;
 
 import chess.move.Move;
+import java.util.logging.Logger;
 
 /**
  *
@@ -14,24 +15,26 @@ import chess.move.Move;
 public class TransTableEntry {
     
     private final long zobristKey;
-    private final float value;
+    private final int value;
     private final byte depth;    
     private final Move bestMove;
-    private final EvaluationFlag flag;
-
-    public TransTableEntry(long zobristKey, float value, byte depth, Move bestMove, EvaluationFlag flag) {
+    private final EvaluationFlag EvaluationFlag;
+    private boolean oldFlag;
+    
+    public TransTableEntry(long zobristKey, int value, byte depth, Move bestMove, EvaluationFlag flag) {
         this.zobristKey = zobristKey;
         this.value = value;
         this.depth = depth;
         this.bestMove = bestMove;
-        this.flag = flag;
+        this.EvaluationFlag = flag;
+        this.oldFlag = false;
     }
 
     public long getZobristKey() {
         return zobristKey;
     }
 
-    public float getValue() {
+    public int getValue() {
         return value;
     }
 
@@ -43,11 +46,16 @@ public class TransTableEntry {
         return bestMove;
     }
 
-    public EvaluationFlag getFlag() {
-        return flag;
+    public EvaluationFlag getEvaluationFlag() {
+        return EvaluationFlag;
     }
 
+    public boolean getOldFlag() {
+        return oldFlag;
+    }
 
-
+    public void setOldFlag(boolean b) {
+        this.oldFlag = b;
+    }
     
 }

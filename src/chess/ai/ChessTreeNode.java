@@ -27,7 +27,7 @@ public class ChessTreeNode implements Comparable{
         this.gameValue = gameValue;
         this.parent = parent;
         if(parent==null) this.depth=0;
-        else this.depth = parent.depth+1;
+        else this.depth = parent.depth+ 1;
         this.children = new ArrayList<>();
     }
 
@@ -50,6 +50,19 @@ public class ChessTreeNode implements Comparable{
         children.add(node);
     }
 
+    /* Moves the node with the specified move to front of children list */
+    public void moveNodeToFront(Move move){
+        if(move != null){
+            for(ChessTreeNode child : children){
+                if(move.equals(child.getMove())){
+                    children.remove(child);
+                    children.add(0, child);
+                    break;
+                }
+            }
+        }
+    }
+    
     public void removeChildNode(ChessTreeNode node){
         children.remove(node);
     }

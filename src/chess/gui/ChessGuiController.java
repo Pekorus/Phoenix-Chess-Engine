@@ -16,6 +16,7 @@ import chess.game.GameController;
 import chess.game.Player;
 import chess.move.Move;
 import static chess.move.MoveType.*;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -35,7 +36,8 @@ public class ChessGuiController implements ActionListener, Player {
     private Move nextMove = null;
     private Coordinate pressedCoord1 = null, pressedCoord2 = null;
     private Coordinate paintedCoord1, paintedCoord2;
-
+    private Coordinate paintedOppCoord1, paintedOppCoord2;
+    
     public ChessGuiController(GameController gameControl,MainView mainFrame, 
             ChessColor ownColor, String playerName, String opponentName) {
         this.gameControl = gameControl;
@@ -78,12 +80,7 @@ public class ChessGuiController implements ActionListener, Player {
                     //Reset after move input
                     if (pressedCoord1 != null && pressedCoord2 != null) {
                         nextMove = null;
-                        view.restoreFieldColor(paintedCoord1);
-                        view.restoreFieldColor(paintedCoord2);
-                        pressedCoord1 = null;
-                        pressedCoord2 = null;
-                        paintedCoord1 = null;
-                        paintedCoord2 = null;
+                        restoreFields();
                     }
                     Piece clickedPiece = view.pieceArray[a][b];
                     if (pressedCoord1 == null && clickedPiece != null 
@@ -96,13 +93,12 @@ public class ChessGuiController implements ActionListener, Player {
                         view.restoreFieldColor(paintedCoord1);
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord1);
-                        gameControl.nextMove(ownColor, nextMove);                                        
+                        view.paintFieldColor(paintedCoord1);                                      
                     } else if(pressedCoord1 != null && pressedCoord2 == null) {
                         pressedCoord2 = new Coordinate(a, b);
                         paintedCoord2 = new Coordinate(i, j);
                         view.paintFieldColor(paintedCoord2);
-                        createMove();
+                        createMove(pressedCoord1, pressedCoord2);
                         gameControl.nextMove(ownColor, nextMove);
                     }
                 }
@@ -110,9 +106,9 @@ public class ChessGuiController implements ActionListener, Player {
         }
     }
 
-    private void createMove() {
-        Piece piece1 = view.pieceArray[pressedCoord1.getX()][pressedCoord1.getY()];
-        Piece piece2 = view.pieceArray[pressedCoord2.getX()][pressedCoord2.getY()];
+    private void createMove(Coordinate coordFrom, Coordinate coordTo) {
+        Piece piece1 = view.pieceArray[coordFrom.getX()][coordFrom.getY()];
+        Piece piece2 = view.pieceArray[coordTo.getX()][coordTo.getY()];
 
         if (piece1 == null) {
             return;
@@ -124,20 +120,20 @@ public class ChessGuiController implements ActionListener, Player {
                     && pawnPromotionValid()){
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialog.setVisible(true);
-                nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, TAKE, nextPromotion);
+                nextMove = new Move(piece1.getPiecetype(), coordFrom, coordTo, TAKE, nextPromotion);
             } //usual taking
             else {
-                nextMove = new Move(piece1.getPiecetype(), pressedCoord1,
-                        pressedCoord2, TAKE, null);
+                nextMove = new Move(piece1.getPiecetype(), coordFrom,
+                        coordTo, TAKE, null);
             }
         } //CASTLE
         else if (piece1.getPiecetype() == KING
-                && pressedCoord1.distance(pressedCoord2) == 2) {
-            nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, CASTLE);
+                && coordFrom.distance(coordTo) == 2) {
+            nextMove = new Move(piece1.getPiecetype(), coordFrom, coordTo, CASTLE);
         } /* ENPASSANT */ 
         else if (piece1.getPiecetype() == PAWN
-                && pressedCoord1.diagonalLineDir(pressedCoord2) != null) {
-            nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, ENPASSANT, null);
+                && coordFrom.diagonalLineDir(coordTo) != null) {
+            nextMove = new Move(piece1.getPiecetype(), coordFrom, coordTo, ENPASSANT, null);
         } //NORMAL
         else {
             //pawn promotion
@@ -146,19 +142,21 @@ public class ChessGuiController implements ActionListener, Player {
                 view.setPromoteDialogColor(piece1.isColor());
                 view.promoteDialogSetLocation();
                 view.promoteDialog.setVisible(true);
-                nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2,
+                nextMove = new Move(piece1.getPiecetype(), coordFrom, coordTo,
                         NORMAL, nextPromotion);
             } //usual move
             else {
-                nextMove = new Move(piece1.getPiecetype(), pressedCoord1, pressedCoord2, NORMAL);
+                nextMove = new Move(piece1.getPiecetype(), coordFrom, coordTo, NORMAL);
             }
         }
     }
 
     @Override
     public void update(ChessGame game, Move move, Object arg) {
-        //TODO: eigenes board, nicht das von game benutzen
-        view.update(game, arg);
+        if(move != nextMove){
+            highlightOpponentMove(move);
+        }        
+        view.update(game, arg);        
     }
 
     private boolean pawnPromotionValid() {
@@ -181,6 +179,33 @@ public class ChessGuiController implements ActionListener, Player {
 
     @Override
     public void getNextMove() {
+    }
+
+    private void restoreFields() {        
+        view.restoreFieldColor(paintedCoord1);
+        view.restoreFieldColor(paintedCoord2);
+        view.restoreFieldColor(paintedOppCoord1);
+        view.restoreFieldColor(paintedOppCoord2);        
+        paintedCoord1 = null;
+        paintedCoord2 = null;
+        pressedCoord1 = null;
+        pressedCoord2 = null;        
+        paintedOppCoord1 = null;
+        paintedOppCoord2 = null;
+    }
+
+    private void highlightOpponentMove(Move move) {
+        Coordinate auxCoord1 = move.getCoordFrom(); 
+        Coordinate auxCoord2 = move.getCoordTo();
+        if(ownColor==WHITE){
+            auxCoord1 = auxCoord1.pointSymmCoordinate();
+            auxCoord2 = auxCoord2.pointSymmCoordinate();
+        }
+        restoreFields();
+        view.paintFieldColor(auxCoord1);
+        view.paintFieldColor(auxCoord2);            
+        paintedOppCoord1 = auxCoord1;
+        paintedOppCoord2 = auxCoord2;
     }
 
 }
