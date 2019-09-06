@@ -37,7 +37,7 @@ import javax.swing.WindowConstants;
 public class MainView{
     
     //string to update version number
-    private static final String VERSION = "0.6.8";
+    private static final String VERSION = "0.7.3";
     
     //fields for main frame
     private final MainController mainControl;
