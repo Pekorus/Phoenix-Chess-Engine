@@ -10,12 +10,23 @@ package chess.board;
  * @author Phoenix
  */
 public enum PieceType {
-           KING,
-           QUEEN,
-           BISHOP,
-           KNIGHT,
-           ROOK,
-           PAWN;
+           
+           KING(100000),
+           QUEEN(900),
+           ROOK(500),
+           BISHOP(300),
+           KNIGHT(300),
+           PAWN(100);
+
+    private final int materialValue;
+
+    private PieceType(int materialValue) {
+        this.materialValue = materialValue;
+    }
+
+    public int getMaterialValue() {
+        return materialValue;
+    }
 
     @Override
     public String toString() {

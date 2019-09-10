@@ -16,7 +16,6 @@ import chess.game.GameController;
 import chess.game.Player;
 import chess.move.Move;
 import static chess.move.MoveType.*;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -38,13 +37,13 @@ public class ChessGuiController implements ActionListener, Player {
     private Coordinate paintedCoord1, paintedCoord2;
     private Coordinate paintedOppCoord1, paintedOppCoord2;
     
-    public ChessGuiController(GameController gameControl,MainView mainFrame, 
+    public ChessGuiController(GameController gameControl, 
             ChessColor ownColor, String playerName, String opponentName) {
         this.gameControl = gameControl;
         this.ownColor = ownColor;
         this.ownName = playerName;
         this.opponentName = opponentName;
-        this.view = new ChessGuiView(mainFrame, this, ownColor);
+        this.view = new ChessGuiView(this, ownColor);
     }
 
     @Override
@@ -153,9 +152,7 @@ public class ChessGuiController implements ActionListener, Player {
 
     @Override
     public void update(ChessGame game, Move move, Object arg) {
-        if(move != nextMove){
-            highlightOpponentMove(move);
-        }        
+          if(move!=null)  highlightMove(move);       
         view.update(game, arg);        
     }
 
@@ -181,6 +178,12 @@ public class ChessGuiController implements ActionListener, Player {
     public void getNextMove() {
     }
 
+    @Override
+    public ChessGuiView getView() {
+        return view;
+    }
+    
+    
     private void restoreFields() {        
         view.restoreFieldColor(paintedCoord1);
         view.restoreFieldColor(paintedCoord2);
@@ -194,7 +197,7 @@ public class ChessGuiController implements ActionListener, Player {
         paintedOppCoord2 = null;
     }
 
-    private void highlightOpponentMove(Move move) {
+    private void highlightMove(Move move) {
         Coordinate auxCoord1 = move.getCoordFrom(); 
         Coordinate auxCoord2 = move.getCoordTo();
         if(ownColor==WHITE){

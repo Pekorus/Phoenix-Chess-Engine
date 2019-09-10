@@ -16,17 +16,26 @@ import chess.game.ChessGame;
 import chess.game.ChessRules;
 import chess.game.GameController;
 import chess.game.Player;
+import chess.gui.ChessGuiView;
 import chess.move.Move;
 import static chess.move.MoveType.TAKE;
 import static java.lang.Boolean.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 import javax.swing.SwingWorker;
 
 /**
@@ -41,6 +50,7 @@ public class ChessAI implements Player {
     private static final boolean QUIET_SEARCH_ON = true;
     private static final int  TRANSPOSITION_TABLE_SIZE = 10000000;
     private static final int MAX_EV_POSITIONS = 500000;
+    private static final int MAX_EV_POSITIONS_QUIET = 700000;
     
     //constants for board evaluation
     private static final int BISHOP_BASIC_VALUE = 310;
@@ -90,6 +100,8 @@ public class ChessAI implements Player {
     private int visitedNodes = 0;
     private int visitedQuietNodes = 0;
     private int transpositionsUsed = 0;
+    private long moveDuration = 0;
+    private final JTextArea analyticsLabel = new JTextArea();
     
     private final GameController controller;
     private final ChessGame ownGame;
@@ -111,7 +123,8 @@ public class ChessAI implements Player {
         this.enemyPieces = board.getPiecesList(ownColor.getInverse());
         this.transTable = new ChessTransTable(TRANSPOSITION_TABLE_SIZE);
         //create root of tree
-        this.currentTree = new ChessTreeNode(null, 0, null);
+        this.currentTree = new ChessTreeNode(null, 0, 0);
+        createAnalyticsFrame();
     }
 
     @Override
@@ -125,13 +138,13 @@ public class ChessAI implements Player {
     }
 
     private int evaluateBoard() {
+        evaluatedPositions++;
         if (evaluateDraw()) {
             return 0;
         }
         int value = 0;
         value += castlingBonus(ownColor);
         value += pieceValue(ownPieces) - pieceValue(enemyPieces);
-        evaluatedPositions++;
         return value;
     }
 
@@ -196,10 +209,12 @@ public class ChessAI implements Player {
     }
 
     private Move findNextMove() {
-        //this.currentTree= new ChessTreeNode(null,0, null);
+        /* measure time to calculate move */
+        Instant start = Instant.now();
         builtTreeAndEvaluate(currentTree, Integer.MIN_VALUE, Integer.MAX_VALUE, TRUE);
         ArrayList<Move> bestMoves = bestMovesFromTree(currentTree);
-        //transTable.clear();
+        Instant finish = Instant.now();
+        moveDuration = Duration.between(start, finish).getSeconds();
         //Random random = new Random();
         //return bestMoves.get(random.nextInt(bestMoves.size()));
         return bestMoves.get(0);
@@ -362,6 +377,7 @@ public class ChessAI implements Player {
             @Override
             public void done() {
                 printAndResetAnalytics();
+                //transTable.clear();
                 try {
                     controller.nextMove(ownColor, get());
                 } catch (InterruptedException | ExecutionException ex) {
@@ -455,17 +471,16 @@ public class ChessAI implements Player {
 
     private ArrayList<Move> bestVariation() {
         ArrayList<Move> list = new ArrayList<>();
-        TransTableEntry auxEntry;
+        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
         int counter = -1;
         
-        for(int i=0; i<5; i++) {
-            auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
-            //TODO: quick fix! sometimes null pointer exception in line 449
-            if(auxEntry==null) break;
+        while(auxEntry != null && counter<8) {
+
             if(auxEntry.getBestMove()==null) break;
             list.add(auxEntry.getBestMove());
             board.executeMove(auxEntry.getBestMove());
             counter++;
+            auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());                        
         }
     
         for(int i=counter; i>=0; i--) {
@@ -476,6 +491,16 @@ public class ChessAI implements Player {
     }
 
     private void printAndResetAnalytics(){
+                analyticsLabel.append("Search duration: "+moveDuration+" sec");
+                analyticsLabel.append("\nBest variation: "+bestVariation());
+                analyticsLabel.append("\nGame value: " + String.format("%.2f" ,0.01 * currentTree.getGameValue()));
+                analyticsLabel.append("\nEvaluated positions: " + evaluatedPositions);
+                analyticsLabel.append("\nVisited nodes: " + visitedNodes +
+                        ", visited quiet nodes: " + visitedQuietNodes);
+                analyticsLabel.append("\nTranspositions used: "+transpositionsUsed);
+                analyticsLabel.append("\n\n");
+
+                /* System.out.print("Search duration: "+moveDuration+" sec"+"\n");
                 System.out.println("Best variation: "+bestVariation());
                 System.out.println("Game value: " + String.format("%.2f" ,0.01 * currentTree.getGameValue()));
                 System.out.println("Evaluated positions: " + evaluatedPositions);
@@ -485,18 +510,26 @@ public class ChessAI implements Player {
                         ", Quiet Beta cuts: " + quietBetaCuts);             
                 System.out.println("Visited nodes: " + visitedNodes +
                         ", visited quiet nodes: " + visitedQuietNodes);                
-                System.out.println("Transpositions used: "+transpositionsUsed);
-                System.out.println(" ");                
+                System.out.println("Transpositions used: "+transpositionsUsed); */                
+                
                 evaluatedPositions = 0;
                 alphaCuts = 0; betaCuts =0;
                 quietAlphaCuts = 0; quietBetaCuts =0;
                 visitedNodes = 0; visitedQuietNodes =0;        
+                transpositionsUsed = 0;
     }
 
     private int quiescenceSearch(ChessTreeNode chessTree, int alpha, int beta, boolean maximizing) {
         
         int posValue = evaluateBoard();
         int gameValue;
+        
+        /* restrict number of evaluated positions to stop quiescence search 
+           explosion */
+        if(evaluatedPositions >= MAX_EV_POSITIONS_QUIET){
+            chessTree.setGameValue(posValue);
+            return posValue;
+        }
         
         if(maximizing){
             /* beta cutoff */
@@ -522,34 +555,35 @@ public class ChessAI implements Player {
             } 
                 
             boolean anyMove = false;        
+             
+            ArrayList<ChessTreeNode> takeList = createTakeList(chessTree.getChildren());            
+            if(takeList.size() >1) sortCaptureList(takeList);
             
-            for (ChessTreeNode node : chessTree.getChildren()) {
+            for (ChessTreeNode node : takeList) {
                 
                 Move currentMove = node.getMove();                
-                if(currentMove.getMoveType()==TAKE){
-                    visitedQuietNodes++;
-                    anyMove = true;
-                    ownGame.executeMove(currentMove, false);
-                    if(maximizing){
-                        gameValue = quiescenceSearch(node, alpha, beta, FALSE);
-                        ownGame.unexecuteMove(currentMove);                        
-                        /* beta cutoff */
-                        if(gameValue >= beta){
-                            quietBetaCuts++;
-                            return beta;
-                        }
-                        alpha = max(gameValue, alpha);
-                    }                    
-                    else{
-                        gameValue = quiescenceSearch(node, alpha, beta, TRUE);
-                        ownGame.unexecuteMove(currentMove);                        
-                        /* alpha cutoff */
-                        if(gameValue <= alpha){
-                            quietAlphaCuts++;
-                            return alpha;
-                        }
-                        beta = min(gameValue, beta);                        
+                visitedQuietNodes++;
+                anyMove = true;
+                ownGame.executeMove(currentMove, false);
+                if(maximizing){
+                    gameValue = quiescenceSearch(node, alpha, beta, FALSE);
+                    ownGame.unexecuteMove(currentMove);                        
+                    /* beta cutoff */
+                    if(gameValue >= beta){
+                        quietBetaCuts++;
+                        return beta;
                     }
+                    alpha = max(gameValue, alpha);
+                }                    
+                else{
+                    gameValue = quiescenceSearch(node, alpha, beta, TRUE);
+                    ownGame.unexecuteMove(currentMove);                        
+                    /* alpha cutoff */
+                    if(gameValue <= alpha){
+                        quietAlphaCuts++;
+                        return alpha;
+                    }
+                    beta = min(gameValue, beta);                        
                 }
             }
             if(!anyMove) return posValue;
@@ -563,8 +597,53 @@ public class ChessAI implements Player {
     private void createChildrenFromPieceList(ChessTreeNode chessTree, ArrayList<Piece> pieces) {
         ArrayList<Move> allMoves= allPossibleMoves((ArrayList<Piece>) pieces);      
         for (Move move : allMoves) {
-            chessTree.addChildNode(new ChessTreeNode(move, Integer.MIN_VALUE, chessTree));
+            chessTree.addChildNode(new ChessTreeNode(move, Integer.MIN_VALUE, chessTree.getDepth()+1));
         }         
     }    
+
+    private void createAnalyticsFrame() {
+        JFrame analyticsView = new JFrame("AI Analytics");
+        analyticsView.setSize(300,700);
+        JScrollPane analyticsScroll = new JScrollPane(analyticsLabel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
+
+        analyticsView.add(analyticsScroll);
+        analyticsView.setVisible(true);
+    }
+
+    private ArrayList<ChessTreeNode> createTakeList(ArrayList<ChessTreeNode> nodeList) {
+    
+        ArrayList<ChessTreeNode> takeList = new ArrayList<>();
+        
+        for(ChessTreeNode node : nodeList){
+            Move currentMove = node.getMove(); 
+            if(currentMove.getMoveType() == TAKE) takeList.add(node);       
+        }
+    
+    return takeList;
+    }
+
+    private void sortCaptureList(ArrayList<ChessTreeNode> nodeList) {
+        
+        /* sort moves by most valuable victim - least valuable attacker
+        */
+        class sortByMVVLVA implements Comparator<ChessTreeNode>
+        {
+            @Override
+            public int compare(ChessTreeNode a, ChessTreeNode b){
+                int ascore = board.getPieceTypeOnCoord(a.getMove().getCoordTo()).getMaterialValue()
+                        -a.getMove().getPieceType().getMaterialValue();
+                int bscore = board.getPieceTypeOnCoord(b.getMove().getCoordTo()).getMaterialValue()
+                        -b.getMove().getPieceType().getMaterialValue();
+                return bscore-ascore;
+            }
+        }
+    
+        nodeList.sort(new sortByMVVLVA());
+    }
+
+    @Override
+    public ChessGuiView getView() {
+        return null;
+    }
 
 }

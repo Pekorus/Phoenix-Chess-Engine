@@ -8,12 +8,12 @@ package chess.gui;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
+import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.game.ChessGame;
 import chess.game.DrawType;
 import chess.move.Move;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -21,7 +21,10 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import javax.swing.*;
 import static javax.swing.BoxLayout.Y_AXIS;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
@@ -36,12 +39,13 @@ public class ChessGuiView extends JFrame {
     private final ChessGuiController guiController;
     private final ChessColor ownColor;
     Piece[][] pieceArray;
-
+    ImageIcon[][] spriteArray;
+    
     //frames, panels, dialogs
-    private final MainView mainView;
-    private final JPanel borderPanel = new JPanel(new BorderLayout());
-    private final JPanel chessBoardPanel = new JPanel(new GridLayout(8, 8));
-    private final JPanel downPanel = new JPanel();
+    private JFrame mainFrame;
+    private final JPanel mainPanel = new JPanel(new GridBagLayout());
+    private final JPanel chessBoardPanel = new JPanel(new GridBagLayout());
+    
     //right side
     private final JPanel rightSidePanel = new JPanel();
     private final JLabel resultLabel = new JLabel();
@@ -60,25 +64,40 @@ public class ChessGuiView extends JFrame {
     private final Color lightColor = Color.getHSBColor(0.52175f, 0.4f, 0.9f);
     private final Color darkColor = Color.getHSBColor(0.52175f, 0.4f, 0.6f);
     
-    public ChessGuiView(MainView mainView, ChessGuiController guiController, ChessColor ownColor) {
+    public ChessGuiView(ChessGuiController guiController, ChessColor ownColor) {
         this.ownColor = ownColor;
-        this.guiController = guiController;
-        this.mainView = mainView;
-
+        this.guiController = guiController;    
+    }
+    
+    public void createView(){
+        
         //create view components
         createPromotionDialog();
         createChessboardPanel();
         createRightPanel();
         createDisplayMovesScroll();
-
-        //border panel
-        borderPanel.add(chessBoardPanel, BorderLayout.CENTER);
-        borderPanel.add(rightSidePanel, BorderLayout.LINE_END);
-        borderPanel.add(downPanel, BorderLayout.PAGE_END);
-        mainView.add(borderPanel);
-        mainView.setVisible(true);
-    }
-
+        
+        //filling main panel
+        GridBagConstraints c = new GridBagConstraints();
+        GridBagConstraints r = new GridBagConstraints();
+        
+        //c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.FIRST_LINE_START;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 0.2;
+        //c.weighty = 0.6;
+        mainPanel.add(chessBoardPanel, c);
+        
+        r.gridx = 1;
+        r.gridy = 0;        
+        r.weightx = 0.8;
+        r.weighty = 1;
+        r.anchor = GridBagConstraints.LINE_END;
+        r.fill = GridBagConstraints.BOTH;
+        mainPanel.add(rightSidePanel, r);
+    } 
+    
     public void update(ChessGame game, Object arg) {
         pieceArray = game.getBoard().getPieceArray();
         this.drawBoard(pieceArray);
@@ -101,16 +120,12 @@ public class ChessGuiView extends JFrame {
                 if (pieces[i][j] == null) {
                     buttonArray[a][b].setIcon(null);
                 } else {
-                    ImageIcon sprite = mainView.getSprite(pieces[i][j].getPiecetype(),
+                    ImageIcon sprite = getSprite(pieces[i][j].getPiecetype(),
                             pieces[i][j].isColor());
                     buttonArray[a][b].setIcon(sprite);
                 }
             }
         }
-    }
-
-    public void setVisible(Boolean b) {
-        mainView.setVisible(b);
     }
 
     private void createPromotionDialog() {
@@ -121,13 +136,13 @@ public class ChessGuiView extends JFrame {
         promoteDialog.setSize(400, 150);
         promoteDialog.setModal(true);
 
-        queenButton = new JButton(mainView.getSprite(QUEEN, WHITE));
+        queenButton = new JButton(getSprite(QUEEN, WHITE));
         iconOnlyButton(queenButton);
-        bishopButton = new JButton(mainView.getSprite(BISHOP, WHITE));
+        bishopButton = new JButton(getSprite(BISHOP, WHITE));
         iconOnlyButton(bishopButton);
-        knightButton = new JButton(mainView.getSprite(KNIGHT, WHITE));
+        knightButton = new JButton(getSprite(KNIGHT, WHITE));
         iconOnlyButton(knightButton);
-        rookButton = new JButton(mainView.getSprite(ROOK, WHITE));
+        rookButton = new JButton(getSprite(ROOK, WHITE));
         iconOnlyButton(rookButton);
         queenButton.addActionListener(guiController);
         bishopButton.addActionListener(guiController);
@@ -170,35 +185,93 @@ public class ChessGuiView extends JFrame {
     }
 
     public void setPromoteDialogColor(ChessColor color) {
-        queenButton.setIcon(mainView.getSprite(QUEEN, color));
-        bishopButton.setIcon(mainView.getSprite(BISHOP, color));
-        knightButton.setIcon(mainView.getSprite(KNIGHT, color));
-        rookButton.setIcon(mainView.getSprite(ROOK, color));
+        queenButton.setIcon(getSprite(QUEEN, color));
+        bishopButton.setIcon(getSprite(BISHOP, color));
+        knightButton.setIcon(getSprite(KNIGHT, color));
+        rookButton.setIcon(getSprite(ROOK, color));
     }
 
     private void createChessboardPanel() {
+        
+        /* wrap every JButton with a JPanel to allow size increase by 
+            flow Layout */
+        JPanel boardPanel = new JPanel(new GridLayout(8, 8));
+        JPanel[][] panelArray = new JPanel[8][8];
+        
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 buttonArray[i][j] = new JButton();
                 buttonArray[i][j].setBorder(null);
+                buttonArray[i][j].setPreferredSize(new Dimension(80,80));
+
                 if ((i + j) % 2 == 0) {
-                    buttonArray[i][j].setBackground(Color.white);
+                    buttonArray[i][j].setBackground(Color.white);                
                 } else {
                     buttonArray[i][j].setBackground(Color.gray);
                 }
                 buttonArray[i][j].addActionListener(guiController);
-                chessBoardPanel.add(buttonArray[i][j]);
+                
+                panelArray[i][j] = new JPanel();                               
+                panelArray[i][j].add(buttonArray[i][j]);
+                boardPanel.add(panelArray[i][j]);
             }
         }
-        chessBoardPanel.setPreferredSize(new Dimension(650, 650));
+        
+        JPanel downCoordAxis = new JPanel(new GridLayout(1,8));
+        downCoordAxis.setBackground(Color.orange);
+        String[] downCoord = {"A", "B", "C", "D", "E", "F", "G", "H"};
+        List<String> downCoordList = Arrays.asList(downCoord);
+        
+        JPanel rightCoordAxis = new JPanel(new GridLayout(8,1));
+        rightCoordAxis.setBackground(Color.orange);        
+        String[] rightCoord = {"8", "7", "6", "5", "4", "3", "2", "1"};        
+        List<String> rightCoordList = Arrays.asList(rightCoord);
+        
+        if(ownColor==BLACK){
+            Collections.reverse(downCoordList);
+            Collections.reverse(rightCoordList);
+        }
+        
+        JLabel auxLabel;
+        
+        for(int i=0; i<8; i++){
+                auxLabel = new JLabel(downCoordList.get(i), SwingConstants.CENTER);
+                downCoordAxis.add(auxLabel);
+                auxLabel = new JLabel("  "+rightCoordList.get(i)+"  ", SwingConstants.CENTER);        
+                rightCoordAxis.add(auxLabel);              
+        }        
+        
+        GridBagConstraints c = new GridBagConstraints();
+        
+        c.gridx = 0;
+        c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;        
+        chessBoardPanel.add(boardPanel, c);
+        
+        c.gridx = 0;
+        c.gridy = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        chessBoardPanel.add(downCoordAxis, c);
+        
+        c.gridx = 1;
+        c.gridy = 0;
+        c.fill = GridBagConstraints.VERTICAL;        
+        chessBoardPanel.add(rightCoordAxis, c);
+    
+        c.gridx = 1;
+        c.gridy = 1;
+        c.fill = GridBagConstraints.BOTH;
+        JPanel extra = new JPanel();
+        extra.setBackground(Color.ORANGE);
+        chessBoardPanel.add(extra, c);
     }
 
     private void showGameEndDialog(ChessColor winner, DrawType draw) {
         if (winner != null) {
-            JOptionPane.showMessageDialog(mainView.getFrame(),
+            JOptionPane.showMessageDialog(mainFrame,
                     winner + " Player has won!", "Game ended", JOptionPane.WARNING_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(mainView.getFrame(),
+            JOptionPane.showMessageDialog(mainFrame,
                     "Game ended in a draw (" + draw + ")", "Game ended",
                     JOptionPane.WARNING_MESSAGE);
         }
@@ -207,7 +280,6 @@ public class ChessGuiView extends JFrame {
     private void createDisplayMovesScroll() {
         displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel,
                 BoxLayout.Y_AXIS));
-        displayMovesScroll.setPreferredSize(new Dimension(220, 300));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
@@ -295,7 +367,7 @@ public class ChessGuiView extends JFrame {
         resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         rightSidePanel.add(resultLabel);
         rightSidePanel.add(displayMovesScroll);
-        rightSidePanel.setPreferredSize(new Dimension(200, mainView.getHeight()));
+        rightSidePanel.setPreferredSize(new Dimension(200, mainFrame.getHeight()));
     }
 
     private void setResultLabel(ChessColor winner) {
@@ -309,7 +381,44 @@ public class ChessGuiView extends JFrame {
     }
 
     void promoteDialogSetLocation() {
-        promoteDialog.setLocationRelativeTo(mainView.getFrame());
+        promoteDialog.setLocationRelativeTo(mainFrame);
     }
 
+    public void setMainFrame(JFrame mainFrame){
+        this.mainFrame = mainFrame;
+    }
+    
+    public void setSpriteArray(ImageIcon[][] spriteArray) {
+        this.spriteArray = spriteArray;
+    }
+    
+    public JPanel getMainPanel(){
+        return mainPanel;
+    }
+
+    private ImageIcon getSprite(PieceType pieceType, ChessColor color) {
+        int aux = 0;
+        if (color == WHITE) aux = 1;
+        
+        switch (pieceType) {
+            case KING:
+                return (spriteArray[aux][0]);
+
+            case QUEEN:
+                return (spriteArray[aux][1]);
+
+            case BISHOP:
+                return (spriteArray[aux][2]);
+
+            case KNIGHT:
+                return (spriteArray[aux][3]);
+
+            case ROOK:
+                return (spriteArray[aux][4]);
+
+            case PAWN:
+                return (spriteArray[aux][5]);
+        }
+        return null;
+    }
 }

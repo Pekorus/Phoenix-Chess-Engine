@@ -23,9 +23,10 @@ public class MainController implements ActionListener{
     ChessGameType gameType;
     
     public MainController() {
-        this.mainView = new MainView(this, 740, 900);
+        this.mainView = new MainView(this, 760, 940);
         this.gameType = null;
-        this.gameController = new GameController(mainView, WHITEPLAYER);
+        this.gameController = new GameController(WHITEPLAYER);
+        handleViews();
     }
        
     @Override
@@ -82,11 +83,17 @@ public class MainController implements ActionListener{
     }
 
     private void restartGame() {
-        this.gameController = new GameController(mainView, gameType);
+        this.gameController = new GameController(gameType);
         gameType = null;
+        handleViews();
         gameController.startGame();
         mainView.removeGamePanel();     
     }
  
-    
+    private void handleViews(){
+        ChessGuiView chessPanel = gameController.getView();
+        mainView.add(chessPanel.getMainPanel());
+        mainView.doPreparations(chessPanel);
+        mainView.setVisible(true);  
+    }
 }

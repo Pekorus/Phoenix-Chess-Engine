@@ -37,14 +37,14 @@ import javax.swing.WindowConstants;
 public class MainView{
     
     //string to update version number
-    private static final String VERSION = "0.7.3";
+    private static final String VERSION = "0.8.0";
     
     //fields for main frame
     private final MainController mainControl;
     private final JFrame mainFrame;
     private final int frameHeight;
     private final int frameWidth;
-    private final JPanel mainPanel;
+    private final JPanel cardPanel;
     private final CardLayout cards;
     
     //fields for menu bar
@@ -73,13 +73,13 @@ public class MainView{
         this.frameHeight = frameHeight;
         this.frameWidth = frameWidth;
         this.cards = new CardLayout();
-        this.mainPanel = new JPanel(cards);
-        
+        this.cardPanel = new JPanel(cards);
+       
         mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mainFrame.setResizable(false);
         mainFrame.setSize(frameWidth, frameHeight);
         mainFrame.setLocationRelativeTo(null);
-        mainFrame.add(mainPanel);
+        mainFrame.add(cardPanel);
 
         //load sprite sheet and process it
         createSprites();
@@ -116,7 +116,7 @@ public class MainView{
     }
 
     void add(JPanel panel) {
-        mainPanel.add(panel);
+        cardPanel.add(panel);
     }
 
     void setVisible(boolean b) {
@@ -136,8 +136,8 @@ public class MainView{
     }
 
     void removeGamePanel() {
-        cards.next(mainPanel);
-        mainPanel.remove(0);
+        cards.next(cardPanel);
+        cardPanel.remove(0);
     }
 
     private void createGameSettingDialog() {
@@ -154,11 +154,11 @@ public class MainView{
         JPanel colorChoiceButtons = new JPanel(new GridLayout(1, 3));
         gameTypePanel.add(colorChoiceButtons, BorderLayout.CENTER);
 
-        whiteColorButton = new JButton(getSprite(KING,WHITE));
+        whiteColorButton = new JButton(spriteArray[1][0]);
         iconOnlyButton(whiteColorButton);
         whiteColorButton.addActionListener(mainControl);
         
-        blackColorButton = new JButton(getSprite(KING,BLACK));
+        blackColorButton = new JButton(spriteArray[0][0]);
         iconOnlyButton(blackColorButton);
         blackColorButton.addActionListener(mainControl);
         
@@ -238,37 +238,17 @@ public class MainView{
         }
     }
 
-    public ImageIcon getSprite(PieceType pieceType, ChessColor color) {
-        int aux = 0;
-        if (color == WHITE) aux = 1;
-        
-        switch (pieceType) {
-            case KING:
-                return (spriteArray[aux][0]);
-
-            case QUEEN:
-                return (spriteArray[aux][1]);
-
-            case BISHOP:
-                return (spriteArray[aux][2]);
-
-            case KNIGHT:
-                return (spriteArray[aux][3]);
-
-            case ROOK:
-                return (spriteArray[aux][4]);
-
-            case PAWN:
-                return (spriteArray[aux][5]);
-        }
-        return null;
-    }
-
     private void loadError(String string) {
         JOptionPane.showMessageDialog(mainFrame, "Could not load data. "
                 +string+" seems to be missing. Game will be shut down.", 
                 "Loading Failure", JOptionPane.ERROR_MESSAGE);
     
         System.exit(1);
+    }
+
+    void doPreparations(ChessGuiView chessPanel) {
+        chessPanel.setSpriteArray(spriteArray);
+        chessPanel.setMainFrame(mainFrame);
+        chessPanel.createView();
     }
 }

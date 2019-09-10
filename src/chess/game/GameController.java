@@ -9,7 +9,7 @@ import chess.ai.ChessAI;
 import chess.board.ChessColor;
 import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
-import chess.gui.MainView;
+import chess.gui.ChessGuiView;
 import chess.move.Move;
 
 /**
@@ -21,20 +21,23 @@ public class GameController {
     ChessGame game;
     Player whitePlayer;
     Player blackPlayer;
+    ChessColor humanPlayer; 
     Boolean checkmate= false, draw=false;
     
-    public GameController(MainView mainView, ChessGameType gameType) {
+    public GameController(ChessGameType gameType) {
         game = new ChessGame();        
         
         switch(gameType){            
             case WHITEPLAYER:
-            whitePlayer = new ChessGuiController(this, mainView, WHITE, "Human", "ChessAI");                
+            whitePlayer = new ChessGuiController(this, WHITE, "Human", "ChessAI");                
             blackPlayer = new ChessAI(this, BLACK);
+            humanPlayer = WHITE;
             break;
         
             case BLACKPLAYER:
-            blackPlayer = new ChessGuiController(this, mainView, BLACK, "Human", "ChessAI");                
+            blackPlayer = new ChessGuiController(this, BLACK, "Human", "ChessAI");                
             whitePlayer = new ChessAI(this, WHITE);                
+            humanPlayer = BLACK;
             break;
         }
         //MainView mainView2= new MainView(700,900);        
@@ -67,5 +70,10 @@ public class GameController {
         if(playersTurn==WHITE) whitePlayer.getNextMove();
         else blackPlayer.getNextMove();
     }
-  
+
+    public ChessGuiView getView(){
+        if(humanPlayer==WHITE) return whitePlayer.getView();
+        else return blackPlayer.getView();
+    }
+    
 }

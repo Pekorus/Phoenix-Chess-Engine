@@ -19,16 +19,13 @@ public class ChessTreeNode implements Comparable{
     private Move move;
     private int gameValue;
     private int depth;
-    private ChessTreeNode parent;
     private final ArrayList<ChessTreeNode> children;
     
-    public ChessTreeNode(Move move, int gameValue, ChessTreeNode parent) {
+    public ChessTreeNode(Move move, int gameValue, int depth) {
         this.move = move;
         this.gameValue = gameValue;
-        this.parent = parent;
-        if(parent==null) this.depth=0;
-        else this.depth = parent.depth+ 1;
         this.children = new ArrayList<>();
+        this.depth = depth;
     }
 
     public int getChildCount(){
@@ -39,7 +36,6 @@ public class ChessTreeNode implements Comparable{
         for(ChessTreeNode child : children){
             if(child.move.equals(move)){
                 child.decreaseDepth();
-                child.parent=null;
                 return child;
             }
         }
@@ -47,7 +43,7 @@ public class ChessTreeNode implements Comparable{
     }
     
     public void addChildNode(ChessTreeNode node){
-        children.add(node);
+        this.children.add(node);
     }
 
     /* Moves the node with the specified move to front of children list */
@@ -77,10 +73,6 @@ public class ChessTreeNode implements Comparable{
 
     public int getDepth() {
         return depth;
-    }
-
-    public ChessTreeNode getParent() {
-        return parent;
     }
 
     public ArrayList<ChessTreeNode> getChildren() {
