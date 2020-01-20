@@ -5,18 +5,19 @@
  */
 package chess.gui;
 
-import chess.board.ChessColor;
-import static chess.board.ChessColor.*;
-import chess.board.PieceType;
-import static chess.board.PieceType.KING;
 import static chess.gui.ChessGuiView.iconOnlyButton;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -27,8 +28,12 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.SwingConstants;
+import static javax.swing.SwingConstants.HORIZONTAL;
+import static javax.swing.SwingConstants.VERTICAL;
 import javax.swing.WindowConstants;
+import javax.swing.border.Border;
 
 /**
  *
@@ -37,7 +42,7 @@ import javax.swing.WindowConstants;
 public class MainView{
     
     //string to update version number
-    private static final String VERSION = "0.8.0";
+    private static final String VERSION = "0.9.0";
     
     //fields for main frame
     private final MainController mainControl;
@@ -58,6 +63,10 @@ public class MainView{
     
     //fields for options dialog
     final JDialog optionsDialog = new JDialog();
+    JSlider searchDepthSlider; 
+    JSlider quietSearchDepthSlider;
+    JButton resetDefault;
+    JButton applyChanges;
     
     //about dialog
     final JDialog aboutDialog = new JDialog();
@@ -176,11 +185,82 @@ public class MainView{
     private void createOptionsDialog(){
         
         optionsDialog.setTitle("Game Options");
-        optionsDialog.setSize(400, 150);
+        optionsDialog.setSize(400, 450);
         optionsDialog.setModal(true);        
-    
-        JLabel optionsLabel = new JLabel("not supported yet", SwingConstants.CENTER);
-        optionsDialog.add(optionsLabel);
+        optionsDialog.setLayout(new FlowLayout(VERTICAL));
+        
+        Border optionsBorder = BorderFactory.createEtchedBorder();
+        
+        /* search Depth Panel */
+        JPanel searchDepthPanel = new JPanel(new GridBagLayout());
+        searchDepthPanel.setBorder(optionsBorder);
+        optionsDialog.add(searchDepthPanel);
+        GridBagConstraints constr = new GridBagConstraints();
+        
+        JLabel searchDepthLabel = new JLabel("Search depth", SwingConstants.CENTER);
+        constr.gridx = 0;
+        constr.gridy = 0;
+        constr.insets = new Insets(0,10,0,0);
+        searchDepthPanel.add(searchDepthLabel, constr);        
+        
+        searchDepthSlider = new JSlider(HORIZONTAL, 1, 10, 5);
+        searchDepthSlider.setMajorTickSpacing(1);
+        searchDepthSlider.setPaintTicks(true);
+        searchDepthSlider.setPaintLabels(true);        
+        constr.gridx = 1;
+        constr.gridy = 0;
+        constr.insets = new Insets(10,10,10,10);        
+        searchDepthPanel.add(searchDepthSlider, constr);
+
+        JLabel searchDepthTip = new JLabel("<html><center>Controls the regular search "
+                + "depth.</center><br> <font color='red'>Warning:</font> Processing power and "
+                + "memory needed grow <br> exponentially with search depth. "
+                + "Increase in moderation!</html>", SwingConstants.CENTER);
+        constr.gridx = 0;
+        constr.gridy = 1;
+        constr.gridwidth = 2;
+        searchDepthPanel.add(searchDepthTip, constr);
+        constr.gridwidth = 1;
+        
+        /* quiescence search depth panel */
+        JPanel quietSearchDepthPanel = new JPanel(new GridBagLayout());        
+        quietSearchDepthPanel.setBorder(optionsBorder);
+        optionsDialog.add(quietSearchDepthPanel);                
+        JLabel quietSearchDepthLabel = new JLabel("Quiescence search depth", 
+                SwingConstants.CENTER);
+        constr.gridx = 0;
+        constr.gridy = 0;
+        constr.insets = new Insets(0,10,0,0);
+        quietSearchDepthPanel.add(quietSearchDepthLabel, constr);        
+        
+        quietSearchDepthSlider = new JSlider(HORIZONTAL, 0, 30, 20);
+        quietSearchDepthSlider.setMajorTickSpacing(5);
+        quietSearchDepthSlider.setSnapToTicks(true);
+        quietSearchDepthSlider.setPaintTicks(true);
+        quietSearchDepthSlider.setPaintLabels(true);        
+        constr.gridx = 1;
+        constr.gridy = 0;
+        constr.insets = new Insets(10,10,10,10);        
+        quietSearchDepthPanel.add(quietSearchDepthSlider, constr);        
+
+        JLabel quietSearchDepthTip = new JLabel("<html><center>Controls quiescence search "
+                + "depth at end of regular search.<br></center> Maximal search depth ="
+                + " regular depth + quiescence depth</html>", 
+                SwingConstants.CENTER);
+        constr.gridx = 0;
+        constr.gridy = 1;
+        constr.gridwidth = 2;
+        quietSearchDepthPanel.add(quietSearchDepthTip, constr);
+
+        /* Buttons at end of options dialog */
+        applyChanges = new JButton("Apply changes");
+        applyChanges.addActionListener(mainControl);
+        optionsDialog.add(applyChanges);
+        
+        resetDefault = new JButton("Reset default settings");
+        resetDefault.addActionListener(mainControl);
+        optionsDialog.add(resetDefault);
+        
     }
     
     private void createAboutDialog(){

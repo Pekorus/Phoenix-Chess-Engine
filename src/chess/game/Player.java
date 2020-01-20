@@ -20,4 +20,6 @@ public interface Player {
     public abstract void getNextMove();
 
     public ChessGuiView getView();
+
+    public void endGame();
 }

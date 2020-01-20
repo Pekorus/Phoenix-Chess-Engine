@@ -13,12 +13,14 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
  */
 public class ChessTransTable {
     
-    Int2ObjectOpenHashMap<TransTableEntry> hashMap;
-    int mapSize;
+    private final Int2ObjectOpenHashMap<TransTableEntry> hashMap;
+    private final int mapSize;
+    private int hashCollisions;
     
     public ChessTransTable(int entryCount) {
         this.mapSize = entryCount+1;
         this.hashMap = new Int2ObjectOpenHashMap(mapSize, 1.0f); 
+        this.hashCollisions = 0;
     }
     
     public void insertEntry(TransTableEntry entry){
@@ -30,7 +32,7 @@ public class ChessTransTable {
             TransTableEntry auxEntry = hashMap.get(key);
             if(auxEntry.getZobristKey() == entry.getZobristKey()) 
                 auxEntry.setOldFlag(false);
-            if(auxEntry.getOldFlag() || auxEntry.getDepth()<= entry.getDepth())
+            if(auxEntry.getOldFlag() || auxEntry.getDepth()>= entry.getDepth())
                 hashMap.replace(key, entry);    
         }
         else hashMap.put(key, entry);
@@ -53,6 +55,17 @@ public class ChessTransTable {
         return (int) (zobris %mapSize);
     } 
 
+    public int getHashCollisions() {
+        return hashCollisions;
+    }
+
+    public int getHashFilled(){
+        return hashMap.size();
+    }
+    
+    public void resetCollisionCounter(){
+        hashCollisions = 0;
+    }
     void clear() {
         hashMap.clear();
     }

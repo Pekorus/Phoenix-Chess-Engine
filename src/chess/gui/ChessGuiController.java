@@ -211,4 +211,8 @@ public class ChessGuiController implements ActionListener, Player {
         paintedOppCoord2 = auxCoord2;
     }
 
+    @Override
+    public void endGame() {        
+    }
+
 }

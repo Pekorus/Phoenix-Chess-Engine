@@ -11,6 +11,7 @@ import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.gui.ChessGuiView;
 import chess.move.Move;
+import chess.options.AIOptions;
 
 /**
  *
@@ -24,19 +25,19 @@ public class GameController {
     ChessColor humanPlayer; 
     Boolean checkmate= false, draw=false;
     
-    public GameController(ChessGameType gameType) {
+    public GameController(ChessGameType gameType, AIOptions aiOptions) {
         game = new ChessGame();        
         
         switch(gameType){            
             case WHITEPLAYER:
             whitePlayer = new ChessGuiController(this, WHITE, "Human", "ChessAI");                
-            blackPlayer = new ChessAI(this, BLACK);
+            blackPlayer = new ChessAI(this, BLACK, aiOptions);
             humanPlayer = WHITE;
             break;
         
             case BLACKPLAYER:
             blackPlayer = new ChessGuiController(this, BLACK, "Human", "ChessAI");                
-            whitePlayer = new ChessAI(this, WHITE);                
+            whitePlayer = new ChessAI(this, WHITE, aiOptions);                
             humanPlayer = BLACK;
             break;
         }
@@ -74,6 +75,11 @@ public class GameController {
     public ChessGuiView getView(){
         if(humanPlayer==WHITE) return whitePlayer.getView();
         else return blackPlayer.getView();
+    }
+
+    public void endGame() {
+        whitePlayer.endGame();
+        blackPlayer.endGame();
     }
     
 }

@@ -44,7 +44,7 @@ public class ChessGame{
         board.executeMove(move);
         moveList.add(move);
         recentPositions.add(board.getHashValue());
-        if(recentPositions.size()>20) recentPositions.removeFirst();
+        if(recentPositions.size()>40) recentPositions.removeFirst();
         drawTurnTimer++;
         if(move.getMoveType()==TAKE || move.getPieceType()==PAWN)
             drawTurnTimer=0;
@@ -67,6 +67,10 @@ public class ChessGame{
         return board;
     }
 
+    public boolean isInCheck(ChessColor color) {
+        return rules.isInCheck(color);
+    }
+    
     public boolean isCheckmate() {
         if(rules.isCheckmate(playersTurn)){
             winner= playersTurn.getInverse();
@@ -109,7 +113,7 @@ public class ChessGame{
     public LinkedList<Move> getMoveList() {
         return moveList;
     }
-
+    
     int getDrawTurnTimer() {
         return drawTurnTimer;
     }
@@ -137,6 +141,5 @@ public class ChessGame{
     public boolean isStalemate() {
         return rules.isStalemate();
     }
-
     
 }

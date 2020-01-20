@@ -6,7 +6,7 @@
 package chess.coordinate;
 
 import chess.board.ChessColor;
-import static chess.board.ChessColor.WHITE;
+import static chess.board.ChessColor.*;
 import static chess.coordinate.Direction.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
@@ -141,6 +141,24 @@ public class Coordinate {
         auxCoord = this.getCoordInDir(SE);
         if(auxCoord!=null) list.add(auxCoord);
         
+        return list;
+    }
+
+    public ArrayList<Coordinate> getDiagCoordFront(ChessColor color){
+        ArrayList<Coordinate> list = new ArrayList<>();
+        Coordinate auxCoord;
+        if(color == BLACK){
+            auxCoord = this.getCoordInDir(NW);
+            if(auxCoord!=null) list.add(auxCoord);
+            auxCoord = this.getCoordInDir(NE);
+            if(auxCoord!=null) list.add(auxCoord);
+        }
+        else{
+            auxCoord = this.getCoordInDir(SW);
+            if(auxCoord!=null) list.add(auxCoord);
+            auxCoord = this.getCoordInDir(SE);
+            if(auxCoord!=null) list.add(auxCoord);
+        }
         return list;
     }
     

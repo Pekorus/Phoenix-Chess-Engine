@@ -6,24 +6,22 @@
 package chess.ai;
 
 import chess.move.Move;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import java.util.ArrayList;
 
 /**
  *
  * @author Phoenix
  */
-public class ChessTreeNode implements Comparable{
+public class ChessTreeNode{
     
-    private Move move;
-    private int gameValue;
+    private final Move move;
+    //private int gameValue;
     private int depth;
     private final ArrayList<ChessTreeNode> children;
     
     public ChessTreeNode(Move move, int gameValue, int depth) {
         this.move = move;
-        this.gameValue = gameValue;
+        //this.gameValue = gameValue;
         this.children = new ArrayList<>();
         this.depth = depth;
     }
@@ -67,9 +65,9 @@ public class ChessTreeNode implements Comparable{
         return move;
     }
 
-    public int getGameValue() {
+    /*public int getGameValue() {
         return gameValue;
-    }
+    }*/
 
     public int getDepth() {
         return depth;
@@ -79,29 +77,25 @@ public class ChessTreeNode implements Comparable{
         return children;
     }
 
-    public void setMove(Move move) {
-        this.move = move;
-    }
-
-    public void setGameValue(int gameValue) {
+    /*public void setGameValue(int gameValue) {
         this.gameValue = gameValue;
-    }
+    }*/
 
-    void evaluateNodeMax() {
+    /*void evaluateNodeMax() {
         int maxValue= -Integer.MAX_VALUE;
         for(ChessTreeNode child : children){
            maxValue = max(maxValue, child.getGameValue());
         }
         this.gameValue = maxValue;
-    }
+    }*/
 
-    void evaluateNodeMin() {
+    /*void evaluateNodeMin() {
         int minValue= Integer.MAX_VALUE;
         for(ChessTreeNode child : children){
            minValue = min(minValue, child.getGameValue());
         }
         this.gameValue = minValue;        
-    }
+    }*/
 
     boolean hasChildren() {
        if(children==null) return false;
@@ -118,11 +112,17 @@ public class ChessTreeNode implements Comparable{
        }
     } 
 
-    @Override
-    public int compareTo(Object o) {
+    /*public int compareTo(Object o) {
        ChessTreeNode node = (ChessTreeNode) o;
        if(this.gameValue< node.gameValue) return 1;
        else if(this.gameValue > node.gameValue) return -1;
        else return 0;
+    }*/
+
+    @Override
+    public String toString() {
+        return move.toString();
     }
+
+
 }
