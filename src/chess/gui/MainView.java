@@ -41,7 +41,7 @@ import javax.swing.border.Border;
 public class MainView{
     
     //string to update version number
-    private static final String VERSION = "0.9.0";
+    private static final String VERSION = "0.9.7";
     
     //fields for main frame
     private final MainController mainControl;
