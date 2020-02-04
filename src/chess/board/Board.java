@@ -7,7 +7,9 @@ package chess.board;
 
 import chess.move.Move;
 import static chess.board.ChessColor.*;
+import static chess.board.PieceType.KING;
 import static chess.board.PieceType.PAWN;
+import static chess.board.PieceType.ROOK;
 import chess.coordinate.Coordinate;
 import java.util.ArrayList;
 import java.util.Random;
@@ -23,9 +25,8 @@ public class Board {
     private final ArrayList<Piece> blackPieces= new ArrayList<>();
     private final ArrayList<Piece> whitePieces= new ArrayList<>();    
     private final Stack<Piece> takenPieces= new Stack<>();
-    private final int[] pawnStructWhite = {1,1,1,1,1,1,1,1};
-    private final int[] pawnStructBlack = {1,1,1,1,1,1,1,1};
-    private boolean whiteCastled, blackCastled;
+    private final int[] pawnStructWhite = {0,0,0,0,0,0,0,0};
+    private final int[] pawnStructBlack = {0,0,0,0,0,0,0,0};
     private Piece whiteKing, blackKing;
     
     //fields for hashing, hashValue is updated in execute/unexecute move
@@ -36,11 +37,20 @@ public class Board {
     public Board() {
         this.board = new Piece[8][8];
         createStartPosition();                    
-        createPieceLists();      
-        whiteCastled = false;
-        blackCastled = false;
+        createPieceFields();      
         initializeZobrisValues(1);
         hashValue = this.zobrisHashBoard();
+    }
+
+    /* Constructor to create board for any position */
+    public Board(Piece[][] pieceArray, ChessColor colorToMove, boolean[] castleRights) {
+        
+        this.board = copyPieceArray(pieceArray);
+        createPieceFields();         
+        verifyCastleRights(castleRights);
+        initializeZobrisValues(1);
+        hashValue = this.zobrisHashBoard();
+        if(colorToMove ==BLACK) hashValue ^= zobrisSideToMove;
     }
     
     public void executeMove(Move move){
@@ -118,7 +128,6 @@ public class Board {
                             getCoordInDir(coordFrom.straightLineDir(coordTo));
             move(rook, rookFrom, rookTo);
             rook.increaseMoveCounter();
-            inverseCastleflag(piece.isColor());
             
             //update hash value
             updatePieceHashValue(piece, coordFrom);
@@ -226,7 +235,6 @@ public class Board {
             
             move(rook, rookTo, rookFrom);  
             rook.decreaseMoveCounter();
-            inverseCastleflag(piece.isColor());
             
             updatePieceHashValue(piece, coordTo);
             updatePieceHashValue(piece, coordFrom);            
@@ -268,9 +276,7 @@ public class Board {
         for(int i=0; i<8; i++) {
             board[1][i] = new Piece(PieceType.PAWN, WHITE, new Coordinate(1,i)); 
             board[6][i] = new Piece(PieceType.PAWN, BLACK, new Coordinate(6,i));
-        }
-        this.whiteKing= board[0][3];
-        this.blackKing= board[7][3];    
+        }   
     }
 
     private void move(Piece piece, Coordinate coordFrom, Coordinate coordTo) {
@@ -286,13 +292,21 @@ public class Board {
         return blackKing;
     }    
 
-    private void createPieceLists() {
+    private void createPieceFields() {
         for(int i=0; i<8; i++){
             for(int j=0; j<8; j++){
                 Piece auxPiece = board[i][j];
                 if(auxPiece!=null){
-                    if(auxPiece.isColor()==WHITE) whitePieces.add(auxPiece);
-                    else blackPieces.add(auxPiece);
+                    if(auxPiece.isColor()==WHITE){
+                        if(auxPiece.getPiecetype()==KING) whiteKing = auxPiece;
+                        if(auxPiece.getPiecetype()==PAWN) pawnStructWhite[j]++;
+                        whitePieces.add(auxPiece);
+                    }
+                    else{
+                        if(auxPiece.getPiecetype()==KING) blackKing = auxPiece;
+                        if(auxPiece.getPiecetype()==PAWN) pawnStructBlack[j]++;
+                        blackPieces.add(auxPiece);
+                    }
                 }
             }
         }
@@ -332,17 +346,7 @@ public class Board {
         if(file<0 || file>7) return 0;
         if(color==WHITE) return pawnStructWhite[file];
         else return pawnStructBlack[file];
-    }  
-
-    private void inverseCastleflag(ChessColor color) {
-        if(color==WHITE) whiteCastled = !whiteCastled;
-        else blackCastled = !blackCastled;
     }    
-
-    public boolean hasCastled(ChessColor color) {
-        if(color==WHITE) return whiteCastled;
-        else return blackCastled;
-    } 
 
     public boolean enPassantPossible() {
         //TODO
@@ -443,4 +447,47 @@ public class Board {
         else return null;
     }
     
+    private void verifyCastleRights(boolean[] castleRights) {
+        whiteKing.increaseMoveCounter();
+        blackKing.increaseMoveCounter();
+        
+        boolean whiteCastle, blackCastle;
+        
+        /* white small castle possible */
+        whiteCastle = castleRights[0] && board[0][0] != null && 
+                                            board[0][0].getPiecetype()== ROOK;
+        /* white large castle possible */
+        whiteCastle = whiteCastle || (castleRights[1] && board[0][7] != null && 
+                                            board[0][7].getPiecetype()== ROOK);
+        if(whiteCastle) whiteKing.decreaseMoveCounter();
+        
+        /* black small castle possible */
+        blackCastle = castleRights[2] && board[7][0] != null && 
+                                            board[7][0].getPiecetype()== ROOK;
+        /* black large castle possible */
+        blackCastle = blackCastle || (castleRights[3] && board[7][7] != null && 
+                                            board[7][7].getPiecetype()== ROOK);    
+        if(blackCastle) blackKing.decreaseMoveCounter();
+    }
+    
+    private Piece[][] copyPieceArray(Piece[][] oldArray){
+        
+        Piece[][] newArray = new Piece[8][8];
+    
+        for(int i=0; i<8; i++){
+            for(int j=0; j<8; j++){
+                if(oldArray[i][j]!=null) newArray[i][j] = 
+                                                    oldArray[i][j].deepCopy();
+            }
+        }
+        return newArray;
+    }
+
+    public void executeNullMove() {
+        hashValue ^= zobrisSideToMove;
+    }
+
+    public void unexecuteNullMove() {
+        hashValue ^= zobrisSideToMove;        
+    }
 }        

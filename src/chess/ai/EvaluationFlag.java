@@ -10,5 +10,5 @@ package chess.ai;
  * @author Phoenix
  */
 public enum EvaluationFlag {
-    ALPHA, BETA, EXACT 
+   ALPHA, BETA, EXACT 
 }

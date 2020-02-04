@@ -5,7 +5,6 @@
  */
 package chess.gui;
 
-import static chess.gui.ChessGuiView.iconOnlyButton;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
@@ -55,7 +54,7 @@ public class MainView{
     //fields for menu bar
     JMenuBar mainBar = new JMenuBar();
     JMenu gameMenu;
-    JMenuItem newGame, closeProgram, options, about;
+    JMenuItem newGame, boardEditor, closeProgram, options, about;
     
     //fields for game type dialog
     final JDialog gameTypeDialog = new JDialog();
@@ -73,6 +72,7 @@ public class MainView{
     
     //sprites
     BufferedImage spriteSheet;
+    BufferedImage[][] imageArray = new BufferedImage[2][6];
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
     ImageIcon randomColorIcon;
     
@@ -104,13 +104,18 @@ public class MainView{
  
         private void createMenuBar() {
         gameMenu = new JMenu("Game");
+            
             newGame = new JMenuItem("New Game...");
             newGame.addActionListener(mainControl);
             gameMenu.add(newGame);
+
+            boardEditor = new JMenuItem("Board Editor");
+            boardEditor.addActionListener(mainControl);
+            gameMenu.add(boardEditor);
             
             options = new JMenuItem("Options");
-            gameMenu.add(options);
             options.addActionListener(mainControl);            
+            gameMenu.add(options);
 
             about = new JMenuItem("About");
             gameMenu.add(about);
@@ -283,32 +288,30 @@ public class MainView{
         } catch (IOException ex) {
            loadError("Chess_Pieces.png");
         }        
-        BufferedImage whiteKing = spriteSheet.getSubimage(5, 5, 75, 75);
-        BufferedImage whiteQueen = spriteSheet.getSubimage(88, 5, 75, 75);
-        BufferedImage whiteBishop = spriteSheet.getSubimage(171, 5, 75, 75);
-        BufferedImage whiteKnight = spriteSheet.getSubimage(254, 5, 75, 75);
-        BufferedImage whiteRook = spriteSheet.getSubimage(338, 5, 75, 75);
-        BufferedImage whitePawn = spriteSheet.getSubimage(420, 5, 75, 75);
+        /* pieces are sorted like the PieceType Enum: King, Queen, Rook, Bishop,
+            Knight, Pawn
+        */
+        /* white pieces */
+        imageArray[1][0] = spriteSheet.getSubimage(5, 5, 75, 75);
+        imageArray[1][1] = spriteSheet.getSubimage(88, 5, 75, 75);
+        imageArray[1][3] = spriteSheet.getSubimage(171, 5, 75, 75);
+        imageArray[1][4] = spriteSheet.getSubimage(254, 5, 75, 75);
+        imageArray[1][2] = spriteSheet.getSubimage(338, 5, 75, 75);
+        imageArray[1][5] = spriteSheet.getSubimage(420, 5, 75, 75);
 
-        BufferedImage blackKing = spriteSheet.getSubimage(5, 89, 75, 75);
-        BufferedImage blackQueen = spriteSheet.getSubimage(88, 89, 75, 75);
-        BufferedImage blackBishop = spriteSheet.getSubimage(171, 89, 75, 75);
-        BufferedImage blackKnight = spriteSheet.getSubimage(254, 89, 75, 75);
-        BufferedImage blackRook = spriteSheet.getSubimage(338, 89, 75, 75);
-        BufferedImage blackPawn = spriteSheet.getSubimage(420, 89, 75, 75);
+        /* black pieces */
+        imageArray[0][0] = spriteSheet.getSubimage(5, 89, 75, 75);
+        imageArray[0][1] = spriteSheet.getSubimage(88, 89, 75, 75);
+        imageArray[0][3] = spriteSheet.getSubimage(171, 89, 75, 75);
+        imageArray[0][4] = spriteSheet.getSubimage(254, 89, 75, 75);
+        imageArray[0][2] = spriteSheet.getSubimage(338, 89, 75, 75);
+        imageArray[0][5] = spriteSheet.getSubimage(420, 89, 75, 75);
 
-        spriteArray[0][0] = new ImageIcon(blackKing);
-        spriteArray[0][1] = new ImageIcon(blackQueen);
-        spriteArray[0][2] = new ImageIcon(blackBishop);
-        spriteArray[0][3] = new ImageIcon(blackKnight);
-        spriteArray[0][4] = new ImageIcon(blackRook);
-        spriteArray[0][5] = new ImageIcon(blackPawn);
-        spriteArray[1][0] = new ImageIcon(whiteKing);
-        spriteArray[1][1] = new ImageIcon(whiteQueen);
-        spriteArray[1][2] = new ImageIcon(whiteBishop);
-        spriteArray[1][3] = new ImageIcon(whiteKnight);
-        spriteArray[1][4] = new ImageIcon(whiteRook);
-        spriteArray[1][5] = new ImageIcon(whitePawn);
+        for(int i=0; i<2; i++){
+            for(int j=0; j<6; j++){
+                spriteArray[i][j] = new ImageIcon(imageArray[i][j]);
+            }
+        }
 
         try {
         randomColorIcon =new ImageIcon(ImageIO.read(getClass().
@@ -330,5 +333,12 @@ public class MainView{
         chessPanel.setSpriteArray(spriteArray);
         chessPanel.setMainFrame(mainFrame);
         chessPanel.createView();
+    }
+
+    public static void iconOnlyButton(JButton button) {
+        button.setBorder(null);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
     }
 }

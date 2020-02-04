@@ -31,7 +31,6 @@ import java.util.List;
 public class ChessRules {
 
     private final List<Coordinate> castleCoords = new ArrayList();
-    ;
     private final ChessGame game;
     private final Board board;
 
@@ -43,12 +42,7 @@ public class ChessRules {
 
     public boolean validateMove(Move move, ChessGame game) {
 
-        //preparation and fail safes (commented out to improve AI performance)
-        /*if (move == null) {
-            return false;
-        }*/
         Piece piece = game.getBoard().getPieceOnCoord(move.getCoordFrom());
-        PieceType pieceType = piece.getPiecetype();
         ChessColor ownColor = piece.isColor();
         if (ownColor != game.getPlayersTurn()) {
             return false;
@@ -58,14 +52,14 @@ public class ChessRules {
 
         switch (move.getMoveType()) {
             case NORMAL:
-                if (board.isOccupied(move.getCoordTo())) {
+                if (board.isOccupied(coordTo)) {
                     return false;
                 }
                 if (!isMovePossible(move)) {
                     return false;
                 }
 
-                if (pieceType == PAWN) {
+                if (piece.getPiecetype() == PAWN) {
                     Direction auxDirect = Direction.S;
                     int promoteParameter = 7;
                     if (ownColor == BLACK) {
@@ -101,7 +95,7 @@ public class ChessRules {
                     return false;
                 }
    
-                if (pieceType == PAWN) {
+                if (piece.getPiecetype() == PAWN) {
                     if (ownColor == WHITE) {
                         if (!coordTo.equals(coordFrom.getCoordInDir(Direction.SW))
                                 && !coordTo.equals(coordFrom.getCoordInDir(Direction.SE))) {
@@ -124,11 +118,11 @@ public class ChessRules {
 
             case ENPASSANT:
                 Piece optPiece = game.getBoard().getPieceOnCoord(
-                        move.getCoordTo().takenCoordEP(ownColor));
+                        coordTo.takenCoordEP(ownColor));
                 if (optPiece == null) {
                     return false;
                 }
-                if (pieceType != PAWN) {
+                if (piece.getPiecetype() != PAWN) {
                     return false;
                 }
                 if (optPiece.getPiecetype() != PAWN) {
@@ -159,7 +153,7 @@ public class ChessRules {
                 break;
 
             case CASTLE:
-                if (pieceType != KING) {
+                if (piece.getPiecetype() != KING) {
                     return false;
                 }
                 if (piece.getMoveCounter() != 0) {
@@ -566,14 +560,14 @@ public class ChessRules {
     public ArrayList<Move> getPossibleMoves(Piece piece) {
 
         ArrayList<Move> moveList = new ArrayList<>();
-        Coordinate startCoord = piece.getCoord();
         Coordinate auxCoord;
         Move auxMove;
 
         switch (piece.getPiecetype()) {
             case KING:
+                Coordinate kingCoord = piece.getCoord();                
                 for (Direction dir : Direction.values()) {
-                    auxCoord = startCoord.getCoordInDir(dir);
+                    auxCoord = kingCoord.getCoordInDir(dir);
                     if (auxCoord != null) {
                         auxMove = createValidMove(piece, auxCoord, null);
                         if (auxMove != null) {
@@ -585,7 +579,7 @@ public class ChessRules {
                 if (piece.getMoveCounter() == 0) {
                     Direction dir = Direction.E;
                     for (int i = 0; i < 2; i++) {
-                        auxCoord = startCoord.getCoordInDir(dir).getCoordInDir(dir);
+                        auxCoord = kingCoord.getCoordInDir(dir).getCoordInDir(dir);
                         auxMove = createValidMove(piece, auxCoord, CASTLE);
                         if (auxMove != null) {
                             moveList.add(auxMove);
@@ -608,7 +602,7 @@ public class ChessRules {
                 break;
 
             case KNIGHT:
-                for (Coordinate coord : startCoord.createKnightCoordinates()) {
+                for (Coordinate coord : piece.getCoord().createKnightCoordinates()) {
                     auxMove = createValidMove(piece, coord, null);
                     if (auxMove != null) {
                         moveList.add(auxMove);
@@ -617,6 +611,7 @@ public class ChessRules {
                 break;
 
             case PAWN:
+                Coordinate pawnCoord = piece.getCoord();                 
                 //one step normal move+take
                 ArrayList<Direction> pawnDir = new ArrayList<>();
                 if (piece.isColor() == WHITE) {
@@ -629,7 +624,7 @@ public class ChessRules {
                     pawnDir.add(NE);
                 }
                 for (Direction auxDir : pawnDir) {
-                    auxCoord = startCoord.getCoordInDir(auxDir);
+                    auxCoord = pawnCoord.getCoordInDir(auxDir);
                     if (auxCoord != null) {
                         //promotion
                         if (auxCoord.getX() == 0 || auxCoord.getX() == 7) {
@@ -650,7 +645,7 @@ public class ChessRules {
                 }
                 //double step when not moved before
                 if (piece.getMoveCounter() == 0) {
-                    auxMove = createValidMove(piece, startCoord.getCoordInDir(pawnDir
+                    auxMove = createValidMove(piece, pawnCoord.getCoordInDir(pawnDir
                             .get(0)).getCoordInDir(pawnDir.get(0)), null);
                     if (auxMove != null) {
                         moveList.add(auxMove);
@@ -669,7 +664,7 @@ public class ChessRules {
                         enPassantDir.add(NE);
                     }
                     for (Direction auxDir : enPassantDir) {
-                        auxCoord = startCoord.getCoordInDir(auxDir);
+                        auxCoord = pawnCoord.getCoordInDir(auxDir);
                         if (auxCoord != null) {
                             auxMove = createValidMove(piece, auxCoord, ENPASSANT);
                             if (auxMove != null) {
@@ -726,7 +721,7 @@ public class ChessRules {
         return null;
     }
 
-    boolean isInCheck(ChessColor color) {
+    public boolean isInCheck(ChessColor color) {
         //TODO: better way to check for check ?
         return !isAttackedBy(board.getKing(color).getCoord(), color.getInverse(), false).isEmpty();
     }

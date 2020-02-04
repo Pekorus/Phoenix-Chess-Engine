@@ -8,6 +8,7 @@ package chess.game;
 import chess.board.Board;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
+import chess.board.Piece;
 import static chess.board.PieceType.PAWN;
 import chess.move.Move;
 import static chess.move.MoveType.TAKE;
@@ -32,12 +33,24 @@ public class ChessGame{
         this.board = new Board(); 
         this.winner = null;
         this.draw = null;
-        this.drawTurnTimer=0;
+        this.drawTurnTimer = 0;
         this.rules = new ChessRules(this);
         this.playersTurn = WHITE;
         this.recentPositions = new LinkedList<>();
         recentPositions.add(board.getHashValue());
     }    
+
+    /* game started from board editor */
+    public ChessGame(Piece[][] pieceArray, ChessColor colorToMove, boolean[] castleRights) {
+        this.board = new Board(pieceArray, colorToMove, castleRights);
+        this.winner = null;
+        this.draw = null;
+        this.drawTurnTimer = 0;
+        this.rules = new ChessRules(this);
+        this.playersTurn = colorToMove;
+        this.recentPositions = new LinkedList<>();
+        recentPositions.add(board.getHashValue());    
+    }
 
     public boolean executeMove(Move move, boolean validationMode){
         if(validationMode && !rules.validateMove(move, this)) return false;
@@ -140,6 +153,16 @@ public class ChessGame{
 
     public boolean isStalemate() {
         return rules.isStalemate();
+    }
+
+    public void unexecuteNullMove() {
+        playersTurn = playersTurn.getInverse();
+        board.unexecuteNullMove();
+    }
+
+    public void executeNullMove() {
+       playersTurn = playersTurn.getInverse();
+       board.executeNullMove();
     }
     
 }

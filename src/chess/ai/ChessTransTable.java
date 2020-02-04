@@ -23,19 +23,19 @@ public class ChessTransTable {
         this.hashCollisions = 0;
     }
     
-    public void insertEntry(TransTableEntry entry){
+    public void insertEntry(TransTableEntry newEntry){
         //TODO: store in buckets if collision happens        
-        int key = zobrisToHashMapKey(entry.getZobristKey());
+        int key = zobrisToHashMapKey(newEntry.getZobristKey());
         
         /* position is already in table */
         if(hashMap.containsKey(key)){
-            TransTableEntry auxEntry = hashMap.get(key);
-            if(auxEntry.getZobristKey() == entry.getZobristKey()) 
-                auxEntry.setOldFlag(false);
-            if(auxEntry.getOldFlag() || auxEntry.getDepth()>= entry.getDepth())
-                hashMap.replace(key, entry);    
+            TransTableEntry oldEntry = hashMap.get(key);
+            if(oldEntry.getZobristKey() == newEntry.getZobristKey()) 
+                oldEntry.setOldFlag(false);
+            if(oldEntry.getOldFlag() || oldEntry.getDepth() <= newEntry.getDepth())
+                hashMap.replace(key, newEntry);    
         }
-        else hashMap.put(key, entry);
+        else hashMap.put(key, newEntry);
     }
 
     /* returns the table entry correlating to the given zobris key. Returns null

@@ -25,6 +25,14 @@ public class Piece {
         this.coordinate = coord;
         this.moveCounter = 0;
     }
+
+    public Piece(PieceType piecetype, ChessColor color, Coordinate coord, int
+            moveCounter) {
+        this.piecetype = piecetype;
+        this.color = color;
+        this.coordinate = coord;
+        this.moveCounter = moveCounter;
+    }    
     
     public Coordinate getCoord() {
         return coordinate;
@@ -104,5 +112,7 @@ public class Piece {
         return "Piece{" + "piecetype=" + piecetype + ", coordinate=" + coordinate + ", color=" + color + ", moveCounter=" + moveCounter + '}';
     }
     
-    
+    public Piece deepCopy(){
+        return new Piece(piecetype, color, coordinate.deepCopy(), this.getMoveCounter());
+    }
 }

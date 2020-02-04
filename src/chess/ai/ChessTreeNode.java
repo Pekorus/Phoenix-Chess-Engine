@@ -15,15 +15,13 @@ import java.util.ArrayList;
 public class ChessTreeNode{
     
     private final Move move;
-    //private int gameValue;
-    private int depth;
-    private final ArrayList<ChessTreeNode> children;
+    //private int depth;
+    private ArrayList<ChessTreeNode> children;
     
-    public ChessTreeNode(Move move, int gameValue, int depth) {
+    public ChessTreeNode(Move move/*, int depth*/) {
         this.move = move;
-        //this.gameValue = gameValue;
         this.children = new ArrayList<>();
-        this.depth = depth;
+        //this.depth = depth;
     }
 
     public int getChildCount(){
@@ -33,7 +31,7 @@ public class ChessTreeNode{
     public ChessTreeNode getSubTreeByMove(Move move){
         for(ChessTreeNode child : children){
             if(child.move.equals(move)){
-                child.decreaseDepth();
+                //child.increaseDepth();
                 return child;
             }
         }
@@ -65,64 +63,46 @@ public class ChessTreeNode{
         return move;
     }
 
-    /*public int getGameValue() {
-        return gameValue;
-    }*/
-
-    public int getDepth() {
+    /*public int getDepth() {
         return depth;
-    }
+    }*/
 
     public ArrayList<ChessTreeNode> getChildren() {
         return children;
     }
 
-    /*public void setGameValue(int gameValue) {
-        this.gameValue = gameValue;
-    }*/
-
-    /*void evaluateNodeMax() {
-        int maxValue= -Integer.MAX_VALUE;
-        for(ChessTreeNode child : children){
-           maxValue = max(maxValue, child.getGameValue());
-        }
-        this.gameValue = maxValue;
-    }*/
-
-    /*void evaluateNodeMin() {
-        int minValue= Integer.MAX_VALUE;
-        for(ChessTreeNode child : children){
-           minValue = min(minValue, child.getGameValue());
-        }
-        this.gameValue = minValue;        
-    }*/
-
+    public void setChildren(ArrayList<ChessTreeNode> children) {
+        this.children = children;
+    }    
+    
     boolean hasChildren() {
        if(children==null) return false;
        if(children.isEmpty()) return false;
        return true;
     }
 
-    private void decreaseDepth() {
-       this.depth -= 1;
+    /*private void increaseDepth() {
+       this.depth += 1;
        if(this.children!=null){
            for(ChessTreeNode child : children){
-               child.decreaseDepth();
+               child.increaseDepth();
            }
        }
-    } 
-
-    /*public int compareTo(Object o) {
-       ChessTreeNode node = (ChessTreeNode) o;
-       if(this.gameValue< node.gameValue) return 1;
-       else if(this.gameValue > node.gameValue) return -1;
-       else return 0;
-    }*/
+    }*/ 
 
     @Override
     public String toString() {
         return move.toString();
     }
+
+    /*void setDepth(int depth) {
+        this.depth = depth;
+        if(this.children!=null){
+           for(ChessTreeNode child : children){
+               child.setDepth(depth-1);
+           }
+        }   
+    }*/
 
 
 }

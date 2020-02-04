@@ -6,7 +6,6 @@
 package chess.ai;
 
 import chess.move.Move;
-import java.util.logging.Logger;
 
 /**
  *
@@ -16,12 +15,12 @@ public class TransTableEntry {
     
     private final long zobristKey;
     private final int value;
-    private final byte depth;    
+    private final int depth;    
     private final Move bestMove;
     private final EvaluationFlag EvaluationFlag;
     private boolean oldFlag;
     
-    public TransTableEntry(long zobristKey, int value, byte depth, Move bestMove, EvaluationFlag flag) {
+    public TransTableEntry(long zobristKey, int value, int depth, Move bestMove, EvaluationFlag flag) {
         this.zobristKey = zobristKey;
         this.value = value;
         this.depth = depth;
@@ -38,7 +37,7 @@ public class TransTableEntry {
         return value;
     }
 
-    public byte getDepth() {
+    public int getDepth() {
         return depth;
     }
 

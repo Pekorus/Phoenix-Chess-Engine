@@ -5,6 +5,9 @@
  */
 package chess.gui;
 
+import chess.board.ChessColor;
+import chess.board.Piece;
+import chess.boardeditor.BoardEditorController;
 import chess.game.ChessGameType;
 import static chess.game.ChessGameType.*;
 import chess.game.GameController;
@@ -52,7 +55,7 @@ public class MainController implements ActionListener{
         else if(source == mainView.blackColorButton){
            gameType = BLACKPLAYER;
            mainView.gameTypeDialog.setVisible(false);
-       }       
+        }       
 
         else if(source == mainView.randomColorButton){
            Random rand = new Random();
@@ -60,8 +63,14 @@ public class MainController implements ActionListener{
            gameType = WHITEPLAYER;
            if(aux==0) gameType = BLACKPLAYER;
            mainView.gameTypeDialog.setVisible(false);
-       }
+        }
 
+        else if(source == mainView.boardEditor){
+            BoardEditorController boardEditor = new BoardEditorController(this, 760, 940, 
+                    mainView.spriteArray, mainView.imageArray);
+            boardEditor.startEditor();
+        }
+        
         else if(source == mainView.options){
             mainView.optionsDialog.setLocationRelativeTo(mainView.getFrame());
             mainView.optionsDialog.setVisible(true);
@@ -104,7 +113,21 @@ public class MainController implements ActionListener{
         gameController.startGame();
         mainView.removeGamePanel();     
     }
- 
+
+    /* castle rights from 0 to 3: white small castle, white large castle, black
+        small castle, black large castle.
+    */ 
+    public void startGameFromBoardEditor(Piece[][] pieceArray, ChessGameType gameType,
+            ChessColor colorToMove, boolean[] castleRights){
+        gameController.endGame();
+        this.gameController = new GameController(gameType, aiOptions, pieceArray, 
+                colorToMove, castleRights);
+        this.gameType = null;
+        handleViews();
+        gameController.startGame();
+        mainView.removeGamePanel();           
+    }
+    
     private void handleViews(){
         ChessGuiView chessPanel = gameController.getView();
         mainView.add(chessPanel.getMainPanel());

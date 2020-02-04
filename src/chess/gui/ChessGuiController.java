@@ -67,7 +67,7 @@ public class ChessGuiController implements ActionListener, Player {
         }
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (source == view.buttonArray[i][j]) {
+                if (source == view.chessBoardPanel.buttonArray[i][j]) {
                     int a = i, b = j;
                     
                     //translate coordinates if playing white(rotated board)
@@ -86,17 +86,17 @@ public class ChessGuiController implements ActionListener, Player {
                                 && clickedPiece.isColor() ==ownColor) {
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord1);
+                        view.chessBoardPanel.paintFieldColor(paintedCoord1);
                     } else if (pressedCoord1 != null && pressedCoord2 ==null && 
                             clickedPiece!= null&&clickedPiece.isColor()==ownColor) {
-                        view.restoreFieldColor(paintedCoord1);
+                        view.chessBoardPanel.restoreFieldColor(paintedCoord1);
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord1);                                      
+                        view.chessBoardPanel.paintFieldColor(paintedCoord1);                                      
                     } else if(pressedCoord1 != null && pressedCoord2 == null) {
                         pressedCoord2 = new Coordinate(a, b);
                         paintedCoord2 = new Coordinate(i, j);
-                        view.paintFieldColor(paintedCoord2);
+                        view.chessBoardPanel.paintFieldColor(paintedCoord2);
                         createMove(pressedCoord1, pressedCoord2);
                         gameControl.nextMove(ownColor, nextMove);
                     }
@@ -185,10 +185,10 @@ public class ChessGuiController implements ActionListener, Player {
     
     
     private void restoreFields() {        
-        view.restoreFieldColor(paintedCoord1);
-        view.restoreFieldColor(paintedCoord2);
-        view.restoreFieldColor(paintedOppCoord1);
-        view.restoreFieldColor(paintedOppCoord2);        
+        view.chessBoardPanel.restoreFieldColor(paintedCoord1);
+        view.chessBoardPanel.restoreFieldColor(paintedCoord2);
+        view.chessBoardPanel.restoreFieldColor(paintedOppCoord1);
+        view.chessBoardPanel.restoreFieldColor(paintedOppCoord2);        
         paintedCoord1 = null;
         paintedCoord2 = null;
         pressedCoord1 = null;
@@ -205,8 +205,8 @@ public class ChessGuiController implements ActionListener, Player {
             auxCoord2 = auxCoord2.pointSymmCoordinate();
         }
         restoreFields();
-        view.paintFieldColor(auxCoord1);
-        view.paintFieldColor(auxCoord2);            
+        view.chessBoardPanel.paintFieldColor(auxCoord1);
+        view.chessBoardPanel.paintFieldColor(auxCoord2);            
         paintedOppCoord1 = auxCoord1;
         paintedOppCoord2 = auxCoord2;
     }

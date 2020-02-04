@@ -204,4 +204,8 @@ public class Coordinate {
         }
         else return this.getCoordInDir(S);
     }    
+
+    public Coordinate deepCopy(){
+        return new Coordinate (x,y);
+    }
 }
