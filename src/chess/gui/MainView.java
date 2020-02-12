@@ -366,7 +366,7 @@ public class MainView extends JFrame{
         
         try {
         randomColorIcon =new ImageIcon(ImageIO.read(getClass().
-                                    getResource("/images/random_icon.png")));
+                                    getResource("/images/Random_color_icon.png")));
         } catch (IOException ex) {
            loadError("random_icon.png");
         }
