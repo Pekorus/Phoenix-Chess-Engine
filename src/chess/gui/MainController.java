@@ -14,13 +14,16 @@ import chess.game.GameController;
 import chess.options.AIOptions;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Random;
+import javax.swing.WindowConstants;
 
 /**
  *
  * @author Phoenix
  */
-public class MainController implements ActionListener{
+public class MainController implements ActionListener, MouseListener{
 
     MainView mainView;
     GameController gameController;
@@ -28,11 +31,21 @@ public class MainController implements ActionListener{
     AIOptions aiOptions;
     
     public MainController() {
-        this.mainView = new MainView(this, 760, 940);
+        
+        this.mainView = new MainView(this);
+        mainView.setTitle("Schaaach");
+        mainView.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        mainView.setResizable(false);
+        mainView.setSize(760, 940);
+        mainView.addCardPanel();
+        
         this.gameType = null;
         this.aiOptions = new AIOptions();
         this.gameController = new GameController(WHITEPLAYER, aiOptions);
         handleViews();
+        
+        mainView.setLocationRelativeTo(null);
+        mainView.setVisible(true);  
     }
        
     @Override
@@ -40,7 +53,7 @@ public class MainController implements ActionListener{
        Object source = e.getSource();
        
         if(source == mainView.newGame){
-               mainView.gameTypeDialog.setLocationRelativeTo(mainView.getFrame());
+               mainView.gameTypeDialog.setLocationRelativeTo(mainView);
                mainView.gameTypeDialog.setVisible(true);
                if(gameType != null){
                    restartGame();
@@ -65,32 +78,27 @@ public class MainController implements ActionListener{
            mainView.gameTypeDialog.setVisible(false);
         }
 
-        else if(source == mainView.boardEditor){
-            BoardEditorController boardEditor = new BoardEditorController(this, 760, 940, 
-                    mainView.spriteArray, mainView.imageArray);
-            boardEditor.startEditor();
-        }
-        
-        else if(source == mainView.options){
-            mainView.optionsDialog.setLocationRelativeTo(mainView.getFrame());
-            mainView.optionsDialog.setVisible(true);
-        }
-
         else if(source == mainView.resetDefault){
             mainView.searchDepthSlider.setValue(aiOptions.getDefaultSearchDepth());
             mainView.quietSearchDepthSlider.setValue(aiOptions.getDefaultQuietSearchDepth());            
+            mainView.peterCheckBox.setSelected(false);
         }
         
         else if(source == mainView.applyChanges){
+            
             aiOptions.setSearchDepth(mainView.searchDepthSlider.getValue());
             aiOptions.setQuietSearchDepth(mainView.quietSearchDepthSlider.getValue());
-            mainView.optionsDialog.setVisible(false);           
-        }
-        
-        else if(source == mainView.about){
-        mainView.aboutDialog.setLocationRelativeTo(mainView.getFrame());
-        mainView.aboutDialog.setVisible(true);
-        }             
+            aiOptions.setPeterMode(mainView.peterCheckBox.isSelected());          
+            
+            /* start new game */
+            mainView.gameTypeDialog.setLocationRelativeTo(mainView);
+            mainView.gameTypeDialog.setVisible(true);
+            if(gameType != null){ 
+                mainView.optionsDialog.setVisible(false);             
+                restartGame();            
+            }    
+
+        }          
        
         else if(source == mainView.closeProgram){
            System.exit(0);
@@ -110,8 +118,8 @@ public class MainController implements ActionListener{
         this.gameController = new GameController(gameType, aiOptions);
         gameType = null;
         handleViews();
-        gameController.startGame();
         mainView.removeGamePanel();     
+        gameController.startGame();
     }
 
     /* castle rights from 0 to 3: white small castle, white large castle, black
@@ -124,15 +132,58 @@ public class MainController implements ActionListener{
                 colorToMove, castleRights);
         this.gameType = null;
         handleViews();
-        gameController.startGame();
-        mainView.removeGamePanel();           
+        mainView.removeGamePanel();
+        gameController.startGame();           
     }
     
     private void handleViews(){
         ChessGuiView chessPanel = gameController.getView();
-        mainView.add(chessPanel.getMainPanel());
+        mainView.addToCards(chessPanel);
         mainView.doPreparations(chessPanel);
-        mainView.setVisible(true);  
+        mainView.pack(); 
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        
+        Object source = e.getSource();
+        
+        if(source == mainView.boardEditor){
+            BoardEditorController boardEditor = new BoardEditorController(this, 
+                    760, 940, mainView.getLocation(),
+                    mainView.spriteArray, mainView.imageArray);
+            boardEditor.startEditor();
+        }
+        
+        else if(source == mainView.options){
+            mainView.optionsDialog.setLocationRelativeTo(mainView);
+            mainView.optionsDialog.setVisible(true);
+        }
+    
+        else if(source == mainView.about){
+            mainView.aboutDialog.setLocationRelativeTo(mainView);
+            mainView.aboutDialog.setVisible(true);
+        }         
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+       
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        
     }
         
 }

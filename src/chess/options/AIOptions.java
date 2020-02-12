@@ -16,19 +16,19 @@ public class AIOptions {
     private int transpositionTableSize;
     private int maxEvPositions;
     private int maxEvPositionsQuiet;
-
-    private static final int DEFAULT_SEARCH_DEPTH = 5;
+    private boolean peterMode;
+    
+    private static final int DEFAULT_SEARCH_DEPTH = 6;
     private static final int  DEFAULT_QUIET_SEARCH_DEPTH = 20;
-    private static final int  DEFAULT_TRANSPOSITION_TABLE_SIZE = 20000000;
-    private static final int DEFAULT_MAX_EV_POSITIONS = 500000;
-    private static final int DEFAULT_MAX_EV_POSITIONS_QUIET = 1000000;    
-
+    private static final int  DEFAULT_TRANSPOSITION_TABLE_SIZE = 20000000;   
+    
+    private static final boolean DEFAULT_PETERMODE = false; 
+    
     public AIOptions() {
         searchDepth = DEFAULT_SEARCH_DEPTH;
         quietSearchDepth = DEFAULT_QUIET_SEARCH_DEPTH;
         transpositionTableSize = DEFAULT_TRANSPOSITION_TABLE_SIZE;
-        maxEvPositions = DEFAULT_MAX_EV_POSITIONS;
-        maxEvPositionsQuiet = DEFAULT_MAX_EV_POSITIONS_QUIET;
+        peterMode = DEFAULT_PETERMODE;    
     }
 
     public void setSearchDepth(int searchDepth) {
@@ -51,6 +51,10 @@ public class AIOptions {
         this.maxEvPositionsQuiet = maxEvPositionsQuiet;
     }
 
+    public void setPeterMode(boolean peterMode) {
+        this.peterMode = peterMode;
+    }
+
     public int getSearchDepth() {
         return searchDepth;
     }
@@ -71,6 +75,10 @@ public class AIOptions {
         return maxEvPositionsQuiet;
     }
 
+    public boolean isPeterMode() {
+        return peterMode;
+    }
+
     public int getDefaultSearchDepth() {
         return DEFAULT_SEARCH_DEPTH;
     }
@@ -81,14 +89,6 @@ public class AIOptions {
 
     public static int getDEFAULT_TRANSPOSITION_TABLE_SIZE() {
         return DEFAULT_TRANSPOSITION_TABLE_SIZE;
-    }
-
-    public static int getDEFAULT_MAX_EV_POSITIONS() {
-        return DEFAULT_MAX_EV_POSITIONS;
-    }
-
-    public static int getDEFAULT_MAX_EV_POSITIONS_QUIET() {
-        return DEFAULT_MAX_EV_POSITIONS_QUIET;
     }
     
 }

@@ -30,26 +30,24 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
  *
  * @author Phoenix
  */
-public class ChessGuiView{
+public class ChessGuiView extends JPanel{
 
     private final ChessGuiController guiController;
     private final ChessColor ownColor;
     Piece[][] pieceArray;
     ImageIcon[][] spriteArray;
     
-    //frames, panels, dialogs
-    private JFrame mainFrame;
-    private final JPanel mainPanel = new JPanel(new GridBagLayout());
+    /* panels */
     final ChessBoardView chessBoardPanel;
     
-    //right side
+    /* right side: player names, result, move display */
     private final JPanel rightSidePanel = new JPanel();
     private final JLabel resultLabel = new JLabel();
     private final JPanel displayMovesPanel = new JPanel();
     private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
     final JDialog promoteDialog = new JDialog();
 
-    //buttons
+    /* promotion buttons */ 
     JButton queenButton;
     JButton bishopButton;
     JButton knightButton;
@@ -66,27 +64,15 @@ public class ChessGuiView{
         
         /* create view components */
         createPromotionDialog();
-        chessBoardPanel.createChessboard();
+        chessBoardPanel.createView();
         createRightPanel();
         createDisplayMovesScroll();
         
+        this.setLayout(new GridBagLayout());
+        
         /* filling main panel */
-        GridBagConstraints c = new GridBagConstraints();
-        GridBagConstraints r = new GridBagConstraints();
-        
-        c.anchor = GridBagConstraints.FIRST_LINE_START;
-        c.gridx = 0;
-        c.gridy = 0;
-        c.weightx = 0.2;
-        mainPanel.add(chessBoardPanel, c);
-        
-        r.gridx = 1;
-        r.gridy = 0;        
-        r.weightx = 0.8;
-        r.weighty = 1;
-        r.anchor = GridBagConstraints.LINE_END;
-        r.fill = GridBagConstraints.BOTH;
-        mainPanel.add(rightSidePanel, r);
+        this.add(chessBoardPanel);
+        this.add(rightSidePanel);
     } 
     
     public void update(ChessGame game, Object arg) {
@@ -136,10 +122,10 @@ public class ChessGuiView{
 
     private void showGameEndDialog(ChessColor winner, DrawType draw) {
         if (winner != null) {
-            JOptionPane.showMessageDialog(mainFrame,
+            JOptionPane.showMessageDialog(chessBoardPanel,
                     winner + " Player has won!", "Game ended", JOptionPane.WARNING_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(mainFrame,
+            JOptionPane.showMessageDialog(chessBoardPanel,
                     "Game ended in a draw (" + draw + ")", "Game ended",
                     JOptionPane.WARNING_MESSAGE);
         }
@@ -232,7 +218,7 @@ public class ChessGuiView{
         resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         rightSidePanel.add(resultLabel);
         rightSidePanel.add(displayMovesScroll);
-        rightSidePanel.setPreferredSize(new Dimension(200, mainFrame.getHeight()));
+        rightSidePanel.setPreferredSize(new Dimension(200, 700));
     }
 
     private void setResultLabel(ChessColor winner) {
@@ -244,22 +230,10 @@ public class ChessGuiView{
             resultLabel.setText("0.5   -   0.5");
         }
     }
-
-    void promoteDialogSetLocation() {
-        promoteDialog.setLocationRelativeTo(mainFrame);
-    }
-
-    public void setMainFrame(JFrame mainFrame){
-        this.mainFrame = mainFrame;
-    }
     
     public void setSpriteArray(ImageIcon[][] spriteArray) {
         this.spriteArray = spriteArray;
         chessBoardPanel.setSpriteArray(spriteArray);
-    }
-    
-    public JPanel getMainPanel(){
-        return mainPanel;
     }
 
     private ImageIcon getSprite(PieceType pieceType, ChessColor color) {

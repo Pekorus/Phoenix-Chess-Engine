@@ -17,6 +17,7 @@ import chess.game.ChessGameType;
 import static chess.game.ChessGameType.BLACKPLAYER;
 import static chess.game.ChessGameType.WHITEPLAYER;
 import chess.gui.MainController;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -39,16 +40,23 @@ public class BoardEditorController implements ActionListener{
     private int whiteKingCounter = 0, blackKingCounter = 0;
     private Piece whiteKing, blackKing;
     
-    public BoardEditorController (MainController mainControl, int frameHeight, int frameWidth, ImageIcon[][] spriteArray,
+    public BoardEditorController (MainController mainControl, int frameHeight, 
+             int frameWidth, Point location, ImageIcon[][] spriteArray,
             BufferedImage[][] imageArray) {
     
         this.mainControl = mainControl;
-        this.editorView = new BoardEditorView(this, frameHeight, frameWidth, spriteArray);
+        this.editorView = new BoardEditorView(this, spriteArray);
+        editorView.setTitle("Board Editor");
+        editorView.setSize(frameWidth, frameHeight);
+        editorView.setResizable(false);        
+        editorView.setLocation(location);
+        editorView.createView();
+        
         this.imageArray = imageArray;
     }
 
-
     public void startEditor(){
+        editorView.pack();
         editorView.setVisible(true);
     }
     
@@ -73,7 +81,8 @@ public class BoardEditorController implements ActionListener{
             for (int j = 0; j < 8; j++) {
                 if (source == editorView.chessBoardPanel.buttonArray[i][j]) {
                 
-                /* translate variables if board is rotated */    
+                /* translate variables if board is rotated (human is white 
+                    player) */    
                 int a = i, b = j;
                 if (ownColor == WHITE) {
                     a = 7 - i;
@@ -89,7 +98,7 @@ public class BoardEditorController implements ActionListener{
         }        
     
         if(source == editorView.eraseButton){
-            editorView.restoreCursor();
+            editorView.setCursor(editorView.trashCanImage);
             selectedPiece = null;
             selectedColor = null;
         }
@@ -97,7 +106,7 @@ public class BoardEditorController implements ActionListener{
         if(source == editorView.rotateBoard){
             ownColor = ownColor.getInverse();
             editorView.setOwnColor(ownColor);
-            editorView.chessBoardPanel.drawBoard(pieceArray);
+            editorView.chessBoardPanel.rotateAndDrawBoard(pieceArray);
         }        
     
         if(source == editorView.playAsWhiteButton){            
@@ -120,7 +129,7 @@ public class BoardEditorController implements ActionListener{
             editorView.blackLargeCastle.isSelected()};
 
         if(verifyPositionLegal(colorToMove, castleRights)){
-                    
+        
             editorView.setVisible(false);
             mainControl.startGameFromBoardEditor(pieceArray, gameType,
                 colorToMove, castleRights);        
@@ -145,22 +154,21 @@ public class BoardEditorController implements ActionListener{
         if(piece.getPiecetype() == KING){
             
             if(piece.isColor() == WHITE){
-                /* only one king per side */                
-                if(whiteKingCounter > 0) return false;          
+                /* only one king per side (same coord is allowed to allow 
+                removing of king with the same king selected by button */                
+                if(whiteKing!= null && !piece.getCoord().equals(whiteKing.
+                        getCoord())) return false;          
                 /* no kings on adjacent squares */ 
                 if(blackKing != null && 
                         piece.getCoord().distance(blackKing.getCoord())==1)
-                    return false;                
-                whiteKing = piece;
-                whiteKingCounter++;    
+                    return false;                   
             }
             else{
-                if(blackKingCounter > 0) return false;          
+                if(blackKing!= null && !piece.getCoord()
+                        .equals(blackKing.getCoord())) return false;          
                 if(whiteKing != null && 
                         piece.getCoord().distance(whiteKing.getCoord())==1)
                     return false;
-                blackKing = piece;
-                blackKingCounter++;    
             }                       
         }        
         return true;
@@ -169,18 +177,45 @@ public class BoardEditorController implements ActionListener{
     private void setPiece(Piece piece, int x, int y) {
         
         Piece oldPiece = pieceArray[x][y];
-        
-        /* restore fields if king is deleted */
-        if(oldPiece != null && oldPiece.getPiecetype() == KING){
-            if(oldPiece.isColor() == WHITE){
-                whiteKingCounter--;
-                whiteKing = null;
+
+        if (piece.getPiecetype() == KING) {
+            if (piece.isColor() == WHITE) {
+                whiteKing = piece;
+                whiteKingCounter++;
+            } else {
+                blackKing = piece;
+                blackKingCounter++;
             }
-            else{
-                blackKingCounter--;
-                blackKing = null;
-            }        
-        }        
+        }
+        
+        if (oldPiece != null) {
+            /* restore fields if king is deleted */
+            if (oldPiece.getPiecetype() == KING) {
+                if (oldPiece.isColor() == WHITE) {
+                    whiteKingCounter--;
+                    whiteKing = null;
+                } else {
+                    blackKingCounter--;
+                    blackKing = null;
+                }
+            }
+
+            /* if the same piece is selected, remove the piece from the board */
+            if (piece.getPiecetype() == oldPiece.getPiecetype()
+                    && piece.isColor() == oldPiece.isColor()) {
+                /* if king is replaced, another correction is needed (until this
+                    point king counter was added and then subtracted by 1
+                */
+                if(piece.getPiecetype() == KING){
+                    if(piece.isColor() == WHITE) whiteKingCounter--;
+                    else blackKingCounter--;
+                }
+                
+                pieceArray[x][y] = null;
+                return;
+            }
+        }
+        
         if(piece.getPiecetype() != null) pieceArray[x][y] = piece;    
         else pieceArray[x][y] = null;
     }

@@ -7,9 +7,9 @@ package chess.gui;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
+import static java.awt.GridBagConstraints.WEST;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,30 +32,26 @@ import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import static javax.swing.SwingConstants.HORIZONTAL;
 import static javax.swing.SwingConstants.VERTICAL;
-import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 
 /**
  *
  * @author Phoenix
  */
-public class MainView{
+public class MainView extends JFrame{
     
-    //string to update version number
-    private static final String VERSION = "0.9.7";
+    /* version number */
+    private static final String VERSION = "0.9.9";
     
     //fields for main frame
     private final MainController mainControl;
-    private final JFrame mainFrame;
-    private final int frameHeight;
-    private final int frameWidth;
     private final JPanel cardPanel;
     private final CardLayout cards;
     
     //fields for menu bar
     JMenuBar mainBar = new JMenuBar();
-    JMenu gameMenu;
-    JMenuItem newGame, boardEditor, closeProgram, options, about;
+    JMenu gameMenu, boardEditor, options, about;
+    JMenuItem newGame, closeProgram;
     
     //fields for game type dialog
     final JDialog gameTypeDialog = new JDialog();
@@ -66,6 +63,7 @@ public class MainView{
     JSlider quietSearchDepthSlider;
     JButton resetDefault;
     JButton applyChanges;
+    JCheckBox peterCheckBox;
     
     //about dialog
     final JDialog aboutDialog = new JDialog();
@@ -76,78 +74,53 @@ public class MainView{
     ImageIcon[][] spriteArray = new ImageIcon[2][6];
     ImageIcon randomColorIcon;
     
-    public MainView(MainController mainControl, int frameHeight, int frameWidth){
+    public MainView(MainController mainControl){
         this.mainControl = mainControl;
-        this.mainFrame = new JFrame("Schaaach");
-        this.frameHeight = frameHeight;
-        this.frameWidth = frameWidth;
         this.cards = new CardLayout();
         this.cardPanel = new JPanel(cards);
-       
-        mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        mainFrame.setResizable(false);
-        mainFrame.setSize(frameWidth, frameHeight);
-        mainFrame.setLocationRelativeTo(null);
-        mainFrame.add(cardPanel);
 
-        //load sprite sheet and process it
+        /* load sprite sheet and process it */
         createSprites();
         
-        //create components of frame
+        /* create components of frame */
         createMenuBar();
         createGameSettingDialog();
         createOptionsDialog();
-        createAboutDialog();
-        
-        mainFrame.setVisible(true);
+        createAboutDialog();        
     }
  
         private void createMenuBar() {
-        gameMenu = new JMenu("Game");
+            
+            gameMenu = new JMenu ("Game");
+            mainBar.add(gameMenu);
             
             newGame = new JMenuItem("New Game...");
             newGame.addActionListener(mainControl);
             gameMenu.add(newGame);
-
-            boardEditor = new JMenuItem("Board Editor");
-            boardEditor.addActionListener(mainControl);
-            gameMenu.add(boardEditor);
             
-            options = new JMenuItem("Options");
-            options.addActionListener(mainControl);            
-            gameMenu.add(options);
-
-            about = new JMenuItem("About");
-            gameMenu.add(about);
-            about.addActionListener(mainControl);       
-
             closeProgram = new JMenuItem("Exit");
             closeProgram.addActionListener(mainControl);
             gameMenu.add(closeProgram);
-        mainBar.add(gameMenu);
+
+            
+            boardEditor = new JMenu("Board Editor");
+            boardEditor.getComponent().addMouseListener(mainControl);
+            mainBar.add(boardEditor);
+            
+            options = new JMenu("Options");
+            options.getComponent().addMouseListener(mainControl);            
+            mainBar.add(options);
+
+            about = new JMenu("About");
+            mainBar.add(about);
+            about.getComponent().addMouseListener(mainControl);       
         
-        mainFrame.setJMenuBar(mainBar);
+        this.setJMenuBar(mainBar);
     }
 
-    void add(JPanel panel) {
+    void addToCards(JPanel panel) {
         cardPanel.add(panel);
-    }
-
-    void setVisible(boolean b) {
-        mainFrame.setVisible(b);
-    }    
-
-    Component getFrame() {
-        return mainFrame;
-    }
-
-    int getHeight() {
-        return frameHeight;
-    }
-
-    int getWidth() {
-        return frameWidth;
-    }
+    }  
 
     void removeGamePanel() {
         cards.next(cardPanel);
@@ -190,16 +163,25 @@ public class MainView{
     private void createOptionsDialog(){
         
         optionsDialog.setTitle("Game Options");
-        optionsDialog.setSize(400, 450);
+        optionsDialog.setSize(450, 520);
+        optionsDialog.setResizable(false);
         optionsDialog.setModal(true);        
-        optionsDialog.setLayout(new FlowLayout(VERTICAL));
+        optionsDialog.setLayout(new GridBagLayout());
+
+        /* Constraints for main option boxes */        
+        GridBagConstraints mainConstr = new GridBagConstraints();
+        mainConstr.gridx = 0;
+        mainConstr.gridy = 0;
+        mainConstr.fill = VERTICAL;
+        mainConstr.gridwidth = 2;        
+        mainConstr.insets = new Insets(0, 0, 10, 0);       
         
         Border optionsBorder = BorderFactory.createEtchedBorder();
         
         /* search Depth Panel */
         JPanel searchDepthPanel = new JPanel(new GridBagLayout());
         searchDepthPanel.setBorder(optionsBorder);
-        optionsDialog.add(searchDepthPanel);
+        optionsDialog.add(searchDepthPanel, mainConstr);
         GridBagConstraints constr = new GridBagConstraints();
         
         JLabel searchDepthLabel = new JLabel("Search depth", SwingConstants.CENTER);
@@ -208,7 +190,7 @@ public class MainView{
         constr.insets = new Insets(0,10,0,0);
         searchDepthPanel.add(searchDepthLabel, constr);        
         
-        searchDepthSlider = new JSlider(HORIZONTAL, 1, 10, 5);
+        searchDepthSlider = new JSlider(HORIZONTAL, 2, 12, 6);
         searchDepthSlider.setMajorTickSpacing(1);
         searchDepthSlider.setPaintTicks(true);
         searchDepthSlider.setPaintLabels(true);        
@@ -230,7 +212,8 @@ public class MainView{
         /* quiescence search depth panel */
         JPanel quietSearchDepthPanel = new JPanel(new GridBagLayout());        
         quietSearchDepthPanel.setBorder(optionsBorder);
-        optionsDialog.add(quietSearchDepthPanel);                
+        mainConstr.gridy = 1;
+        optionsDialog.add(quietSearchDepthPanel, mainConstr);                
         JLabel quietSearchDepthLabel = new JLabel("Quiescence search depth", 
                 SwingConstants.CENTER);
         constr.gridx = 0;
@@ -256,28 +239,96 @@ public class MainView{
         constr.gridy = 1;
         constr.gridwidth = 2;
         quietSearchDepthPanel.add(quietSearchDepthTip, constr);
-
+        constr.gridwidth = 1;
+        
+        /* creator mode checkbox */
+        JPanel peterCheckBoxPanel = new JPanel(new GridBagLayout());
+        peterCheckBoxPanel.setBorder(optionsBorder);
+        peterCheckBox = new JCheckBox("Play against creator");
+        peterCheckBox.setFocusable(false);
+        constr.gridy = 0;
+        constr.anchor = WEST;
+        peterCheckBoxPanel.add(peterCheckBox, constr);
+        JLabel peterTip = new JLabel("<html><center>AI will play Larsen's Opening as "
+                + "white and Owen's Defence <br></center> as black (The preferred openings of the "
+                + "creator)</html>");
+        constr.gridy = 1;
+        peterCheckBoxPanel.add(peterTip, constr);
+        mainConstr.gridy = 2;
+        optionsDialog.add(peterCheckBoxPanel, mainConstr);
+        
         /* Buttons at end of options dialog */
-        applyChanges = new JButton("Apply changes");
+        applyChanges = new JButton("Apply changes (starts new game)");
+        dialogButton(applyChanges);
         applyChanges.addActionListener(mainControl);
-        optionsDialog.add(applyChanges);
+        mainConstr.gridwidth = 1;
+        mainConstr.gridy = 3;
+        mainConstr.fill = GridBagConstraints.NONE;
+        optionsDialog.add(applyChanges, mainConstr);
         
         resetDefault = new JButton("Reset default settings");
         resetDefault.addActionListener(mainControl);
-        optionsDialog.add(resetDefault);
+        mainConstr.gridx = 1;
+        mainConstr.anchor = GridBagConstraints.EAST;
+        optionsDialog.add(resetDefault, mainConstr);
         
     }
     
     private void createAboutDialog(){
 
         aboutDialog.setTitle("About");
-        aboutDialog.setSize(400, 150);
+        aboutDialog.setSize(550, 600);
+        aboutDialog.setResizable(false);
         aboutDialog.setModal(true);
         
-        JLabel versionLabel = new JLabel ("<html>Chess made by Peter Korusiewicz<br/>"
-                + "Version: "+VERSION+"<br/>Send bug reports to peter.korusiewicz@gmail.com"
-                + "</html>", SwingConstants.CENTER);
-        aboutDialog.add(versionLabel); 
+        JPanel aboutDialogPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(0,0,20,0);
+        c.fill = VERTICAL;
+        
+        JPanel versionPanel = new JPanel();
+        JPanel piecesCreditsPanel = new JPanel();
+        customBoxedPanel(piecesCreditsPanel);
+        JPanel canCreditsPanel = new JPanel();
+        customBoxedPanel(canCreditsPanel);
+        JPanel rotateCreditsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        customBoxedPanel(rotateCreditsPanel);
+                
+        JLabel versionLabel = new JLabel ("<html>Chess created by Peter Korusiewicz<br><br>"
+                + "Version: "+VERSION+"<br><br>Send bug reports to peter.korusiewicz@gmail.com</html>");
+        versionPanel.add(versionLabel);
+        aboutDialogPanel.add(versionPanel, c); 
+        
+        c.insets = new Insets(0,0,10,0);
+        JLabel creditsHead = new JLabel("Image Credits");
+        c.gridy = 1;        
+        aboutDialogPanel.add(creditsHead, c);
+        
+        JLabel piecesCreditsLabel = new JLabel("<html>Chess pieces<br><br> https://commons.wikimedia.org/wiki/File:Chess_Pieces_Sprite.svg "
+                        + "<br>by jurgenwesterhof (adapted from work of Cburnett) "
+                        + "<br><br>Shared under the Creative Commons Attribution ShareAlike 3.0 License"
+                        + "<br>https://creativecommons.org/licenses/by-sa/3.0/legalcode</html>", SwingConstants.CENTER);
+        piecesCreditsPanel.add(piecesCreditsLabel);
+        c.gridy = 2;
+        aboutDialogPanel.add(piecesCreditsPanel, c);        
+        
+        JLabel canCreditsLabel = new JLabel("<html>Trash can icon (board editor)<br><br> https://commons.wikimedia.org/wiki/File:Trash_Can.svg "
+                        + "<br>by Andy"
+                        + "<br><br>Shared from the Open Clip Art Library which released it into public domain"
+                        + "<br>https://openclipart.org/</html>", SwingConstants.CENTER);
+        canCreditsPanel.add(canCreditsLabel);
+        c.gridy = 3;
+        aboutDialogPanel.add(canCreditsPanel, c); 
+        
+        JLabel rotateCreditsLabel = new JLabel("<html>Rotate icon (board editor)<br><br> https://commons.wikimedia.org/wiki/File:Rotate2_svg.svg "
+                        + "<br>by BenjStaw"
+                        + "<br><br>Shared under CCO 1.0 Universal Public Domain Dedication"
+                        + "</html>", SwingConstants.CENTER);
+        rotateCreditsPanel.add(rotateCreditsLabel);
+        c.gridy = 4;
+        aboutDialogPanel.add(rotateCreditsPanel, c);         
+        
+        aboutDialog.add(aboutDialogPanel);
     }
 
     private void createSprites() {
@@ -311,8 +362,8 @@ public class MainView{
             for(int j=0; j<6; j++){
                 spriteArray[i][j] = new ImageIcon(imageArray[i][j]);
             }
-        }
-
+        }     
+        
         try {
         randomColorIcon =new ImageIcon(ImageIO.read(getClass().
                                     getResource("/images/random_icon.png")));
@@ -322,7 +373,7 @@ public class MainView{
     }
 
     private void loadError(String string) {
-        JOptionPane.showMessageDialog(mainFrame, "Could not load data. "
+        JOptionPane.showMessageDialog(this, "Could not load data. "
                 +string+" seems to be missing. Game will be shut down.", 
                 "Loading Failure", JOptionPane.ERROR_MESSAGE);
     
@@ -331,14 +382,27 @@ public class MainView{
 
     void doPreparations(ChessGuiView chessPanel) {
         chessPanel.setSpriteArray(spriteArray);
-        chessPanel.setMainFrame(mainFrame);
         chessPanel.createView();
     }
 
+    /* Sets the look of a JButton consistently for several parts of the gui */ 
     public static void iconOnlyButton(JButton button) {
-        button.setBorder(null);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
+        button.setFocusable(false);
         button.setOpaque(false);
+    }
+
+    /* Sets the look of a JButton consistently for several parts of the gui */
+    public static void dialogButton(JButton button) {
+        button.setFocusable(false);
+    }
+
+    public static void customBoxedPanel(JPanel panel){
+        panel.setBorder(BorderFactory.createEtchedBorder());
+    }
+    
+    void addCardPanel() {
+        this.add(cardPanel);
     }
 }

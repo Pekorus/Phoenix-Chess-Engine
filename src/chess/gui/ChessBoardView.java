@@ -34,8 +34,8 @@ public class ChessBoardView extends JPanel{
     private final ActionListener controller;
     private ChessColor ownColor;
 
-    private JPanel downCoordAxis;
-    private JPanel rightCoordAxis;
+    private final JPanel downCoordAxis = new JPanel(new GridLayout(1,8));
+    private final JPanel rightCoordAxis = new JPanel(new GridLayout(8,1));;
     
     /* sprites */
     ImageIcon[][] spriteArray;
@@ -48,11 +48,18 @@ public class ChessBoardView extends JPanel{
     private final Color darkColor = Color.getHSBColor(0.52175f, 0.4f, 0.6f);
     
     public ChessBoardView(ActionListener controller, ChessColor ownColor) {
-        this.setLayout(new GridBagLayout());
+
         this.controller = controller;
         this.ownColor = ownColor;
     }
 
+    public void createView(){
+        
+        this.setLayout(new GridBagLayout());        
+        createChessboard();
+    
+    }
+    
     public void createChessboard() {
         
         /* wrap every JButton with a JPanel to allow size increase by 
@@ -63,8 +70,9 @@ public class ChessBoardView extends JPanel{
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 buttonArray[i][j] = new JButton();
-                buttonArray[i][j].setBorder(null);
-                buttonArray[i][j].setPreferredSize(new Dimension(80,80));
+                buttonArray[i][j].setBorderPainted(false);
+                buttonArray[i][j].setFocusable(false);
+                buttonArray[i][j].setPreferredSize(new Dimension(90,90));
 
                 if ((i + j) % 2 == 0) {
                     buttonArray[i][j].setBackground(Color.white);                
@@ -75,7 +83,7 @@ public class ChessBoardView extends JPanel{
                 
                 panelArray[i][j] = new JPanel();                               
                 panelArray[i][j].add(buttonArray[i][j]);
-                boardPanel.add(panelArray[i][j]);
+                boardPanel.add(buttonArray[i][j]);
             }
         }
         
@@ -183,12 +191,12 @@ public class ChessBoardView extends JPanel{
 
     public void initializeCoordAxes() {
         
-        downCoordAxis = new JPanel(new GridLayout(1,8));
+        downCoordAxis.removeAll();
         downCoordAxis.setBackground(Color.orange);
         String[] downCoord = {"A", "B", "C", "D", "E", "F", "G", "H"};
         List<String> downCoordList = Arrays.asList(downCoord);
         
-        rightCoordAxis = new JPanel(new GridLayout(8,1));
+        rightCoordAxis.removeAll();
         rightCoordAxis.setBackground(Color.orange);        
         String[] rightCoord = {"8", "7", "6", "5", "4", "3", "2", "1"};        
         List<String> rightCoordList = Arrays.asList(rightCoord);
@@ -206,6 +214,13 @@ public class ChessBoardView extends JPanel{
                 auxLabel = new JLabel("  "+rightCoordList.get(i)+"  ", SwingConstants.CENTER);        
                 rightCoordAxis.add(auxLabel);              
         }     
+    }
+
+    public void rotateAndDrawBoard(Piece[][] pieceArray) {
+        initializeCoordAxes();
+        this.revalidate();
+        this.repaint();
+        drawBoard(pieceArray);
     }
     
 }
