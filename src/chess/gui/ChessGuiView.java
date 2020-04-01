@@ -1,14 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.gui;
 
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
-import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.game.ChessGame;
 import chess.game.DrawType;
@@ -28,14 +22,18 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 /**
  *
- * @author Phoenix
+ * Provides a GUI for a chess game. Needs the classes ChessGuiController and 
+ * ChessBoardView (chess board panel) to function.
  */
 public class ChessGuiView extends JPanel{
+    
 
     private final ChessGuiController guiController;
     private final ChessColor ownColor;
+    /* board state represented as piece array */
     Piece[][] pieceArray;
-    ImageIcon[][] spriteArray;
+    /* Options to control gui, including sprites for painting */
+    ChessOptions options;
     
     /* panels */
     final ChessBoardView chessBoardPanel;
@@ -44,20 +42,32 @@ public class ChessGuiView extends JPanel{
     private final JPanel rightSidePanel = new JPanel();
     private final JLabel resultLabel = new JLabel();
     private final JPanel displayMovesPanel = new JPanel();
-    private final JScrollPane displayMovesScroll = new JScrollPane(displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
+    private final JScrollPane displayMovesScroll = new JScrollPane(
+                                displayMovesPanel, VERTICAL_SCROLLBAR_ALWAYS, 
+                                                    HORIZONTAL_SCROLLBAR_NEVER);
+    
+    /* dialog for piece promotion */
     final JDialog promoteDialog = new JDialog();
-
-    /* promotion buttons */ 
+    /* promotion buttons to select piece */ 
     JButton queenButton;
     JButton bishopButton;
     JButton knightButton;
     JButton rookButton;
     
-    
-    public ChessGuiView(ChessGuiController guiController, ChessColor ownColor) {
+    /**
+     * Class constructor.
+     * 
+     * @param guiController     controller of the gui
+     * @param options           options to control gui
+     * @param ownColor          color of human player
+     */
+    public ChessGuiView(ChessGuiController guiController, ChessOptions options,
+                                                         ChessColor ownColor) {
         this.ownColor = ownColor;
         this.guiController = guiController;    
-        this.chessBoardPanel = new ChessBoardView(guiController, ownColor);
+        this.options = options;
+        this.chessBoardPanel = new ChessBoardView(guiController, options,
+                                                                    ownColor);
     }
     
     public void createView(){
@@ -74,13 +84,21 @@ public class ChessGuiView extends JPanel{
         this.add(chessBoardPanel);
         this.add(rightSidePanel);
     } 
-    
-    public void update(ChessGame game, Object arg) {
+
+    /**
+     * Updates the view after a move was made in the game. Is invoked by game
+     * controller.
+     * 
+     * @param game  game information that should be displayed 
+     */
+    public void update(ChessGame game) {
+        
+        /* draw board */
         pieceArray = game.getBoard().getPieceArray();
         chessBoardPanel.drawBoard(pieceArray);
+        /* update moves display and in case of ended game the winner */
         updateMovesDisplay(game.getMoveList());
-        if (game.getWinner() != null || game.getDraw() != null) {
-            
+        if (game.getWinner() != null || game.getDraw() != null) {           
             setResultLabel(game.getWinner());
             showGameEndDialog(game.getWinner(), game.getDraw());
         }
@@ -94,13 +112,13 @@ public class ChessGuiView extends JPanel{
         promoteDialog.setSize(400, 150);
         promoteDialog.setModal(true);
 
-        queenButton = new JButton(getSprite(QUEEN, WHITE));
+        queenButton = new JButton(options.getSprite(QUEEN, WHITE));
         MainView.iconOnlyButton(queenButton);
-        bishopButton = new JButton(getSprite(BISHOP, WHITE));
+        bishopButton = new JButton(options.getSprite(BISHOP, WHITE));
         MainView.iconOnlyButton(bishopButton);
-        knightButton = new JButton(getSprite(KNIGHT, WHITE));
+        knightButton = new JButton(options.getSprite(KNIGHT, WHITE));
         MainView.iconOnlyButton(knightButton);
-        rookButton = new JButton(getSprite(ROOK, WHITE));
+        rookButton = new JButton(options.getSprite(ROOK, WHITE));
         MainView.iconOnlyButton(rookButton);
         queenButton.addActionListener(guiController);
         bishopButton.addActionListener(guiController);
@@ -113,17 +131,31 @@ public class ChessGuiView extends JPanel{
         promotePanel.add(rookButton);
     }
 
+    /**
+     * Sets button sprites of promotion dialog depending on given color.
+     * 
+     * @param color     color of sprites that will be used
+     */
     public void setPromoteDialogColor(ChessColor color) {
-        queenButton.setIcon(getSprite(QUEEN, color));
-        bishopButton.setIcon(getSprite(BISHOP, color));
-        knightButton.setIcon(getSprite(KNIGHT, color));
-        rookButton.setIcon(getSprite(ROOK, color));
+        
+        queenButton.setIcon(options.getSprite(QUEEN, color));
+        bishopButton.setIcon(options.getSprite(BISHOP, color));
+        knightButton.setIcon(options.getSprite(KNIGHT, color));
+        rookButton.setIcon(options.getSprite(ROOK, color));
     }
 
+    /**
+     * Invokes a dialog to inform human player about end of game and the winner.
+     * 
+     * @param winner    color of player that won the game
+     * @param draw      draw type if game is a draw
+     */
     private void showGameEndDialog(ChessColor winner, DrawType draw) {
+        
         if (winner != null) {
             JOptionPane.showMessageDialog(chessBoardPanel,
-                    winner + " Player has won!", "Game ended", JOptionPane.WARNING_MESSAGE);
+                    winner + " Player has won!", "Game ended", 
+                                                  JOptionPane.WARNING_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(chessBoardPanel,
                     "Game ended in a draw (" + draw + ")", "Game ended",
@@ -132,16 +164,20 @@ public class ChessGuiView extends JPanel{
     }
 
     private void createDisplayMovesScroll() {
+        
         displayMovesPanel.setLayout(new BoxLayout(displayMovesPanel,
                 BoxLayout.Y_AXIS));
     }
 
     private void updateMovesDisplay(LinkedList<Move> moveList) {
+        
         JLabel label1, label2, label3, dummyLabel;
         int newestMove = moveList.size() - 1;
         GridBagConstraints numberConstr, move1Constr, move2Constr;
 
-        if (newestMove == -1) ; else if (newestMove % 2 == 0) {
+        if (newestMove == -1) ; 
+        /* number of moves in list is odd */
+        else if (newestMove % 2 == 0) {
             JPanel triPanel = new JPanel(new GridBagLayout());
             triPanel.setMaximumSize(new Dimension(220, 20));
 
@@ -163,7 +199,7 @@ public class ChessGuiView extends JPanel{
             move1Constr.gridy = newestMove / 2;
             triPanel.add(label2, move1Constr);
 
-            //dummy label to be removed when black move is added
+            /* dummy label to be removed when black's next move is added */
             dummyLabel = new JLabel();
             dummyLabel.setPreferredSize(new Dimension(80, 20));
             move1Constr.gridx = 2;
@@ -179,6 +215,7 @@ public class ChessGuiView extends JPanel{
             }
 
             displayMovesPanel.add(triPanel);
+        /* number of moves in list is even */
         } else {
             JPanel lastPanel = (JPanel) displayMovesPanel.
                     getComponent(displayMovesPanel.getComponentCount() - 1);
@@ -231,34 +268,4 @@ public class ChessGuiView extends JPanel{
         }
     }
     
-    public void setSpriteArray(ImageIcon[][] spriteArray) {
-        this.spriteArray = spriteArray;
-        chessBoardPanel.setSpriteArray(spriteArray);
-    }
-
-    private ImageIcon getSprite(PieceType pieceType, ChessColor color) {
-        int aux = 0;
-        if (color == WHITE) aux = 1;
-        
-        switch (pieceType) {
-            case KING:
-                return (spriteArray[aux][0]);
-
-            case QUEEN:
-                return (spriteArray[aux][1]);
-
-            case BISHOP:
-                return (spriteArray[aux][3]);
-
-            case KNIGHT:
-                return (spriteArray[aux][4]);
-
-            case ROOK:
-                return (spriteArray[aux][2]);
-
-            case PAWN:
-                return (spriteArray[aux][5]);
-        }
-        return null;
-    }
 }

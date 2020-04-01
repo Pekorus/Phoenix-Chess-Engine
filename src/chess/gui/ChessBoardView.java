@@ -1,14 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.gui;
 
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
-import chess.board.PieceType;
 import chess.coordinate.Coordinate;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -27,30 +21,43 @@ import javax.swing.SwingConstants;
 
 /**
  *
- * @author Phoenix
+ * Provides the GUI of a chess board. Needs a controller that implements 
+ * ActionListener to function.
  */
 public class ChessBoardView extends JPanel{
 
+    /* controller that implements gui logic */
     private final ActionListener controller;
     private ChessColor ownColor;
-
+    
+    /* coordinate axes of chess board */
     private final JPanel downCoordAxis = new JPanel(new GridLayout(1,8));
     private final JPanel rightCoordAxis = new JPanel(new GridLayout(8,1));;
     
-    /* sprites */
-    ImageIcon[][] spriteArray;
+    /* Options to control gui, including sprites for painting */
+    ChessOptions options;
 
     /* buttons */
     final public JButton[][] buttonArray = new JButton[8][8];
     
-    //colors to be used for painting chess squares
+    /* colors of chess board squares */
     private final Color lightColor = Color.getHSBColor(0.52175f, 0.4f, 0.9f);
     private final Color darkColor = Color.getHSBColor(0.52175f, 0.4f, 0.6f);
     
-    public ChessBoardView(ActionListener controller, ChessColor ownColor) {
+    /**
+     * Class contructor.
+     * 
+     * @param controller    controller that implements button logic
+     * @param options       options to control gui
+     * @param ownColor      color of the player (this color is displayed at 
+     *                      bottom) 
+     */
+    public ChessBoardView(ActionListener controller, ChessOptions options,
+                                                        ChessColor ownColor) {
 
         this.controller = controller;
         this.ownColor = ownColor;
+        this.options = options;
     }
 
     public void createView(){
@@ -114,10 +121,17 @@ public class ChessBoardView extends JPanel{
         this.add(extra, c);
     }    
 
+    /**
+     * Updates the board with given piece array.
+     * 
+     * @param pieces    board position to be drawn
+     */
     public void drawBoard(Piece[][] pieces) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
+                
                 int a = i, b = j;
+                /* translate coordinates if board is rotated */
                 if (ownColor == WHITE) {
                     a = 7 - i;
                     b = 7 - j;
@@ -125,7 +139,7 @@ public class ChessBoardView extends JPanel{
                 if (pieces[i][j] == null) {
                     buttonArray[a][b].setIcon(null);
                 } else {
-                    ImageIcon sprite = getSprite(pieces[i][j].getPiecetype(),
+                    ImageIcon sprite = options.getSprite(pieces[i][j].getType(),
                             pieces[i][j].isColor());
                     buttonArray[a][b].setIcon(sprite);
                 }
@@ -133,6 +147,12 @@ public class ChessBoardView extends JPanel{
         }
     }
 
+    /**
+     * Paints given coordinate with corresponding color stated in constants
+     * lightColor and darkColor.
+     * 
+     * @param coord     coordinate on chess board to be painted 
+     */
     public void paintFieldColor(Coordinate coord) {
         if(coord==null) return;
         int x = coord.getX();
@@ -144,6 +164,11 @@ public class ChessBoardView extends JPanel{
         }        
     }
 
+    /**
+     * Restores the color of square with given coordinate.
+     * 
+     * @param coord     coordinate to be restored
+     */
     public void restoreFieldColor(Coordinate coord) {
         if(coord==null) return;
         int x = coord.getX();
@@ -155,40 +180,13 @@ public class ChessBoardView extends JPanel{
         }
     }
 
-    public void setSpriteArray(ImageIcon[][] spriteArray) {
-        this.spriteArray = spriteArray;
-    }
-
     public void setOwnColor(ChessColor ownColor) {
         this.ownColor = ownColor;
     }    
-    
-    private ImageIcon getSprite(PieceType pieceType, ChessColor color) {
-        int aux = 0;
-        if (color == WHITE) aux = 1;
-        
-        switch (pieceType) {
-            case KING:
-                return (spriteArray[aux][0]);
 
-            case QUEEN:
-                return (spriteArray[aux][1]);
-
-            case BISHOP:
-                return (spriteArray[aux][3]);
-
-            case KNIGHT:
-                return (spriteArray[aux][4]);
-
-            case ROOK:
-                return (spriteArray[aux][2]);
-
-            case PAWN:
-                return (spriteArray[aux][5]);
-        }
-        return null;
-    }
-
+    /**
+     * Builds coordinate axes of a chess board.
+     */
     public void initializeCoordAxes() {
         
         downCoordAxis.removeAll();
@@ -201,7 +199,8 @@ public class ChessBoardView extends JPanel{
         String[] rightCoord = {"8", "7", "6", "5", "4", "3", "2", "1"};        
         List<String> rightCoordList = Arrays.asList(rightCoord);
         
-        if(ownColor==BLACK){
+        /* mirror letters and integers if own color is black */
+        if(ownColor == BLACK){
             Collections.reverse(downCoordList);
             Collections.reverse(rightCoordList);
         }
@@ -209,13 +208,20 @@ public class ChessBoardView extends JPanel{
         JLabel auxLabel;
         
         for(int i=0; i<8; i++){
-                auxLabel = new JLabel(downCoordList.get(i), SwingConstants.CENTER);
+                auxLabel = new JLabel(downCoordList.get(i), 
+                                                        SwingConstants.CENTER);
                 downCoordAxis.add(auxLabel);
-                auxLabel = new JLabel("  "+rightCoordList.get(i)+"  ", SwingConstants.CENTER);        
+                auxLabel = new JLabel("  "+rightCoordList.get(i)+"  ", 
+                                                        SwingConstants.CENTER);        
                 rightCoordAxis.add(auxLabel);              
         }     
     }
 
+    /**
+     * Updates chess board including coordinate axes after rotation.
+     * 
+     * @param pieceArray    rotated board position represented by piece array
+     */
     public void rotateAndDrawBoard(Piece[][] pieceArray) {
         initializeCoordAxes();
         this.revalidate();

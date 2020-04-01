@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.ai;
 
 import static chess.ai.ChessGameStage.*;
@@ -17,7 +12,6 @@ import chess.game.ChessGame;
 import chess.game.ChessRules;
 import chess.game.GameController;
 import chess.game.Player;
-import chess.gui.ChessGuiView;
 import chess.move.Move;
 import static chess.move.MoveType.NORMAL;
 import static chess.move.MoveType.TAKE;
@@ -41,37 +35,59 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 import javax.swing.SwingWorker;
 
 /**
- *
- * @author Phoenix
+ * Provides an AI which is able to play chess using a tree structure. 
+ * Several standard techniques are used to improve performance:
+ *  - Alpha-Beta pruning
+ *  - Null-move pruning
+ *  - Quiescence search
+ *  - Killer heuristic
+ *  - Transposition tables 
+ *  - Iterative deepening
+ *  - Position matrices for pieces
  */
 public class ChessAI implements Player {
 
     /* fields to control general AI behaviour */
+    
     private int SEARCH_DEPTH;
     private int QUIET_SEARCH_DEPTH;
     private static final int TRANSPOSITION_TABLE_SIZE = 200000;
     private static final int DRAW_THRESHOLD_VALUE = -50;
+    /* highest value for a position (lowest value is given by -MATEVALUE) */
     private static final int MATEVALUE = Integer.MAX_VALUE / 2;
+    /* value to control the search depth reduction in null move search */ 
     private static final int NULLMOVE_REDUCTION = 2;
 
     /* constants for board evaluation */
+    
     private static final int BISHOP_BASIC_VALUE = 310;
+    /* given if player has a pair of bishops */
     private static final int BISHOP_DOUBLE_BONUS = 20;
+    /* given for pawns directly in front of a bishop */
     private static final int BISHOP_DIAG_PAWN_MALUS = 20;
 
     private static final int ROOK_BASIC_VALUE = 500;
+    /* given for two rooks on same file */
     private static final int ROOK_DOUBLE_FILE_BONUS = 20;
+    /* given for a rook on open file */
     private static final int ROOK_OPEN_FILE_BONUS = 15;
+    /* given for a rook on half-open file */
     private static final int ROOK_HALF_OPEN_FILE_BONUS = 10;
 
     private static final int PAWN_BASIC_VALUE = 100;
+    /* given for multiple pawns on same file */
     private static final int PAWN_DOUBLE_MALUS = 15;
+    /* given if a pawn is isolated (from own pawns) */
     private static final int PAWN_ISOLATED_MALUS = 15;
 
     private static final int KNIGHT_BASIC_VALUE = 310;
 
     private static final int QUEEN_BASIC_VALUE = 900;
 
+    /* Position matrices for a piece. Bonus/ Malus given depends on the position
+        on the board. Used in static evaluation to quickly evaluate if a field
+        is desirable for that piece.       
+    */
     private static final int[][] KNIGHT_BONUS_MATRIX
             = {{-15, -5, -5, -5, -5, -5, -5, -15},
             {-10, -5, 0, 5, 5, 0, -5, -10},
@@ -184,6 +200,7 @@ public class ChessAI implements Player {
 
     /* fields for AI analytics */
     private JFrame analyticsView;
+    private final AnalyticsWriter analyticsWriter;
     private int evaluatedPositions = 0;
     private int visitedNodes = 0;
     private int visitedQuietNodes = 0;
@@ -195,23 +212,40 @@ public class ChessAI implements Player {
 
     /* regular AI fields */
     private final GameController controller;
+    /* AI has a copy of the game to execute/unexecute moves in the search tree 
+    */
     private final ChessGame ownGame;
+    /* the rules class to be used */
     private final ChessRules rules;
+    /* own board to execute/unexecute moves in search tree */
     private final Board board;
     private final ArrayList<Piece> ownPieces;
     private final ArrayList<Piece> enemyPieces;
     private final ChessColor ownColor;
+    /* transposition table */
     private final ChessTransTable transTable;
     private Move storedBestMove;
     private int storedBestValue;
     private ChessTreeNode currentTree;
     private ChessGameStage gameStage;
+    /* array to store moves for the killer heuristic */
     private final Move[][] killerMoves;
+    /* thread in which the calculation of the move takes place */
     private SwingWorker moveCalculation;
     private boolean firstMove = true;
+    /* stores if AI plays the creators favorite openings */
     private boolean peterMode;
 
-    public ChessAI(GameController controller, ChessColor ownColor, AIOptions aiOptions) {
+    /**
+     * Class constructor for a regular chess game from the starting position.
+     * 
+     * @param controller    controller that started the game
+     * @param ownColor      color that the AI should play
+     * @param aiOptions     Options to control AI behaviour
+     */
+    public ChessAI(GameController controller, ChessColor ownColor, AIOptions 
+            aiOptions) {
+        
         this.controller = controller;
         this.ownGame = new ChessGame();
         this.board = ownGame.getBoard();
@@ -229,9 +263,27 @@ public class ChessAI implements Player {
         gameStage = OPENING;
         killerMoves = new Move[SEARCH_DEPTH + 1][2];
         createAnalyticsFrame();
+        
+        this.analyticsWriter = new AnalyticsWriter();
+        analyticsWriter.writeNewGame();
     }
 
-    public ChessAI(GameController controller, ChessColor ownColor, AIOptions aiOptions, Piece[][] pieceArray, ChessColor colorToMove, boolean[] castleRights) {
+    /**
+     * Class constructor for a regular chess game from a custom starting 
+     * position (is used to start a game from board editor).
+     * 
+     * @param controller    the controller that started the game
+     * @param ownColor      color that the AI should play
+     * @param aiOptions     options to control AI behaviour
+     * @param pieceArray    array of pieces of starting position     
+     * @param colorToMove   color that begins the game in this position
+     * @param castleRights  array of the castle rights of both players in this
+     *                      position
+     */
+    public ChessAI(GameController controller, ChessColor ownColor, AIOptions 
+            aiOptions, Piece[][] pieceArray, ChessColor colorToMove, 
+            boolean[] castleRights) {
+        
         this.controller = controller;
         this.ownGame = new ChessGame(pieceArray, colorToMove, castleRights);
         this.board = ownGame.getBoard();
@@ -249,16 +301,22 @@ public class ChessAI implements Player {
         gameStage = OPENING;
         killerMoves = new Move[SEARCH_DEPTH + 1][2];
         createAnalyticsFrame();
+        this.analyticsWriter = new AnalyticsWriter();
+        analyticsWriter.writeNewGame();
     }
 
     @Override
-    public void update(ChessGame game, Move lastMove, Object arg) {
-        if (lastMove != null) {
+    public void update(Move lastMove) {
+        
+        if (lastMove != null) {            
+            if(ownGame.getPlayersTurn()!= ownColor) analyticsWriter
+                                              .movePlayed(lastMove.toString());
             ownGame.executeMove(lastMove, false);
+
             /* if enemy queen is traded, change gamestage flag to endgame */
             gameStage = ENDGAME;
             for (Piece piece : enemyPieces) {
-                if (piece.getPiecetype() == QUEEN) {
+                if (piece.getType() == QUEEN) {
                     gameStage = MIDDLEGAME;
                 }
             }
@@ -268,7 +326,16 @@ public class ChessAI implements Player {
         }
     }
 
+    /**
+     * Returns value of the static board evalutation function. Higher values 
+     * correspond to a better position for the specified color. It is always
+     * true that evaluateBoard(WHITE) = -evaluateBoard(BLACK).
+     * 
+     * @param colorToMove color of the side that is evaluating
+     * @return            value of the static board evaluation function
+     */
     private int evaluateBoard(ChessColor colorToMove) {
+        
         evaluatedPositions++;
         if (colorToMove == ownColor) {
             return pieceValue(ownPieces) - pieceValue(enemyPieces);
@@ -277,27 +344,37 @@ public class ChessAI implements Player {
         }
     }
 
+    /**
+     * Returns sum of the piece values as determined by static board evaluation
+     * function. Higher value corresponds to a better position.
+     * 
+     * @param pieces    array of pieces to be evaluated
+     * @return          sum of piece values  
+     */
     private int pieceValue(ArrayList<Piece> pieces) {
+        
         int value = 0;
         int bishopCount = 0;
         int otherRookFile = -1;
 
         for (Piece piece : pieces) {
-            switch (piece.getPiecetype()) {
+            switch (piece.getType()) {
                 case PAWN:
                     value += PAWN_BASIC_VALUE + pawnBonus(piece);
                     break;
                 case QUEEN:
                     /* distance to enemy king, weighted with 0.5 */
-                    value += QUEEN_BASIC_VALUE - 0.5 * (piece.getCoord().distance(
-                            board.getKing(piece.isColor().getInverse()).getCoord()));
+                    value += QUEEN_BASIC_VALUE - 0.5 * (piece.getCoord()
+                                    .distance(board.getKing(piece.isColor().
+                                                    getInverse()).getCoord()));
                     //value += queenBonus(piece);
                     break;
                 case BISHOP:
                     bishopCount++;
                     if (bishopCount > 1) {
                         /* more than one bishop */
-                        value += BISHOP_DOUBLE_BONUS + BISHOP_BASIC_VALUE + bishopBonus(piece);
+                        value += BISHOP_DOUBLE_BONUS + BISHOP_BASIC_VALUE 
+                                                        + bishopBonus(piece);
                         break;
                     }
                     value += BISHOP_BASIC_VALUE + bishopBonus(piece);
@@ -308,7 +385,8 @@ public class ChessAI implements Player {
                 case ROOK:
                     if (otherRookFile == piece.getCoord().getY()) {
                         /* rooks on same file */
-                        value += ROOK_DOUBLE_FILE_BONUS + ROOK_BASIC_VALUE + rookBonus(piece);
+                        value += ROOK_DOUBLE_FILE_BONUS + ROOK_BASIC_VALUE 
+                                                            + rookBonus(piece);
                         break;
                     } else {
                         otherRookFile = piece.getCoord().getY();
@@ -323,18 +401,38 @@ public class ChessAI implements Player {
         return value;
     }
 
+    /**
+     * Generates all legal moves as stated by rules class for all pieces in this
+     * game state.
+     * 
+     * @param pieces    pieces to generate all legal moves for
+     * @return          list of all legal moves in this game
+     */
     private ArrayList<Move> allPossibleMoves(ArrayList<Piece> pieces) {
+        
         ArrayList<Move> allMoves = new ArrayList<>();
         for (Piece piece : pieces) {
-            allMoves.addAll(rules.getPossibleMoves(piece));
+            allMoves.addAll(rules.getAllLegalMoves(piece));
         }
         return allMoves;
     }
 
-    /* Builds and evaluates the tree for this position and returns its value
+    /**
+     * Builds and evaluates the tree for this position and returns its value.
+     * Calculation is recursive: All legal moves are generated, executed and
+     * evaluated. Then the value of the best scoring move is returned.
+     * 
+     * 
+     * @param chessTree     tree of possible moves of current position
+     * @param alpha         alpha value of alpha-beta pruning
+     * @param beta          beta value of alpha-beta pruning
+     * @param colorToMove   color to move from this position
+     * @param depth         stores number of plies that are left to evaluate
+     * @param allowNullMove stores if null move is allowed in evaluation
+     * @return              value of best scoring move                  
      */
     private int builtTreeAndEvaluate(ChessTreeNode chessTree, int alpha,
-            int beta, ChessColor colorToMove, int depth, boolean allowNullMove) {
+            int beta, ChessColor colorToMove, int depth, boolean allowNullMove){
 
         visitedNodes++;
 
@@ -345,7 +443,8 @@ public class ChessAI implements Player {
 
         /* check if position is already in transposition table */
         //TransTableEntry auxEntry = null;
-        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
+        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board
+                                                               .getHashValue());
         Move tableBestMove = null;
         if (auxEntry != null) {
             /* if the searched depth of plies of the transposition table is 
@@ -381,7 +480,8 @@ public class ChessAI implements Player {
 
 
         /* leaf node */
-        if (depth <= 0) /* only evaluate quiet positions to avoid horizon effect */ {
+        if (depth <= 0) 
+        /* only evaluate quiet positions to avoid horizon effect */ {
             return quiescenceSearch(chessTree, alpha, beta, depth, colorToMove);
         } /* inner node */ else {
 
@@ -390,8 +490,9 @@ public class ChessAI implements Player {
             /* conduct a null-move search */
             if (allowNullMove && !ownGame.isInCheck(colorToMove)) {
                 ownGame.executeNullMove();
-                gameValue = -builtTreeAndEvaluate(new ChessTreeNode(null), -beta, -beta + 1,
-                        colorToMove.getInverse(), depth - NULLMOVE_REDUCTION - 1, false);
+                gameValue = -builtTreeAndEvaluate(new ChessTreeNode(null), 
+                                 -beta, -beta + 1, colorToMove.getInverse(), 
+                                        depth - NULLMOVE_REDUCTION - 1, false);
                 ownGame.unexecuteNullMove();
                 if (gameValue >= beta) {
                     return gameValue;
@@ -401,16 +502,14 @@ public class ChessAI implements Player {
             /* value of the position to be returned after evaluation */
             gameValue = -MATEVALUE - depth;
 
-            /* store best Move found in evaluation of this node and the evaluation flag to be stored 
-            in the transposition table
-             */
+            /* store best Move found in evaluation of this node and the 
+            evaluation flag to be stored in the transposition table */
             Move bestMove = null;
             EvaluationFlag evalFlag = EXACT;
             boolean anyMoveBeatAlpha = false;
 
             /* Create all possible moves as children of the node 
-               if not already done.
-             */
+               if not already done. */
             if (!chessTree.hasChildren()) {
                 createChildrenFromPieceList(chessTree, colorToMove);
                 /* no  legal moves: not in check => stalemate, in check => 
@@ -439,14 +538,19 @@ public class ChessAI implements Player {
 
                 ownGame.executeMove(node.getMove(), false);
                 if (firstChild) {
-                    gameValue = -builtTreeAndEvaluate(node, -beta, -alpha, colorToMove.getInverse(), depth - 1, true);
+                    gameValue = -builtTreeAndEvaluate(node, -beta, -alpha, 
+                                    colorToMove.getInverse(), depth - 1, true);
                     firstChild = false;
-                } /* zero window search to quickly prove that first move is best */ else {
-                    gameValue = -builtTreeAndEvaluate(node, -alpha - 1, -alpha, colorToMove.getInverse(), depth - 1, true);
+                } 
+                /* zero window search to quickly prove that first move is best*/ 
+                else {
+                    gameValue = -builtTreeAndEvaluate(node, -alpha - 1, -alpha, 
+                                    colorToMove.getInverse(), depth - 1, true);
                     /* research if alpha < gameValue < beta */
                     if (gameValue > alpha && gameValue < beta) {
                         gameValue = -builtTreeAndEvaluate(node, -beta,
-                                -alpha, colorToMove.getInverse(), depth - 1, true);
+                                -alpha, colorToMove.getInverse(), depth - 1, 
+                                true);
                     }
                 }
                 ownGame.unexecuteMove(node.getMove());
@@ -499,7 +603,7 @@ public class ChessAI implements Player {
                 Instant start = Instant.now();
                 iterativeDeepeningSearch(SEARCH_DEPTH);
                 Instant finish = Instant.now();
-                moveDuration = Duration.between(start, finish).getSeconds();
+                moveDuration = Duration.between(start, finish).toMillis();
                 if (iterationDepth < SEARCH_DEPTH) {
                     return storedBestMove;
                 }
@@ -524,27 +628,55 @@ public class ChessAI implements Player {
         moveCalculation.execute();
     }
 
+    /**
+     * Calculates value for this piece as stated by the static evaluation 
+     * function. 
+     * 
+     * @param bishop    piece to be evaluated
+     * @return          value of static evaluation function
+     */
     private int bishopBonus(Piece bishop) {
+        
         int bonus = 0;
-
-        for (Coordinate auxCoord : bishop.getCoord().getDiagCoordFront(bishop.isColor())) {
+        
+        /* is the bishop blocked by pawns in front of him? */
+        for (Coordinate auxCoord : bishop.getCoord().getDiagCoordFront(bishop
+                                                                 .isColor())) {
             if (board.getPieceTypeOnCoord(auxCoord) == PAWN) {
                 bonus -= BISHOP_DIAG_PAWN_MALUS;
             }
         }
         if (bishop.isColor() == BLACK) {
-            bonus += BLACK_BISHOP_BONUS_MATRIX[bishop.getCoord().getX()][bishop.getCoord().getY()];
+            bonus += BLACK_BISHOP_BONUS_MATRIX[bishop.getCoord().getX()][bishop
+                                                            .getCoord().getY()];
         } else {
-            bonus += WHITE_BISHOP_BONUS_MATRIX[bishop.getCoord().getX()][bishop.getCoord().getY()];
+            bonus += WHITE_BISHOP_BONUS_MATRIX[bishop.getCoord().getX()][bishop
+                                                            .getCoord().getY()];
         }
         return bonus;
     }
 
+    /**
+     * Calculates value for the piece on this coordinate as stated by the static 
+     * evaluation function. 
+     * 
+     * @param coord     cord of the piece to be evaluated
+     * @return          value of static evaluation function
+     */
     private int knightBonus(Coordinate coord) {
+        
         return KNIGHT_BONUS_MATRIX[coord.getX()][coord.getY()];
     }
 
+    /**
+     * Calculates value for this piece as stated by the static evaluation 
+     * function. 
+     * 
+     * @param pawn    piece to be evaluated
+     * @return        value of static evaluation function
+     */    
     private int pawnBonus(Piece pawn) {
+        
         int bonus = 0;
         int file = pawn.getCoord().getY();
         /* doubled pawns */
@@ -566,7 +698,15 @@ public class ChessAI implements Player {
         return bonus;
     }
 
+    /**
+     * Calculates value for this piece as stated by the static evaluation 
+     * function. 
+     * 
+     * @param rook    piece to be evaluated
+     * @return        value of static evaluation function
+     */    
     private int rookBonus(Piece rook) {
+        
         int bonus = 0;
         int file = rook.getCoord().getY();
 
@@ -587,7 +727,15 @@ public class ChessAI implements Player {
         return bonus;
     }
 
+    /**
+     * Calculates value for this piece as stated by the static evaluation 
+     * function. 
+     * 
+     * @param queen     piece to be evaluated
+     * @return          value of static evaluation function
+     */
     private int queenBonus(Piece queen) {
+        
         int bonus = 0;
         Coordinate coord = queen.getCoord();
         if (queen.isColor() == BLACK) {
@@ -598,14 +746,26 @@ public class ChessAI implements Player {
         return bonus;
     }
 
+    /**
+     * Calculates value for this piece as stated by the static evaluation 
+     * function. 
+     * 
+     * @param king      piece to be evaluated
+     * @return          value of static evaluation function
+     */
     private int kingBonus(Piece king) {
+        
+        /* different matrices are used depending on stage of game */
         if (gameStage == ENDGAME) {
-            return KING_BONUS_MATRIX_ENDGAME[king.getCoord().getX()][king.getCoord().getY()];
+            return KING_BONUS_MATRIX_ENDGAME[king.getCoord().getX()]
+                                                       [king.getCoord().getY()];
         } else {
             if (king.isColor() == BLACK) {
-                return BLACK_KING_BONUS_MATRIX_MIDDLEGAME[king.getCoord().getX()][king.getCoord().getY()];
+               return BLACK_KING_BONUS_MATRIX_MIDDLEGAME[king.getCoord().getX()]
+                                                       [king.getCoord().getY()];
             } else {
-                return WHITE_KING_BONUS_MATRIX_MIDDLEGAME[king.getCoord().getX()][king.getCoord().getY()];
+               return WHITE_KING_BONUS_MATRIX_MIDDLEGAME[king.getCoord().getX()]
+                                                       [king.getCoord().getY()];
             }
         }
     }
@@ -614,17 +774,26 @@ public class ChessAI implements Player {
         return ownGame.isDraw(false);
     }
 
+    /**
+     * Gets best variation from transposition table for current position.
+     * 
+     * @return      best variation as list of plies for current position
+     */
     private ArrayList<Move> bestVariation() {
         ArrayList<Move> list = new ArrayList<>();
-        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
+        TransTableEntry auxEntry = transTable.getEntryByZobrisKey(board
+                                                               .getHashValue());
         int counter = -1;
 
         while (auxEntry != null && counter < 8) {
 
-            if (auxEntry.getBestMove() == null /*|| auxEntry.getEvaluationFlag()!= EXACT*/) {
+            if (auxEntry.getBestMove() == null) {
                 break;
             }
             list.add(auxEntry.getBestMove());
+            /* execute move to get zobris key of next position to be searched
+                for best move
+            */ 
             board.executeMove(auxEntry.getBestMove());
             counter++;
             auxEntry = transTable.getEntryByZobrisKey(board.getHashValue());
@@ -637,10 +806,19 @@ public class ChessAI implements Player {
         return list;
     }
 
+    /**
+     * Appends analytics of this turn to the analyticsLabel, writes them into a 
+     * text file and resets them for the next turn.
+     */
     private void printAndResetAnalytics() {
-        analyticsLabel.append("Search duration: " + moveDuration + " sec");
-        analyticsLabel.append("\nBest variation: " + bestVariation());
-        TransTableEntry tableEntry = transTable.getEntryByZobrisKey(board.getHashValue());
+        
+        String currentLabel = "";
+        currentLabel = currentLabel.concat("Search duration: " + ((float)moveDuration)/1000 
+                                                                      + " sec");
+        currentLabel = currentLabel.concat("\nBest variation: " 
+                                                             + bestVariation());
+        TransTableEntry tableEntry = transTable.getEntryByZobrisKey(board
+                                                               .getHashValue());
         int gameValue = 0;
         if (tableEntry != null) {
             gameValue = tableEntry.getValue();
@@ -649,21 +827,34 @@ public class ChessAI implements Player {
             gameValue = storedBestValue;
         }
         if (gameValue > 10000) {
-            analyticsLabel.append("\nGame value: " + ownColor + " mates in " + (SEARCH_DEPTH - gameValue + MATEVALUE + 1) / 2);
+            currentLabel = currentLabel.concat("\nGame value: " + ownColor 
+               + " mates in " + (SEARCH_DEPTH - gameValue + MATEVALUE + 1) / 2);
         } else if (gameValue < -10000) {
-            analyticsLabel.append("\nGame value: " + ownColor.getInverse() + " mates in " + (SEARCH_DEPTH + gameValue + MATEVALUE) / 2);
+            currentLabel = currentLabel.concat("\nGame value: " 
+                    + ownColor.getInverse() + " mates in " 
+                                 + (SEARCH_DEPTH + gameValue + MATEVALUE) / 2);
         } else {
-            analyticsLabel.append("\nGame value: " + String.format("%.2f", 0.01 * gameValue));
+            currentLabel = currentLabel.concat("\nGame value: " 
+                                    + String.format("%.2f", 0.01 * gameValue));
         }
-        analyticsLabel.append("\nEvaluated positions: " + evaluatedPositions);
-        analyticsLabel.append("\nVisited nodes: " + visitedNodes
+        currentLabel = currentLabel.concat("\nEvaluated positions: " 
+                                                          + evaluatedPositions);
+        currentLabel = currentLabel.concat("\nVisited nodes: " + visitedNodes
                 + ", visited quiet nodes: " + visitedQuietNodes);
-        analyticsLabel.append("\nTransp. used: " + transpositionsUsed);
-        analyticsLabel.append("\nTransp. Table entries: " + transTable.getHashFilled() + " / " + TRANSPOSITION_TABLE_SIZE);
-        analyticsLabel.append("\nIterated to depth: " + iterationDepth);
-        analyticsLabel.append("\nMaximum Depth: " + (Math.abs(reachedDepth) + SEARCH_DEPTH));
-        analyticsLabel.append("\n\n");
-
+        currentLabel = currentLabel.concat("\nTransp. used: " 
+                                                          + transpositionsUsed);
+        currentLabel = currentLabel.concat("\nTransp. Table entries: " 
+               + transTable.getHashFilled() + " / " + TRANSPOSITION_TABLE_SIZE);
+        currentLabel = currentLabel.concat("\nIterated to depth: " 
+                                                             + iterationDepth);
+        currentLabel = currentLabel.concat("\nMaximum Depth: " 
+                                    + (Math.abs(reachedDepth) + SEARCH_DEPTH));
+        currentLabel = currentLabel.concat("\nNodes per second: "
+                +(visitedNodes+visitedQuietNodes)/(moveDuration+1) +"k");
+        currentLabel = currentLabel.concat("\nEvaluated Positions per second: "+
+                                        (evaluatedPositions/(moveDuration+1)+"k"));
+        currentLabel = currentLabel.concat("\n\n");
+        
         evaluatedPositions = 0;
         visitedNodes = 0;
         visitedQuietNodes = 0;
@@ -671,8 +862,27 @@ public class ChessAI implements Player {
         iterationDepth = 0;
         reachedDepth = 0;
 
+        analyticsLabel.append(currentLabel);
+        analyticsWriter.writeAnalyticsTurn(currentLabel);
+        
     }
 
+    /**
+     * Calculates value of current position in tree by only using quiet 
+     * positions. Quiet positions are positions in which the king is not in
+     * check and there are no captures. If a position is not quiet, all takes
+     * are considered (all legal moves in case of check position) and executed.
+     * This is done recursively until a quiet position (or the maximum depth as
+     * stated in the options) is reached which is then evaluated by the static 
+     * evaluation function.
+     * 
+     * @param chessTree     tree representing current position
+     * @param alpha         alpha value of alpha-beta pruning    
+     * @param beta          beta value of alpha-beta pruning 
+     * @param depth         stores number of plies that are left to evaluate
+     * @param colorToMove   color to move in this position
+     * @return              value of best scoring move
+     */
     private int quiescenceSearch(ChessTreeNode chessTree, int alpha, int beta,
             int depth, ChessColor colorToMove) {
 
@@ -730,7 +940,8 @@ public class ChessAI implements Player {
                 visitedQuietNodes++;
                 anyMove = true;
                 ownGame.executeMove(node.getMove(), false);
-                gameValue = -quiescenceSearch(node, -beta, -alpha, depth - 1, colorToMove.getInverse());
+                gameValue = -quiescenceSearch(node, -beta, -alpha, depth - 1, 
+                                                      colorToMove.getInverse());
                 ownGame.unexecuteMove(node.getMove());
                 /* beta cutoff */
                 if (gameValue >= beta) {
@@ -747,7 +958,15 @@ public class ChessAI implements Player {
         }
     }
 
-    private void createChildrenFromPieceList(ChessTreeNode chessTree, ChessColor color) {
+    /**
+     * Creates and adds child nodes of all legal moves for current position to 
+     * given tree.  
+     * 
+     * @param chessTree     nodes will be added to this tree
+     * @param color         color of the pieces to generate legal moves for
+     */
+    private void createChildrenFromPieceList(ChessTreeNode chessTree, 
+                                                            ChessColor color) {
         ArrayList<Move> allMoves;
         if (color == ownColor) {
             allMoves = allPossibleMoves((ArrayList<Piece>) ownPieces);
@@ -759,21 +978,33 @@ public class ChessAI implements Player {
             chessTree.addChildNode(new ChessTreeNode(move));
         }
     }
-
+    
+    /**
+     * Creates a frame to display AI analytics to user.
+     */
     private void createAnalyticsFrame() {
+        
         analyticsView = new JFrame("AI Analytics");
         analyticsView.setSize(315, 700);
-        JScrollPane analyticsScroll = new JScrollPane(analyticsLabel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane analyticsScroll = new JScrollPane(analyticsLabel, 
+                        VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
 
         analyticsView.add(analyticsScroll);
         analyticsView.setVisible(true);
     }
 
-    /* creates a new list of moves with 
-        - mode == true: only TAKE moves
-        - mode == false: only non-TAKE move
+    /**
+     * Filters a list of nodes to contain only one type of move (captures or
+     * non-captures). If mode is true the returned list will only contain 
+     * captures, otherwise it will only contain non-captures. Method does not
+     * alter the given list, it creates a new object.
+     * 
+     * @param nodeList      list to be filtered
+     * @param mode          mode to operate
+     * @return              filtered list (only captures or only non-captures)
      */
-    private ArrayList<ChessTreeNode> createTakeList(ArrayList<ChessTreeNode> nodeList, boolean mode) {
+    private ArrayList<ChessTreeNode> createTakeList(
+                            ArrayList<ChessTreeNode> nodeList, boolean mode) {
 
         ArrayList<ChessTreeNode> takeList = new ArrayList<>();
 
@@ -790,11 +1021,13 @@ public class ChessAI implements Player {
         return takeList;
     }
 
-    @Override
-    public ChessGuiView getView() {
-        return null;
-    }
-
+    /**
+     * Checks the game for three times repetition of the position given by its
+     * hash value.
+     * 
+     * @param hashValue     hash value of position to be checked
+     * @return              
+     */
     private boolean fastRepetitionCheck(long hashValue) {
         LinkedList<Long> positions = ownGame.getRecentPositions();
         int counter = 0;
@@ -810,6 +1043,12 @@ public class ChessAI implements Player {
         return false;
     }
 
+    /**
+     * Writes move found by the killer heuristic in the killer heuristic array.
+     *
+     * @param move      move to be stored in killer heuristic array
+     * @param depth     depth at which the move was found
+     */
     private void storeKillerMove(Move move, int depth) {
         if (move.equals(killerMoves[depth - 1][0])) {
             return;
@@ -818,6 +1057,11 @@ public class ChessAI implements Player {
         killerMoves[depth - 1][0] = move;
     }
 
+    /**
+     * Sets the values of AI constants as stated by the AIOptions.
+     * 
+     * @param aiOptions     the options to be implemented
+     */
     private void setOptions(AIOptions aiOptions) {
         SEARCH_DEPTH = aiOptions.getSearchDepth();
         QUIET_SEARCH_DEPTH = aiOptions.getQuietSearchDepth();
@@ -828,57 +1072,80 @@ public class ChessAI implements Player {
     public void endGame() {
         //if(moveCalculation != null) moveCalculation.cancel(true);
         analyticsView.dispose();
+        analyticsWriter.endGame();
     }
 
+    /**
+     * Conducts a search of current position with iterative deepening. The first
+     * search is always 2 plies deep. Then the search is deepened one ply at a 
+     * time until the maximal depth is reached.
+     * 
+     * @param searchDepth   maximal depth to search at
+     */
     private void iterativeDeepeningSearch(int searchDepth) {
 
         boolean quietExplosionFlag = false;
 
         for (int depth = 2; depth <= searchDepth; depth++) {
-            builtTreeAndEvaluate(currentTree, -Integer.MAX_VALUE, Integer.MAX_VALUE, ownColor, depth, true);
+            builtTreeAndEvaluate(currentTree, -Integer.MAX_VALUE, 
+                                      Integer.MAX_VALUE, ownColor, depth, true);
             iterationDepth = max(iterationDepth, depth);
-            storedBestMove = transTable.getEntryByZobrisKey(board.getHashValue()).getBestMove();
-            storedBestValue = transTable.getEntryByZobrisKey(board.getHashValue()).getValue();
-            //System.out.print("visited nodes: "+visitedNodes+" quiet nodes:"+ visitedQuietNodes+" "+(visitedQuietNodes/visitedNodes) );
-            //System.out.print("\n");
+            storedBestMove = transTable.getEntryByZobrisKey(
+                                            board.getHashValue()).getBestMove();
+            storedBestValue = transTable.getEntryByZobrisKey(
+                                               board.getHashValue()).getValue();
+
             /* If the ratio visited nodes in quiescence search to visited 
             regular nodes is larger than 3 on any of the last 2 plies, a quiet 
             search explosion seems to be likely (based on experience). In that 
             case reduce the number of iterations (and final depth) by one.
              */
-            if (depth >= SEARCH_DEPTH - 2 && visitedQuietNodes / visitedNodes >= 3) {
+            if (depth >= SEARCH_DEPTH - 2 && visitedQuietNodes / 
+                                                            visitedNodes >= 3) 
+            {
                 quietExplosionFlag = true;
             }
-            if (quietExplosionFlag && visitedNodes + visitedQuietNodes > 200000 && depth == searchDepth - 1) {
+            if (quietExplosionFlag && visitedNodes + visitedQuietNodes > 200000 
+                                                  && depth == searchDepth - 1) 
+            {
                 break;
             }
         }
     }
 
-    /* sorts chessTree by : 
-        -taking moves, sorted by MVVLVA
-        -killer moves 1 and 2
-        -all other unsorted moves
+    /**
+     * Sorts children of a tree by stated rules.
+     *  -taking moves, sorted by MVVLVA
+     *  -killer moves of killer heuristic
+     *  -all other unsorted moves
+     * 
+     * @param chessTree     tree to be sorted
+     * @param depth         depth of the tree
      */
     private void sortNodes(ChessTreeNode chessTree, int depth) {
 
         /* List that contains only the taking moves from nodeList */
-        ArrayList<ChessTreeNode> takeList = createTakeList(chessTree.getChildren(), true);
+        ArrayList<ChessTreeNode> takeList = createTakeList(chessTree.
+                                                           getChildren(), true);
         takeList.sort(new SortByMVVLVA());
 
         ChessTreeNode auxNode = null;
 
         /* List that contains all NORMAL moves from nodeList */
-        ArrayList<ChessTreeNode> regularList = createTakeList(chessTree.getChildren(), false);
+        ArrayList<ChessTreeNode> regularList = createTakeList(chessTree
+                                                        .getChildren(), false);
 
         /* add killer moves */
         ListIterator<ChessTreeNode> iter = regularList.listIterator();
         while (iter.hasNext()) {
             ChessTreeNode node = iter.next();
-            if (depth > 0 && node.getMove().equals(killerMoves[depth - 1][0])) {
+            if (depth > 0 && node.getMove().equals(killerMoves[depth - 1][0])) 
+            {
                 takeList.add(node);
                 iter.remove();
-            } else if (depth > 0 && node.getMove().equals(killerMoves[depth - 1][1])) {
+            } else if (depth > 0 && node.getMove().equals(
+                                                   killerMoves[depth - 1][1])) 
+            {
                 auxNode = node;
                 iter.remove();
             }
@@ -894,7 +1161,9 @@ public class ChessAI implements Player {
         chessTree.setChildren(takeList);
     }
 
-    /* sort moves by most valuable victim - least valuable attacker
+    /**
+     * Comparator to sort the nodes of a ChessTree by MVVLVA (most valuable 
+     * victim - least valuable attacker).
      */
     class SortByMVVLVA implements Comparator<ChessTreeNode> {
 
@@ -904,11 +1173,16 @@ public class ChessAI implements Player {
         }
 
         private int score(ChessTreeNode node) {
-            return board.getPieceTypeOnCoord(node.getMove().getCoordTo()).getMaterialValue()
-                    - node.getMove().getPieceType().getMaterialValue();
+            return board.getPieceTypeOnCoord(node.getMove().getCoordTo())
+                    .getMaterialValue() - node.getMove().getPieceType()
+                                                           .getMaterialValue();
         }
     }
 
+    /**
+     * Comparator to sort the nodes of a ChessTree. Captures are sorted to the 
+     * front of the list, sorted by MVVLVA.
+     */
     class SortingMovesWithoutKiller implements Comparator<ChessTreeNode> {
 
         @Override
@@ -923,8 +1197,8 @@ public class ChessAI implements Player {
             /* Taking moves get +1000 score, also additional score for 
                        MVVLVA */
             if (move.getMoveType() == TAKE) {
-                score = +1000 + board.getPieceTypeOnCoord(move.getCoordTo()).getMaterialValue()
-                        - move.getPieceType().getMaterialValue();
+                score = +1000 + board.getPieceTypeOnCoord(move.getCoordTo())
+                    .getMaterialValue()- move.getPieceType().getMaterialValue();
             }
             return score;
         }

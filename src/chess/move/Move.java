@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.move;
 
 import chess.board.PieceType;
@@ -12,16 +7,29 @@ import java.util.Objects;
 
 /**
  *
- * @author Phoenix
+ * Provides a move for a chess game.
  */
 public class Move {
     
+    /* type of piece to be moved */
     private final PieceType pieceType;
+    /* coordinate from which piece is moved */
     private final Coordinate coordFrom;
+    /* coordinate to which piece is moved */
     private final Coordinate coordTo;
+    /* type of move */
     private final MoveType moveType;
+    /* if move represents promotion: type of piece to promote to */
     private final PieceType promoteTo;
     
+    /**
+     * Class constructor for a move without promotion.
+     * 
+     * @param pieceType     type of piece to be moved
+     * @param coordFrom     coordinate from which piece is moved
+     * @param coordTo       coordinate to which piece is moved
+     * @param moveType      type of move 
+     */
     public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
                                                            MoveType moveType) {
         this.pieceType = pieceType;
@@ -31,13 +39,22 @@ public class Move {
         this.promoteTo = null;
     }
 
-   public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
+    /**
+     * Class constructor for a move with promotion.
+     * 
+     * @param pieceType     type of piece to be moved
+     * @param coordFrom     coordinate from which piece is moved
+     * @param coordTo       coordinate to which piece is moved
+     * @param moveType      type of move
+     * @param promoteTo     type of piece to promote to
+     */
+    public Move(PieceType pieceType, Coordinate coordFrom, Coordinate coordTo, 
             MoveType moveType, PieceType promoteTo) {
         this.pieceType = pieceType;
         this.coordFrom = coordFrom;
         this.coordTo = coordTo;
         this.moveType = moveType; 
-        this.promoteTo=promoteTo;
+        this.promoteTo = promoteTo;
     }
     
     public PieceType getPieceType() {
@@ -66,7 +83,8 @@ public class Move {
            if(coordTo.getY()==1) return "0-0";
            else return "0-0-0";
         }   
-        if(promoteTo!=null) return ""+coordFrom+moveType.toString()+coordTo+promoteTo;
+        if(promoteTo!=null) return ""+coordFrom+moveType.toString()+
+                coordTo+promoteTo;
         return ""+pieceType+coordFrom+moveType.toString()+coordTo;      
     }
 

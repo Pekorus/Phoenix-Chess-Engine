@@ -1,13 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.boardeditor;
 
 import chess.board.ChessColor;
 import static chess.board.ChessColor.WHITE;
 import chess.gui.ChessBoardView;
+import chess.gui.ChessOptions;
 import chess.gui.MainView;
 import static chess.gui.MainView.dialogButton;
 import java.awt.Cursor;
@@ -33,12 +29,14 @@ import javax.swing.JRadioButton;
 
 /**
  *
- * @author Phoenix
+ * Provides a board editor (with gui) to create custom chess positions and start 
+ * them. Needs the class BoardEditorController (logic of the editor) to 
+ * function.
  */
 public class BoardEditorView extends JFrame {
 
-    /* sprites */
-    ImageIcon[][] spriteArray;
+    /* Options including sprites */
+    ChessOptions options;
     ImageIcon rotateIcon;
     BufferedImage trashCanImage;
     
@@ -57,17 +55,24 @@ public class BoardEditorView extends JFrame {
     protected JCheckBox whiteSmallCastle, blackSmallCastle, whiteLargeCastle,
             blackLargeCastle;
 
+    /* controller of the gui */
     private final BoardEditorController controller;
 
+    /**
+     * Class contructor.
+     * 
+     * @param controller    controller of the gui
+     * @param options       options containing sprites to paint
+     */
     public BoardEditorView(BoardEditorController controller,
-            ImageIcon[][] spriteArray) {
+            ChessOptions options) {
 
         this.controller = controller;
-        this.spriteArray = spriteArray;
+        this.options = options;
         this.mainPanel = new JPanel(new GridBagLayout());
-        this.chessBoardPanel = new ChessBoardView(controller, WHITE);
+        this.chessBoardPanel = new ChessBoardView(controller, options, WHITE);
         this.buttonPanel = new JPanel(new GridBagLayout());
-
+        
     }
 
     void createView() {
@@ -90,8 +95,7 @@ public class BoardEditorView extends JFrame {
         }   
         eraseButton = new JButton(new ImageIcon(trashCanImage));        
         
-        chessBoardPanel.createView();
-        chessBoardPanel.setSpriteArray(spriteArray);        
+        chessBoardPanel.createView();       
         createButtonPanel();
         
         mainPanel.add(chessBoardPanel);
@@ -99,6 +103,9 @@ public class BoardEditorView extends JFrame {
         this.add(mainPanel);
     }
 
+    /**
+     * Creates the button panel on right side of board editor.
+     */
     private void createButtonPanel() {
 
         GridBagConstraints constr = new GridBagConstraints();
@@ -146,6 +153,7 @@ public class BoardEditorView extends JFrame {
         constr.gridwidth = 1;
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 6; j++) {
+                ImageIcon[][] spriteArray = options.getSpriteArray();
                 pieceButtons[i][j] = new JButton(spriteArray[i][j]);
                 MainView.iconOnlyButton(pieceButtons[i][j]);
                 pieceButtons[i][j].addActionListener(controller);
@@ -197,6 +205,11 @@ public class BoardEditorView extends JFrame {
         buttonPanel.add(playPanel, constr);
     }
 
+    /**
+     * Changes ths image of the cursor to that of given image. 
+     * 
+     * @param image    change cursor to this image
+     */
     void setCursor(BufferedImage image) {
         this.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
                 image, new Point(0, 0), "custom cursor"));

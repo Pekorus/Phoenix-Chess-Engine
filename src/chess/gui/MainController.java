@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.gui;
 
 import chess.board.ChessColor;
@@ -16,32 +11,47 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Random;
 import javax.swing.WindowConstants;
 
 /**
  *
- * @author Phoenix
+ * Provides the gui of a chess programm. Needs MainView (graphical part) class 
+ * to function.
  */
-public class MainController implements ActionListener, MouseListener{
+public class MainController extends WindowAdapter implements ActionListener, 
+                                                                MouseListener{
 
     MainView mainView;
+    /* controller of the chess agme */
     GameController gameController;
     ChessGameType gameType;
+    /* Options to control gui */
+    ChessOptions options;
+    /* options to control AI behaviour */
     AIOptions aiOptions;
     
+    /**
+     * Class constructor.
+     */
     public MainController() {
         
-        this.mainView = new MainView(this);
-        mainView.setTitle("Schaaach");
+        this.options = new ChessOptions();         
+        /* initialize main gui */
+        this.mainView = new MainView(this, options);
+        mainView.setTitle("Phoenix Chess Engine");
         mainView.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         mainView.setResizable(false);
         mainView.setSize(760, 940);
         mainView.addCardPanel();
         
-        this.gameType = null;
+        /* initialize game */
+        this.gameType = null;      
         this.aiOptions = new AIOptions();
-        this.gameController = new GameController(WHITEPLAYER, aiOptions);
+        this.gameController = new GameController(WHITEPLAYER, options,
+                                                                    aiOptions);
         handleViews();
         
         mainView.setLocationRelativeTo(null);
@@ -50,8 +60,10 @@ public class MainController implements ActionListener, MouseListener{
        
     @Override
     public void actionPerformed(ActionEvent e) {
-       Object source = e.getSource();
        
+        Object source = e.getSource();
+        
+        /* new game button */
         if(source == mainView.newGame){
                mainView.gameTypeDialog.setLocationRelativeTo(mainView);
                mainView.gameTypeDialog.setVisible(true);
@@ -63,7 +75,7 @@ public class MainController implements ActionListener, MouseListener{
         else if(source == mainView.whiteColorButton){
            gameType = WHITEPLAYER;
            mainView.gameTypeDialog.setVisible(false);
-       } 
+        } 
        
         else if(source == mainView.blackColorButton){
            gameType = BLACKPLAYER;
@@ -79,16 +91,20 @@ public class MainController implements ActionListener, MouseListener{
         }
 
         else if(source == mainView.resetDefault){
-            mainView.searchDepthSlider.setValue(aiOptions.getDefaultSearchDepth());
-            mainView.quietSearchDepthSlider.setValue(aiOptions.getDefaultQuietSearchDepth());            
+            mainView.searchDepthSlider.setValue(
+                                             aiOptions.getDefaultSearchDepth());
+            mainView.quietSearchDepthSlider.setValue(
+                                        aiOptions.getDefaultQuietSearchDepth());            
             mainView.peterCheckBox.setSelected(false);
         }
         
         else if(source == mainView.applyChanges){
             
             aiOptions.setSearchDepth(mainView.searchDepthSlider.getValue());
-            aiOptions.setQuietSearchDepth(mainView.quietSearchDepthSlider.getValue());
-            aiOptions.setPeterMode(mainView.peterCheckBox.isSelected());          
+            aiOptions.setQuietSearchDepth(mainView.quietSearchDepthSlider
+                                                                   .getValue());
+            aiOptions.setCreatorMode(mainView.peterCheckBox.isSelected());          
+            options.setCreatorMode(mainView.peterCheckBox.isSelected());
             
             /* start new game */
             mainView.gameTypeDialog.setLocationRelativeTo(mainView);
@@ -101,7 +117,8 @@ public class MainController implements ActionListener, MouseListener{
         }          
        
         else if(source == mainView.closeProgram){
-           System.exit(0);
+            gameController.endGame();
+            System.exit(0);
        }
     }
 
@@ -109,34 +126,51 @@ public class MainController implements ActionListener, MouseListener{
         return mainView;
     }
 
+    /**
+     * Starts a new chess game with regular starting position.
+     */
     public void start() {
         if(gameController!=null) gameController.startGame();               
     }
 
+    /**
+     * Closes old game and starts a new one.
+     */
     private void restartGame() {
         gameController.endGame();
-        this.gameController = new GameController(gameType, aiOptions);
+        this.gameController = new GameController(gameType, options, aiOptions);
         gameType = null;
         handleViews();
         mainView.removeGamePanel();     
         gameController.startGame();
     }
 
-    /* castle rights from 0 to 3: white small castle, white large castle, black
-        small castle, black large castle.
-    */ 
-    public void startGameFromBoardEditor(Piece[][] pieceArray, ChessGameType gameType,
-            ChessColor colorToMove, boolean[] castleRights){
+    /**
+     * Starts a chess game from a custom postion.
+     *  
+     * @param pieceArray    board position represented by piece array
+     * @param gameType      type of game
+     * @param colorToMove   color of player to move first
+     * @param castleRights  castling rights in order: 0-0 white, 0-0-0 white,
+     *                      0-0- black, 0-0-0 black
+     */
+    public void startGameFromBoardEditor(Piece[][] pieceArray, ChessGameType 
+            gameType, ChessColor colorToMove, boolean[] castleRights){
+        
         gameController.endGame();
-        this.gameController = new GameController(gameType, aiOptions, pieceArray, 
-                colorToMove, castleRights);
+        this.gameController = new GameController(gameType, options, aiOptions, 
+                pieceArray, colorToMove, castleRights);
         this.gameType = null;
         handleViews();
         mainView.removeGamePanel();
         gameController.startGame();           
     }
     
+    /**
+     * Adds the panel of a ChessGuiView of the game controller to mainView.
+     */
     private void handleViews(){
+        
         ChessGuiView chessPanel = gameController.getView();
         mainView.addToCards(chessPanel);
         mainView.doPreparations(chessPanel);
@@ -155,12 +189,11 @@ public class MainController implements ActionListener, MouseListener{
         
         if(source == mainView.boardEditor){
             BoardEditorController boardEditor = new BoardEditorController(this, 
-                    760, 940, mainView.getLocation(),
-                    mainView.spriteArray, mainView.imageArray);
+                    760, 940, mainView.getLocation(), options);
             boardEditor.startEditor();
         }
         
-        else if(source == mainView.options){
+        else if(source == mainView.optionsMenu){
             mainView.optionsDialog.setLocationRelativeTo(mainView);
             mainView.optionsDialog.setVisible(true);
         }
@@ -184,6 +217,16 @@ public class MainController implements ActionListener, MouseListener{
     @Override
     public void mouseExited(MouseEvent e) {
         
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+       gameController.endGame();    
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+       gameController.endGame();
     }
         
 }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.game;
 
 import chess.board.Board;
@@ -14,7 +9,6 @@ import chess.board.PieceType;
 import static chess.board.PieceType.*;
 import chess.coordinate.Coordinate;
 import chess.coordinate.Direction;
-import static chess.coordinate.Direction.*;
 import static chess.game.DrawType.*;
 import chess.move.MoveType;
 import static chess.move.MoveType.*;
@@ -26,24 +20,43 @@ import java.util.List;
 
 /**
  *
- * @author Phoenix
+ * Provides a legal move verifier and generator for a regular chess game. This 
+ * includes methods to verify a move, check, check mate, draws like stalemate 
+ * etc.
  */
 public class ChessRules {
-
+    
+    /* stores coordinates king moves to in castling */
     private final List<Coordinate> castleCoords = new ArrayList();
+    /* game and board state to verify for */
     private final ChessGame game;
     private final Board board;
 
+    /**
+     * Class constructor.
+     * 
+     * @param game  game to verify rules for
+     */
     public ChessRules(ChessGame game) {
         this.game = game;
         this.board = game.getBoard();
         createCastleCoords();
     }
 
-    public boolean validateMove(Move move, ChessGame game) {
-
-        Piece piece = game.getBoard().getPieceOnCoord(move.getCoordFrom());
+    /**
+     * Verifies if given move is legal in game state of this game. Don't set the
+     * promote field of a move if no promotion is intended. This can return 
+     * false even if the move would be valid depending on piece type and 
+     * coordinates.
+     * 
+     * @param move  move to be validated
+     * @return      true if move is valid
+     */
+    public boolean validateMove(Move move) {
+        
+        Piece piece = board.getPieceOnCoord(move.getCoordFrom());
         ChessColor ownColor = piece.isColor();
+        
         if (ownColor != game.getPlayersTurn()) {
             return false;
         }
@@ -51,379 +64,646 @@ public class ChessRules {
         Coordinate coordTo = move.getCoordTo();
 
         switch (move.getMoveType()) {
+            
             case NORMAL:
-                if (board.isOccupied(coordTo)) {
-                    return false;
-                }
-                if (!isMovePossible(move)) {
+                
+                /* target square is not occupied and own piece must be able to
+                    get to target coordinate
+                */
+                if (board.isOccupied(coordTo) || !isMovePossible(move)) {
                     return false;
                 }
 
-                if (piece.getPiecetype() == PAWN) {
-                    Direction auxDirect = Direction.S;
-                    int promoteParameter = 7;
-                    if (ownColor == BLACK) {
-                        auxDirect = Direction.N;
-                        promoteParameter = 0;
-                    }
+                if (move.getPieceType() == PAWN) {
+                    
+                    Direction auxDirect = ownColor.getFrontDir();
+                    
                     Coordinate sCoord = coordFrom.getCoordInDir(auxDirect);
-                    Coordinate s2Coord = sCoord.getCoordInDir(auxDirect);
-                    if (!coordTo.equals(sCoord) && !coordTo.equals(s2Coord)) {
-                        return false;
-                    }
+                    /* coordinate in front of pawn blocked => pawn can't move */
                     if (board.isOccupied(sCoord)) {
                         return false;
-                    }
-                    if (coordTo.equals(s2Coord) && piece.getMoveCounter() != 0) {
-                        return false;
-                    }
-                    //promotion
-                    if (move.getPromoteTo() != null && coordTo.getX() != promoteParameter) {
-                        return false;
+                    }                    
+                    /* target coordinate is not directly in front => must be
+                        pawns first move to be valid
+                    */
+                    if (!coordTo.equals(sCoord)) {
+                        
+                        /* if target coordinate is not two spaces in front of
+                            pawn or the pawn already moved, move is invalid
+                        */
+                        if (!coordTo.equals(sCoord.getCoordInDir(auxDirect)) || 
+                                                piece.getMoveCounter() != 0) {
+                            return false;
+                        }
                     }
                 }
+                
                 break;
 
             case TAKE:
-                if (!board.isOccupied(coordTo)) {
+                
+                /* target coordinate is occupied by enemy piece and own piece
+                    must be able to get to target coordinate
+                */
+                if (!board.isOccupied(coordTo) || !this.isMovePossible(move)
+                      || board.getPieceOnCoord(coordTo).isColor() == ownColor) {
                     return false;
                 }
-                if (board.getPieceOnCoord(coordTo).isColor() == ownColor) {
-                    return false;
+                
+                /* if capturing piece is a pawn, verify that target coordinate 
+                    is a coordinate the pawn can capture on
+                */
+                if (move.getPieceType() == PAWN && 
+                        !coordTo.equals(coordFrom.getCoordInDir(
+                                                    ownColor.getPawnCapture1()))
+                        && !coordTo.equals(coordFrom.getCoordInDir(ownColor
+                                                        .getPawnCapture2()))) {
+                        
+                        return false;
                 }
-                if (!this.isMovePossible(move)) {
-                    return false;
-                }
-   
-                if (piece.getPiecetype() == PAWN) {
-                    if (ownColor == WHITE) {
-                        if (!coordTo.equals(coordFrom.getCoordInDir(Direction.SW))
-                                && !coordTo.equals(coordFrom.getCoordInDir(Direction.SE))) {
-                            return false;
-                        }
-                        if (move.getPromoteTo() != null && coordTo.getX() != 7) {
-                            return false;
-                        }
-                    } else {
-                        if (!coordTo.equals(coordFrom.getCoordInDir(Direction.NW))
-                                && !coordTo.equals(coordFrom.getCoordInDir(Direction.NE))) {
-                            return false;
-                        }
-                        if (move.getPromoteTo() != null && coordTo.getX() != 0) {
-                            return false;
-                        }
-                    }
-                }
+
                 break;
 
             case ENPASSANT:
+                
+                /* target coordinate not occupied and capturing piece is pawn */
+                if (move.getPieceType() != PAWN && board.isOccupied(coordTo)) {
+                    return false;                
+                }                          
+                
+                /* get the piece taken by en passant */
                 Piece optPiece = game.getBoard().getPieceOnCoord(
-                        coordTo.takenCoordEP(ownColor));
-                if (optPiece == null) {
+                                                coordTo.takenCoordEP(ownColor));
+                /* taken piece has to be a pawn of opposite color */
+                if (optPiece == null || optPiece.getType() != PAWN || 
+                                            optPiece.isColor() == ownColor) {
                     return false;
                 }
-                if (piece.getPiecetype() != PAWN) {
-                    return false;
-                }
-                if (optPiece.getPiecetype() != PAWN) {
-                    return false;
-                }
-                if (optPiece.isColor() == ownColor) {
-                    return false;
-                }
-                if (board.isOccupied(coordTo)) {
-                    return false;
-                }
-                if ((ownColor == WHITE && coordFrom.getX() != 4)
-                        || (ownColor == BLACK && coordFrom.getX() != 3)) {
-                    return false;
-                }
+
+                /* last move has to be a pawn that moved besides capturing
+                    pawn with its first move*/
                 Move lastMove = game.getLastMove();
-                if (lastMove.getPieceType() != PAWN) {
+                
+                if (lastMove.getPieceType() != PAWN
+                        || !lastMove.getCoordTo().equals(optPiece.getCoord())
+                        || lastMove.getCoordFrom().distance(
+                                                 lastMove.getCoordTo()) != 2) {
+                    
                     return false;
                 }
-                if (!lastMove.getCoordTo().
-                        equals(optPiece.getCoord())) {
-                    return false;
-                }
-                if (lastMove.getCoordFrom().
-                        distance(lastMove.getCoordTo()) != 2) {
-                    return false;
-                }
+                
                 break;
 
             case CASTLE:
-                if (piece.getPiecetype() != KING) {
+                
+                /* Moving piece must be king that never moved before and
+                   target coordinate has to be in list castleCoords.
+                   Verify that rook is on required square and has not 
+                   moved before.
+                */
+                if (move.getPieceType() != KING || piece.getMoveCounter() != 0
+                        || !castleCoords.contains(coordTo)
+                        || !rookCastleCheck(coordTo.getRookCastleCoord())) {
+                    
                     return false;
                 }
-                if (piece.getMoveCounter() != 0) {
-                    return false;
-                }
-                if (!castleCoords.contains(coordTo)) {
-                    return false;
-                }
-                ChessColor enemyColor = ownColor.getInverse();
-                if (!isAttackedBy(coordFrom, enemyColor, false).isEmpty()) {
-                    return false;
-                }
-                Coordinate rookCoord = coordTo.getRookCastleCoord();
-                if (!rookCastleCheck(rookCoord)) {
-                    return false;
-                }
-                //check if all fields between king and rook are empty and not in check
-                Direction dir = coordFrom.straightLineDir(rookCoord);
-                Coordinate auxCoord = coordFrom.getCoordInDir(dir);
-                for (int i = 0; i < 2; i++) {
-                    if (board.isOccupied(auxCoord)) {
+
+                /* verify that all squares between king and rook are not 
+                    occupied and king is not in check on them
+                */
+                Coordinate auxCoord = coordFrom;
+                
+                for (int i = 0; i < 3; i++) {
+                    
+                    /* i==0 is square with king */
+                    if ( i!=0 && board.isOccupied(auxCoord)) return false;
+                    /* square attacked by opponents piece */
+                    if (isAttacked(auxCoord, ownColor.getInverse(), null)) {
                         return false;
                     }
-                    if (!isAttackedBy(auxCoord, enemyColor, false).isEmpty()) {
-                        return false;
-                    }
-                    auxCoord = auxCoord.getCoordInDir(dir);
+                    /* get to next coordinate */
+                    auxCoord = auxCoord.getCoordInDir(coordFrom
+                                                    .straightLineDir(coordTo));
                 }
-                //large castling
+                /* When castling large, one more square has to be checked */
                 if (coordTo.getY() == 5 && board.isOccupied(auxCoord)) {
                     return false;
                 }
+                
                 break;
         }
-        board.executeMove(move);
-        //TODO:change to isInCheck?
-        if (!isAttackedBy(board.getKing(game.getPlayersTurn()).getCoord(), ownColor.getInverse(), false).isEmpty()) {
-            board.unexecuteMove(move);
-            return false;
+        
+        /* handle pawn promotion */
+        if(move.getPieceType() == PAWN && move.getPromoteTo() != null && 
+                                coordTo.getX() != ownColor.getPromotionRank()){
+            
+            return false;   
         }
-        board.unexecuteMove(move);
-        return true;
+        
+        /* verify king is not in check after move is made */
+        return !isCheckAfterMove(move, ownColor);    
     }
 
-//checks if move from start coordinate to target coordinate is possible
-//NOT checking if target is legit in case of taking, just considers if the way is free
+    /**
+     * Auxiliary method to verify if given move is legal in game state of this 
+     * game. This method is designed to only be used in getAllLegalMoves (move
+     * generation). It is in functionality equal to validate move but does not
+     * verify information already handled by getAllLegalMoves (like if a piece
+     * is able to move to a square).
+     * 
+     * @param move  move to be validated
+     * @return      true if move is valid
+     */    
+    
+    private boolean validateMoveAux(Move move){
+        
+        Coordinate coordTo = move.getCoordTo();
+        ChessColor ownColor = board.getPieceOnCoord(move.getCoordFrom())
+                                                                    .isColor();
+        
+        switch(move.getMoveType()){
+            
+            case NORMAL:
+                
+                /* Square not occupied and piece can move to is already
+                   verified in generateAllLegalMoves. Is also true for 
+                   pawns.
+                */
+                break;
+                
+            case TAKE:
+                
+                if (board.getPieceOnCoord(coordTo).isColor() == ownColor) {
+                    return false;
+                }   
+                break;
+                
+            case ENPASSANT:
+                
+                /* get the piece taken by en passant */
+                Piece optPiece = game.getBoard().getPieceOnCoord(
+                                                coordTo.takenCoordEP(ownColor));
+                /* taken piece has to be a pawn of opposite color */
+                if (optPiece == null || optPiece.getType() != PAWN || 
+                                            optPiece.isColor() == ownColor) {
+                    return false;
+                }
+
+                /* last move has to be a pawn that moved besides capturing
+                    pawn with its first move*/
+                Move lastMove = game.getLastMove();
+                if(lastMove == null) return false;
+                
+                if (lastMove.getPieceType() != PAWN
+                        || !lastMove.getCoordTo().equals(optPiece.getCoord())
+                        || lastMove.getCoordFrom().distance(
+                                                 lastMove.getCoordTo()) != 2) {
+                    
+                    return false;
+                }
+                break;
+                
+            case CASTLE:
+
+                Coordinate coordFrom = move.getCoordFrom();
+                /* Moving piece must be king that never moved before and
+                   target coordinate has to be in list castleCoords.
+                   Verify that rook is on required square and has not 
+                   moved before.
+                */
+                if (!castleCoords.contains(coordTo)
+                        || !rookCastleCheck(coordTo.getRookCastleCoord())) {
+                    
+                    return false;
+                }
+
+                /* verify that all squares between king and rook are not 
+                    occupied and king is not in check on them
+                */
+                Coordinate auxCoord = coordFrom;
+                
+                for (int i = 0; i < 3; i++) {
+                    
+                    /* i==0 is square with king */
+                    if ( i!=0 && board.isOccupied(auxCoord)) return false;
+                    /* square attacked by opponents piece */
+                    if (isAttacked(auxCoord, ownColor.getInverse(), null)) {
+                        return false;
+                    }
+                    /* get to next coordinate */
+                    auxCoord = auxCoord.getCoordInDir(coordFrom
+                                                    .straightLineDir(coordTo));
+                }
+                /* When castling large, one more square has to be checked */
+                if (coordTo.getY() == 5 && board.isOccupied(auxCoord)) {
+                    return false;
+                }
+                
+                break;                
+        }
+    
+        /* verify king is not in check after move is made */
+        return !isCheckAfterMove(move, ownColor); 
+    }
+    
+    /**
+     * Verifies if the piece type given by move can reach target coordinate
+     * from starting coordinate given by move. Does not check pawns, only
+     * the other pieces (King, Queen, Bishop, Knight and Rook). Does not verify
+     * if target is legit to be captured if there is an opponent's piece on
+     * target square.
+     * 
+     * @param move  move to be verified
+     * @return      
+     */
     private boolean isMovePossible(Move move) {
 
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
         Direction auxDir;
-
-        if (move.getPieceType() == null) {
-            return false;
-        }
+        
         switch (move.getPieceType()) {
+            
             case KING:
-                if (coordFrom.distance(coordTo) > 1) {
+                
+                if (coordFrom.distance(coordTo) != 1) {
                     return false;
                 }
+                
                 break;
 
             case QUEEN:
+                
+                /* Are coordinates on diagonal? */
                 auxDir = coordFrom.diagonalLineDir(coordTo);
                 if (auxDir == null) {
+                    /* Coordinates not on diagonal. Coordinates on line? */
                     auxDir = coordFrom.straightLineDir(coordTo);
+                    /* Coordinates not on diagonal or line */
+                    if (auxDir == null) return false;                
                 }
-                if (auxDir == null) {
-                    return false;
-                }
-                if (coordsOccupied(coordFrom, coordTo, auxDir)) {
-                    return false;
-                }
+                /* verify that no square is occupied between coordFrom and
+                    coordTo
+                */
+                if (coordsOccupied(coordFrom, coordTo, auxDir)) return false;
+                
                 break;
 
             case BISHOP:
+                
+                /* Are coordinates on diagonal? */
                 auxDir = coordFrom.diagonalLineDir(coordTo);
-                if (auxDir == null) {
-                    return false;
-                }
-                if (coordsOccupied(coordFrom, coordTo, auxDir)) {
-                    return false;
-                }
+                if (auxDir == null) return false;
+                /* verify that no square is occupied between coordFrom and
+                    coordTo
+                */
+                if (coordsOccupied(coordFrom, coordTo, auxDir)) return false;
+                
                 break;
 
             case KNIGHT:
+                
+                /* All squares a knight can reach have a distance 2 in one 
+                    cardinal direction and distance 1 in another one 
+                */
                 int disX = abs(coordFrom.getX() - coordTo.getX());
                 int disY = abs(coordFrom.getY() - coordTo.getY());
                 if ((disX != 2 || disY != 1) && (disX != 1 || disY != 2)) {
                     return false;
                 }
+                
                 break;
 
             case ROOK:
+                
+                /* Are coordinates on line? */
                 auxDir = coordFrom.straightLineDir(coordTo);
-                if (auxDir == null) {
-                    return false;
-                }
-                if (coordsOccupied(coordFrom, coordTo, auxDir)) {
-                    return false;
-                }
+                if (auxDir == null) return false;
+                /* verify that no square is occupied between coordFrom and
+                    coordTo
+                */
+                if (coordsOccupied(coordFrom, coordTo, auxDir)) return false;
+                
                 break;
 
             case PAWN:
-                //is coded in validateMove                                
+                /* is coded in validateMove because move pattern of pawn is
+                    depending on if he already moved, its color and if it is a 
+                    regular move or a capture
+                */                               
                 break;
         }
+        
         return true;
     }
 
+    /**
+     * Verifies if a rook is on given coordinate and if it can be used for 
+     * castling (never moved before).
+     * 
+     * @param rookCoord     coordinate to be verified
+     * @return 
+     */
     private boolean rookCastleCheck(Coordinate rookCoord) {
-        if (rookCoord == null) {
-            return false;
-        }
+        
         Piece rook = board.getPieceOnCoord(rookCoord);
-        if (rook == null) {
-            return false;
-        }
-        if (rook.getPiecetype() != ROOK) {
-            return false;
-        }
-        return rook.getMoveCounter() == 0;
+        
+        return rook != null && rook.getType() == ROOK 
+                                                 && rook.getMoveCounter() == 0;
     }
 
-    /*checks if a given coordinate is attacked by pieces of specified color 
-    on current boardstate. Boolean mode switches between ignoring enemy King
-    as blocker of a line (needed in isCheckmate method). mode = false is
-    default and enemy King is also counted for blocking lines    */
-    private ArrayList<Piece> isAttackedBy(Coordinate checkedCoord,
-            ChessColor color, boolean mode) {
+    /**
+     * Gets list of all attacking pieces of given color for a given coordinate
+     * on current board state.
+     * 
+     * @param checkedCoord  all pieces in returned list attack this coordinate
+     * @param color         color of attacking pieces
+     * @return              all pieces of given color that attack coordinate
+     * 
+     */
+    private ArrayList<Piece> attackedBy(Coordinate checkedCoord, 
+                                                            ChessColor color) {
+        
         ArrayList<Piece> attackerList = new ArrayList<>();
-        List<Coordinate> knightList = checkedCoord.createKnightCoordinates();
         Coordinate auxCoord;
         Piece auxPiece;
 
-        //attacked by a king?
-        if (checkedCoord.distance(board.getKing(color).getCoord()) == 1) {
+        /* attacked by a king */
+        if (checkedCoord.distance(board.getKingCoord(color)) == 1) {
             attackerList.add(board.getKing(color));
         }
 
-        //attacked by a bishop, rook or queen?
+        /* attacked by a bishop, rook or queen */
         for (Direction dir : Direction.values()) {
+            
+            /* Search extends  in all directions to cover all diagonals and 
+                lines. */
             auxCoord = checkedCoord.getCoordInDir(dir);
-
+            
+            /* Search until an occupied square is found, then end search for 
+                this direction.
+            */
             while (auxCoord != null) {
-                if (mode && board.isOccupied(auxCoord)) {
-                    auxPiece = board.getPieceOnCoord(auxCoord);
-                    if (auxPiece.isColor() == color || auxPiece.getPiecetype() != KING) {
-                        break;
-                    }
-                } else if (board.isOccupied(auxCoord)) {
-                    break;
-                }
+                
+                auxPiece = board.getPieceOnCoord(auxCoord);
+                
+                /* auxPiece not null => piece found */
+                if(auxPiece != null){
+                   
+                    PieceType PT = auxPiece.getType();
+                        
+                    if (auxPiece.isColor() == color) {
+                        /* Verify if coordinates are on diagonal and piece
+                                type is bishop or queen. Also verify if 
+                                coordinates are on a line and piece type is 
+                                rook or queen. 
+                         */
+                        if ((checkedCoord.coordinatesOnDiag(auxCoord)
+                                && (PT == BISHOP || PT == QUEEN))
+                                || (checkedCoord.coordinatesOnLine(auxCoord)
+                                && (PT == ROOK || PT == QUEEN))) {
 
+                            attackerList.add(auxPiece);
+                        }
+                    }
+                    
+                    break;                    
+                }                
+                /* extend further into this direction if no piece was found */
                 auxCoord = auxCoord.getCoordInDir(dir);
             }
-            if (auxCoord != null) {
-                auxPiece = board.getPieceOnCoord(auxCoord);
-                PieceType PT = auxPiece.getPiecetype();
-                if (auxPiece.isColor() == color) {
-                    if ((checkedCoord.coordinatesOnDiag(auxCoord)
-                            && (PT == BISHOP || PT == QUEEN))
-                            || (checkedCoord.coordinatesOnLine(auxCoord)
-                            && (PT == ROOK || PT == QUEEN))) {
-                        attackerList.add(auxPiece);
-                    }
-                }
-            }
+
         }
 
-        //attacked by a knight?
-        for (Coordinate possCoord : knightList) {
+        /* attacked by knight */
+        for (Coordinate possCoord : checkedCoord.createKnightCoordinates()) {
+            
+            /* Get piece and add to list if it is a knight in matching color */
             auxPiece = board.getPieceOnCoord(possCoord);
-            if (auxPiece != null && auxPiece.getPiecetype() == KNIGHT
-                    && auxPiece.isColor() != color.getInverse()) {
-                attackerList.add(auxPiece);
-            }
-        }
-        //attacked by a pawn?
-        Direction auxDirection1 = Direction.NW;
-        Direction auxDirection2 = Direction.NE;
-        if (color == BLACK) {
-            auxDirection1 = Direction.SW;
-            auxDirection2 = Direction.SE;
-        }
-        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection1));
-        for (int i = 0; i < 2; i++) {
-            if (auxPiece != null && auxPiece.getPiecetype() == PAWN
+            if (auxPiece != null && auxPiece.getType() == KNIGHT
                     && auxPiece.isColor() == color) {
+                
                 attackerList.add(auxPiece);
             }
-            auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(auxDirection2));
         }
+        
+        /* attacked by pawn */        
+        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(color
+                                             .getInverse().getPawnCapture1()));
+        /* Verify that piece is pawn of matching color */
+        if (auxPiece != null && auxPiece.getType() == PAWN 
+                                              && auxPiece.isColor() == color) {
+                attackerList.add(auxPiece);
+        }
+        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(color
+                                             .getInverse().getPawnCapture2()));
+        if (auxPiece != null && auxPiece.getType() == PAWN 
+                                              && auxPiece.isColor() == color) {
+                attackerList.add(auxPiece);
+        }        
+        
+        
         return attackerList;
     }
+    /**
+     * Verifies if given coordinate is attacked by pieces of given color on 
+     * current board state. A piece on coordinate ignore will be ignored in the
+     * search, that means the method treats this square as empty. If no piece
+     * has to be ignored, set ignore as null.
+     * 
+     * @param checkedCoord  coordinate to be checked
+     * @param color         color of attacking pieces
+     * @param ignore        piece on this coordinated will be ignored
+     * @return              
+     * 
+     */
+    private boolean isAttacked(Coordinate checkedCoord, 
+                                          ChessColor color, Coordinate ignore){
+    
+        Coordinate auxCoord;
+        Piece auxPiece;
 
+        /* attacked by a king */
+        if (checkedCoord.distance(board.getKingCoord(color)) == 1) {
+            return true;
+        }
+
+        /* attacked by a bishop, rook or queen */
+        for (Direction dir : Direction.values()) {
+            
+            /* Search extends  in all directions to cover all diagonals and 
+                lines. */
+            auxCoord = checkedCoord.getCoordInDir(dir);
+            
+            /* Search until an occupied square is found, then end search for 
+                this direction.
+            */
+            while (auxCoord != null) {
+                
+                auxPiece = board.getPieceOnCoord(auxCoord);
+                
+                /* auxPiece not null => piece found */
+                if(auxPiece != null){
+                    
+                    /* for mode == true: Ignore piece found if it is king of
+                        enemy color. (In case of a check on that king, the king
+                        can't move on the square in this direction, he would 
+                        still be in check.)
+                       for mode == false: if-statement is always true 
+                    */
+                    if(!auxCoord.equals(ignore)){
+                        
+                        PieceType PT = auxPiece.getType();
+                        
+                        if (auxPiece.isColor() == color) {
+                            /* Verify if coordinates are on diagonal and piece
+                                type is bishop or queen. Also verify if 
+                                coordinates are on a line and piece type is 
+                                rook or queen. 
+                            */
+                            if ((checkedCoord.coordinatesOnDiag(auxCoord)
+                                && (PT == BISHOP || PT == QUEEN))
+                                || (checkedCoord.coordinatesOnLine(auxCoord)
+                                && (PT == ROOK || PT == QUEEN))) {
+                                    
+                                return true;
+                            }
+                        }
+                        
+                        break;
+                    }
+                }
+                
+                /* extend further into this direction */
+                auxCoord = auxCoord.getCoordInDir(dir);
+            }
+
+        }
+
+        /* attacked by knight */
+        for (Coordinate possCoord : checkedCoord.createKnightCoordinates()) {
+            
+            /* Get piece and add to list if it is a knight in matching color */
+            auxPiece = board.getPieceOnCoord(possCoord);
+            if (auxPiece != null && auxPiece.getType() == KNIGHT
+                    && auxPiece.isColor() == color) {
+                
+                return true;
+            }
+        }
+        
+        /* attacked by pawn */        
+        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(color
+                                             .getInverse().getPawnCapture1()));
+        /* Verify that piece is pawn of matching color */
+        if (auxPiece != null && auxPiece.getType() == PAWN 
+                                              && auxPiece.isColor() == color) {
+                return true;
+        }
+        auxPiece = board.getPieceOnCoord(checkedCoord.getCoordInDir(color
+                                             .getInverse().getPawnCapture2()));
+        if (auxPiece != null && auxPiece.getType() == PAWN 
+                                              && auxPiece.isColor() == color) {
+                return true;
+        }        
+        
+        
+        return false;
+        
+    }
+    
+    /**
+     * Verifies if player with given color is checkmate on current board state.
+     * 
+     * @param color     color of player to be verified
+     * @return          
+     */
     public boolean isCheckmate(ChessColor color) {
 
-        Coordinate kingCoord = board.getKing(color).getCoord();
+        Coordinate kingCoord = board.getKingCoord(color);
         ChessColor enemyColor = color.getInverse();
-        ArrayList<Piece> pieceCheckList = isAttackedBy(kingCoord, enemyColor, false);
-        ArrayList<Piece> threatensCheckGiver;
-        ArrayList<Piece> pieceBlocking;
-        Piece givesCheck;
+        ArrayList<Piece> pieceCheckList = attackedBy(kingCoord, enemyColor);
+        
         Coordinate auxCoord;
+        
+        /* If no piece attacks king => no check mate */
+        if (pieceCheckList.isEmpty()) return false;
 
-        if (pieceCheckList.isEmpty()) {
-            return false;
-        }
-        //Can the king get out of chess?
+        /* Can king get out of chess? */
         for (Direction dir : Direction.values()) {
+            
             auxCoord = kingCoord.getCoordInDir(dir);
             if (auxCoord != null && (!board.isOccupied(auxCoord)
                     || board.getPieceOnCoord(auxCoord).isColor() != color)
-                    && isAttackedBy(auxCoord, enemyColor, true).isEmpty()) {
+                    && !isAttacked(auxCoord, enemyColor, kingCoord)) {
                 /* if king moves, he could have blocked the attack from R,Q or B
-                for the new field which he isn't after moving, so isAttackedBy
-                has to ignore the enemy King in that case (mode=true)*/
+                for the new field which he isn't after moving, so isAttacked
+                has to ignore king */
                 return false;
             }
         }
-        //if the king cant move and double check is given -> checkmate
+       
+        /* if king cant move and double check is given => checkmate */
         if (pieceCheckList.size() >= 2) {
             return true;
         }
-        //is it possible to take the piece giving check?
-        givesCheck = pieceCheckList.get(0);
-        threatensCheckGiver = isAttackedBy(givesCheck.getCoord(), color, false);
+        
+        /* Is it possible to take the piece giving check? */
+        Piece givesCheck = pieceCheckList.get(0);
+        ArrayList<Piece>  threatensCheckGiver = 
+                                       attackedBy(givesCheck.getCoord(), color);
         for (Piece threat : threatensCheckGiver) {
-            if (validateMove(new Move(threat.getPiecetype(), threat.getCoord(),
-                    givesCheck.getCoord(), TAKE), game)) {
+            /* If king is not in check after taking piece giving check 
+                => no checkmate
+            */
+            if (!isCheckAfterMove(new Move(threat.getType(), threat.getCoord(),
+                    givesCheck.getCoord(), TAKE), color)) {
                 return false;
             }
         }
-        //is it possible to block the check from queen, rook, bishop?
-        PieceType auxPt = givesCheck.getPiecetype();
+        
+        /* Is it possible to block the check from queen, rook or bishop? */
+        PieceType auxPt = givesCheck.getType();
         if (auxPt == QUEEN || auxPt == BISHOP || auxPt == ROOK) {
+            
+            /* Get direction from king to piece giving check */
             Direction auxDir = kingCoord.
                     diagonalLineDir(givesCheck.getCoord());
             if (auxDir == null) {
                 auxDir = kingCoord.straightLineDir(givesCheck.getCoord());
             }
+            
+            /* Verify if a piece can move to a square between king and piece 
+                giving check
+            */
             auxCoord = kingCoord.getCoordInDir(auxDir);
             while (!board.isOccupied(auxCoord)) {
-                pieceBlocking = canCoordBeOccupied(auxCoord, color);
-                for (Piece pieceBL : pieceBlocking) {
-                    if (validateMove(new Move(pieceBL.getPiecetype(), pieceBL.getCoord(),
-                            auxCoord, NORMAL), game)) {
+                
+                for (Piece blocker : attackedBy(auxCoord, color)) {
+                    /* verify that blocking check doesn't get king into another
+                        check
+                    */
+                    if (!isCheckAfterMove(new Move(blocker.getType(), 
+                            blocker.getCoord(), auxCoord, NORMAL), color)) {
                         return false;
                     }
                 }
+                /* Pawns can move to a square without attacking it. */
+                Piece pawn = getPawnMoveCoord(auxCoord, color);
+                if (!(pawn == null || isCheckAfterMove(new Move(PAWN, pawn.
+                                       getCoord(), auxCoord, NORMAL), color))) {                    
+                    return false;
+                }
+
                 auxCoord = auxCoord.getCoordInDir(auxDir);
             }
         }
         return true;
     }
 
-    private ArrayList<Piece> canCoordBeOccupied(Coordinate coord, ChessColor color) {
-        /* pawns can give check to a field without being able to move to it,
-          also they can go to fields without giving check to the field */
-        ArrayList<Piece> occupants = canPawnMoveCoord(coord, color);
-
-        for (Piece auxPiece : isAttackedBy(coord, color, false)) {
-            if (auxPiece.getPiecetype() != PAWN) {
-                occupants.add(auxPiece);
-            }
-        }
-        return occupants;
-    }
-
+    /**
+     * Adds all coordinates a king can castle to into castleCoords field.
+     */
     private void createCastleCoords() {
         castleCoords.add(new Coordinate(0, 1));
         castleCoords.add(new Coordinate(0, 5));
@@ -431,35 +711,45 @@ public class ChessRules {
         castleCoords.add(new Coordinate(7, 5));
     }
 
-    private ArrayList<Piece> canPawnMoveCoord(Coordinate coord,
-            ChessColor color) {
-        ArrayList<Piece> pawns = new ArrayList<>();
+    /**
+     * Gets the pawn of given color that can move to target coordinate in 
+     * current board state. If there is no pawn that can do that, null is 
+     * returned. Only normal moves are considered, no captures.
+     * 
+     * @param targetCoord   coordinate to move to
+     * @param color         color of pawn
+     * @return              pawn that can move to target coordinate
+     */
+    private Piece getPawnMoveCoord(Coordinate targetCoord, ChessColor color) {
+        
         Piece auxPiece;
-        Direction dir = Direction.S;
-        if (color == WHITE) {
-            dir = Direction.N;
-        }
-
-        Coordinate auxCoord = coord.getCoordInDir(dir);
-        if (auxCoord != null) {
-            auxPiece = board.getPieceOnCoord(auxCoord);
-            if (auxPiece != null && auxPiece.getPiecetype() == PAWN
-                    && auxPiece.isColor() == color) {
-                pawns.add(auxPiece);
-            }
-
-            if (!board.isOccupied(auxCoord)) {
-                auxCoord = auxCoord.getCoordInDir(dir);
-                if (auxCoord != null) {
-                    auxPiece = board.getPieceOnCoord(auxCoord);
-                    if (auxPiece != null && auxPiece.getPiecetype() == PAWN
-                            && auxPiece.isColor() == color && auxPiece.getMoveCounter() == 0) {
-                        pawns.add(auxPiece);
-                    }
+        /* Search in opposite direction of pawn move direction */
+        Direction dir = color.getFrontDir().oppositeDir();
+        
+        /* Verify if there is a pawn on coordinate that can move to target 
+            coordinate */
+        Coordinate auxCoord = targetCoord.getCoordInDir(dir);        
+        /* Do two steps in Direction dir to search for pawns */
+        for(int i=0; i<2; i++){
+            /* Coordinate exists */
+            if(auxCoord == null) break;
+            else {                
+                auxPiece = board.getPieceOnCoord(auxCoord);
+                if (auxPiece != null){
+                    /* Return piece if it is pawn of matching color */
+                    if(auxPiece.getType() == PAWN && 
+                                                  auxPiece.isColor() == color){                       
+                        /* If pawn is 2 squares away, it has to be its first
+                           move to be able to move to target coordinate
+                        */
+                        if(i==1 && auxPiece.getMoveCounter() != 0) return null;
+                        return auxPiece;
+                    }                
                 }
+                if(i==0) auxCoord = auxCoord.getCoordInDir(dir);
             }
         }
-        return pawns;
+        return null;
     }
 
     private boolean coordsOccupied(Coordinate coordFrom, Coordinate coordTo,
@@ -474,255 +764,406 @@ public class ChessRules {
         return false;
     }
 
-    /* Checks if the given position is a draw. Argument "mode" controls checking
-    of stalemate. "False" is used in AI to improve performance
+    /**
+     * Verifies if current game state is a draw and gets the draw type. Argument 
+     * "mode" controls if stalemate is considered (False gives better 
+     * performance if stalemate validation is not needed). Returns null if game 
+     * is not draw, type of draw otherwise.
+     * 
+     * @param mode  controls validation of stalemate
+     * @return      type of draw found or null
      */
     public DrawType isDraw(boolean mode) {
-        if (game.getDrawTurnTimer() >= 100) {
-            return FIFTYTURNS;
-        }
-        if (isThreeRepetition()) {
-            return THREEFOLD;
-        }
-        if (isTechnicalDraw()) {
-            return TECHNICAL;
-        }
-        if (mode && isStalemate()) {
-            return STALEMATE;
-        }
+        
+        if (game.getDrawTurnTimer() >= 100) return FIFTYTURNS;
+        if (isThreeRepetition()) return THREEFOLD;
+        if (isTechnicalDraw()) return TECHNICAL;
+        if (mode && isStalemate()) return STALEMATE;
+        
         return null;
     }
 
+    /**
+     * Verifies if current board state is a technical draw. Technical draws in
+     * chess are positions in which both sides can't mate anymore.
+     * 
+     * @return 
+     */
     private boolean isTechnicalDraw() {
-        //fast return (improves preformance in AI)        
+        
+        /* If any side has more then two pieces => no technical draw
+            (fast return to improve performance on boards with lots of
+            pieces).
+        */      
+        if (board.getPiecesList(WHITE).size() > 2) return false;
+        if (board.getPiecesList(BLACK).size() > 2) return false;
+
         ArrayList<Piece> whitePieces = board.getPiecesList(WHITE);
-        if (whitePieces.size() > 2) {
-            return false;
-        }
-        ArrayList<Piece> blackPieces = board.getPiecesList(BLACK);
-        if (blackPieces.size() > 2) {
-            return false;
-        }
+        ArrayList<Piece> blackPieces = board.getPiecesList(BLACK);        
+        
         int countWhite = whitePieces.size();
         int countBlack = blackPieces.size();
 
+        /* Both sides only have king => draw */
         if (countWhite == 1 && countBlack == 1) {
             return true;
         }
+        /* One side only only has king, the other king and another piece. If
+           that other piece is a minor piece => draw 
+        */
         if (countWhite + countBlack == 3) {
-            if (!hasMinorPiece(whitePieces).isEmpty()
-                    || !hasMinorPiece(blackPieces).isEmpty()) {
+            if ( getMinorPiece(whitePieces) != null
+                    || getMinorPiece(blackPieces)!= null) {
                 return true;
             }
         }
-        //remaining: both sides have king+piece
-        //TODO: king+bishop against king+bishop with same color is techn. draw      
-        //TODO: king+2knights against king?? 
+        
+        /* With 4 pieces on the board, only the combination of king and bishop
+           for both sides, with the bishops being on same colored squares is a
+           technical draw. In all other positions it is theoretically possible 
+           to mate (but some combinations don't allow to FORCE mate). 
+        */
+        if(countWhite == 2 && countBlack == 2){
+            
+            Piece minorWhite = getMinorPiece(whitePieces);
+            Piece minorBlack = getMinorPiece(blackPieces);
+            
+            if(minorWhite != null && minorBlack != null){
+                
+                if(minorWhite.getType() == BISHOP 
+                                        && minorBlack.getType() == BISHOP){
+                    /* Coordinates of a square on a chess board have the color
+                       of the square coded in them. Even sum of x and y means
+                       that the square is white, odd sum means that it is black.
+                       By comparing the sums of both bishops, it is possible to
+                       determine if both bishops are on the same square color. 
+                    */
+                    if((minorWhite.getCoord().getX()
+                            + minorWhite.getCoord().getY())%2
+                            ==(minorBlack.getCoord().getX()
+                            + minorBlack.getCoord().getY())%2)
+                        
+                        return true;
+                }
+            }
+        }
+       
         return false;
     }
 
+    /**
+     * Verifies if current game state is a stalemate.
+     * 
+     * @return 
+     */
     public boolean isStalemate() {
-        ChessColor playersTurn = game.getPlayersTurn();
-
-        for (Piece piece : board.getPiecesList(playersTurn)) {
-            if (!getPossibleMoves(piece).isEmpty()) {
+        
+        for (Piece piece : board.getPiecesList(game.getPlayersTurn())) {
+            if (!getAllLegalMoves(piece).isEmpty()) {
                 return false;
             }
         }
-        if (isInCheck(playersTurn)) {
+        if (isInCheck(game.getPlayersTurn())) {
             return false;
         }
         return true;
     }
 
+    /**
+     * Verifies if current game state is a draw by threefold repetition.
+     * 
+     * @return 
+     */
     private boolean isThreeRepetition() {
+        
         LinkedList<Long> positions = game.getRecentPositions();
+        /* Retrieve hash value of last position and remove it from list */
         long hashValue = positions.removeLast();
-        if (!positions.contains(hashValue)) {
+        /* If the value isn't in the list anymore => no repetition */
+        if (!positions.contains(hashValue)) {           
+            
             positions.add(hashValue);
             return false;
         }
-        boolean ret = positions.indexOf(hashValue) != positions.lastIndexOf(hashValue);
+        /* Position repeated at least once. If first occurence of hash value
+            != last occurence of hash value => repeated three times */
+        boolean ret = positions.indexOf(hashValue) 
+                                           != positions.lastIndexOf(hashValue);
         positions.add(hashValue);
+        
         return ret;
     }
 
-    private ArrayList<Piece> hasMinorPiece(ArrayList<Piece> pieceList) {
-        ArrayList<Piece> returnList = new ArrayList<>();
+    /**
+     * Gets the first minor piece (bishop or knight) of given piece list. If no 
+     * minor pieces are in the list, null is returned.
+     * 
+     * @param pieceList     list to be examined
+     * @return              first minor piece found in list
+     */
+    private Piece getMinorPiece(ArrayList<Piece> pieceList) {
+
         for (Piece piece : pieceList) {
-            if (piece.getPiecetype() == KNIGHT || piece.getPiecetype() == BISHOP) {
-                returnList.add(piece);
+            
+            if (piece.getType() == KNIGHT || piece.getType() == BISHOP) {
+                return piece;
             }
-        }
-        return returnList;
-    }
-
-    public ArrayList<Move> getPossibleMoves(Piece piece) {
-
-        ArrayList<Move> moveList = new ArrayList<>();
-        Coordinate auxCoord;
-        Move auxMove;
-
-        switch (piece.getPiecetype()) {
-            case KING:
-                Coordinate kingCoord = piece.getCoord();                
-                for (Direction dir : Direction.values()) {
-                    auxCoord = kingCoord.getCoordInDir(dir);
-                    if (auxCoord != null) {
-                        auxMove = createValidMove(piece, auxCoord, null);
-                        if (auxMove != null) {
-                            moveList.add(auxMove);
-                        }
-                    }
-                }
-                //Castling
-                if (piece.getMoveCounter() == 0) {
-                    Direction dir = Direction.E;
-                    for (int i = 0; i < 2; i++) {
-                        auxCoord = kingCoord.getCoordInDir(dir).getCoordInDir(dir);
-                        auxMove = createValidMove(piece, auxCoord, CASTLE);
-                        if (auxMove != null) {
-                            moveList.add(auxMove);
-                        }
-                        dir = Direction.W;
-                    }
-                }
-                break;
-
-            case QUEEN:
-                moveList = zoomPieceList(Arrays.asList(Direction.values()), piece);
-                break;
-
-            case BISHOP:
-                moveList = zoomPieceList(Direction.createBishopList(), piece);
-                break;
-
-            case ROOK:
-                moveList = zoomPieceList(Direction.createRookList(), piece);
-                break;
-
-            case KNIGHT:
-                for (Coordinate coord : piece.getCoord().createKnightCoordinates()) {
-                    auxMove = createValidMove(piece, coord, null);
-                    if (auxMove != null) {
-                        moveList.add(auxMove);
-                    }
-                }
-                break;
-
-            case PAWN:
-                Coordinate pawnCoord = piece.getCoord();                 
-                //one step normal move+take
-                ArrayList<Direction> pawnDir = new ArrayList<>();
-                if (piece.isColor() == WHITE) {
-                    pawnDir.add(S);
-                    pawnDir.add(SW);
-                    pawnDir.add(SE);
-                } else {
-                    pawnDir.add(N);
-                    pawnDir.add(NW);
-                    pawnDir.add(NE);
-                }
-                for (Direction auxDir : pawnDir) {
-                    auxCoord = pawnCoord.getCoordInDir(auxDir);
-                    if (auxCoord != null) {
-                        //promotion
-                        if (auxCoord.getX() == 0 || auxCoord.getX() == 7) {
-                            auxMove = createValidMove(piece, auxCoord, QUEEN);
-                            if (auxMove != null) {
-                                moveList.add(auxMove);
-                                moveList.add(createValidMove(piece, auxCoord, BISHOP));
-                                moveList.add(createValidMove(piece, auxCoord, KNIGHT));
-                                moveList.add(createValidMove(piece, auxCoord, ROOK));
-                            }
-                        } else {
-                            auxMove = createValidMove(piece, auxCoord, null);
-                            if (auxMove != null) {
-                                moveList.add(auxMove);
-                            }
-                        }
-                    }
-                }
-                //double step when not moved before
-                if (piece.getMoveCounter() == 0) {
-                    auxMove = createValidMove(piece, pawnCoord.getCoordInDir(pawnDir
-                            .get(0)).getCoordInDir(pawnDir.get(0)), null);
-                    if (auxMove != null) {
-                        moveList.add(auxMove);
-                    }
-                }
-
-                //en passant
-                if (board.enPassantPossible()) {
-                    //TODO: EnPASSANTDIRECTION in dir klasse
-                    ArrayList<Direction> enPassantDir = new ArrayList<>();
-                    if (piece.isColor() == WHITE) {
-                        enPassantDir.add(SW);
-                        enPassantDir.add(SE);
-                    } else {
-                        enPassantDir.add(NW);
-                        enPassantDir.add(NE);
-                    }
-                    for (Direction auxDir : enPassantDir) {
-                        auxCoord = pawnCoord.getCoordInDir(auxDir);
-                        if (auxCoord != null) {
-                            auxMove = createValidMove(piece, auxCoord, ENPASSANT);
-                            if (auxMove != null) {
-                                moveList.add(auxMove);
-                            }
-                        }
-                    }
-                }
-
-                break;
-        }
-        return moveList;
-    }
-
-    private ArrayList<Move> zoomPieceList(List<Direction> dirList, Piece piece) {
-
-        ArrayList<Move> returnList = new ArrayList<>();
-        Coordinate startCoord = piece.getCoord();
-
-        dirList.forEach((dir) -> {
-            Coordinate auxCoord = startCoord.getCoordInDir(dir);
-            Move auxMove;
-            while (auxCoord != null) {
-                auxMove = createValidMove(piece, auxCoord, null);
-                if (auxMove != null) {
-                    returnList.add(auxMove);
-                }
-                auxCoord = auxCoord.getCoordInDir(dir);
-            }
-        });
-        return returnList;
-    }
-
-    private Move createValidMove(Piece piece, Coordinate coordTo, Object arg) {
-        Move createdMove;
-
-        if (!board.isOccupied(coordTo)) {
-            if (arg == CASTLE || arg == ENPASSANT) {
-                createdMove = new Move(piece.getPiecetype(), piece.getCoord(),
-                        coordTo, (MoveType) arg);
-            } else {
-                createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, NORMAL,
-                        (PieceType) arg);
-            }
-        } else {
-            if (arg == CASTLE || arg == ENPASSANT) {
-                return null;
-            }
-            createdMove = new Move(piece.getPiecetype(), piece.getCoord(), coordTo, TAKE, (PieceType) arg);
-        }
-        if (validateMove(createdMove, game)) {
-            return createdMove;
         }
         return null;
     }
 
+    /**
+     * Gets all legal moves for given piece.
+     * 
+     * @param piece     piece to generate legal moves for
+     * @return          all legal moves for given piece
+     */
+    public ArrayList<Move> getAllLegalMoves(Piece piece) {
+
+        Move auxMove;
+        Coordinate auxCoord;
+        
+        switch (piece.getType()) {
+            
+            case KING:
+                
+                ArrayList<Move> moveList = new ArrayList<>();
+                Coordinate kingCoord = piece.getCoord();
+                /* move in all directions */               
+                for (Direction dir : Direction.values()) {
+
+                    auxCoord = kingCoord.getCoordInDir(dir);
+                    if (auxCoord != null) {
+                        auxMove = new Move(KING, kingCoord, auxCoord,
+                                                     getTypeToCoord(auxCoord));
+                        /* add move if it is legal */
+                        if (validateMoveAux(auxMove)) moveList.add(auxMove);
+                    }
+                }
+                /* castling */
+                if (piece.getMoveCounter() == 0) {
+                    
+                    auxMove = new Move(KING, kingCoord, new Coordinate(kingCoord
+                            .getX(), kingCoord.getY()+2), CASTLE);
+                    if (validateMoveAux(auxMove)) moveList.add(auxMove);
+                    
+                    auxMove = new Move(KING, kingCoord, new Coordinate(kingCoord
+                            .getX(), kingCoord.getY()-2), CASTLE);    
+                    if (validateMoveAux(auxMove)) moveList.add(auxMove);
+                }
+                
+                return moveList;
+
+            case QUEEN:
+                
+                return zoomPieceList(Arrays.asList(Direction.values()), piece);
+
+            case BISHOP:
+                
+                return zoomPieceList(Direction.createBishopList(), piece);
+
+            case ROOK:
+                
+                return zoomPieceList(Direction.createRookList(), piece);
+
+            case KNIGHT:
+                
+                ArrayList<Move> knightList = new ArrayList<>();
+                for (Coordinate coord : piece.getCoord()
+                                                  .createKnightCoordinates()) {
+                    
+                    auxMove = new Move(KNIGHT, piece.getCoord(), coord, 
+                                                        getTypeToCoord(coord));
+                    if (validateMoveAux(auxMove)) knightList.add(auxMove);
+                }
+                return knightList;
+
+            case PAWN:
+                
+                ArrayList<Move> pawnList = new ArrayList<>();
+                Coordinate pawnCoord = piece.getCoord();                 
+                ChessColor color = piece.isColor();
+                
+                /* one step and capture */
+                ArrayList<Direction> pawnDir = new ArrayList<>();
+                pawnDir.add(color.getFrontDir());
+                pawnDir.add(color.getPawnCapture1());
+                pawnDir.add(color.getPawnCapture2());
+               
+                for (Direction auxDir : pawnDir) {
+                    
+                    auxCoord = pawnCoord.getCoordInDir(auxDir);
+                    /* coordinate exists */
+                    if (auxCoord != null) {
+                        
+                        /* determine move type */
+                        MoveType type = null;
+                        if(auxDir == pawnDir.get(0)){
+                            if(!board.isOccupied(auxCoord)) type = NORMAL;
+                        }
+                        else if(board.isOccupied(auxCoord)) type = TAKE;
+                        
+                        if(type != null){
+                            /* promotion */                            
+                            if ((auxCoord.getX() == 0 || auxCoord.getX() == 7)){
+                            
+                                auxMove = new Move(PAWN, pawnCoord, auxCoord, 
+                                              type, QUEEN);
+                                if (validateMoveAux(auxMove)) {
+                                
+                                    pawnList.add(auxMove);
+                                    /* if promotion to queen is valid, all other
+                                        promotions are also valid 
+                                    */
+                                    pawnList.add(new Move(PAWN, pawnCoord, 
+                                            auxCoord, type, ROOK));                                                                
+                                    pawnList.add(new Move(PAWN, pawnCoord, 
+                                            auxCoord, type, BISHOP));
+                                    pawnList.add(new Move(PAWN, pawnCoord, 
+                                            auxCoord, type, KNIGHT));
+                                }
+                            /* not ptomotion */    
+                            } else {
+                            
+                                auxMove = new Move(PAWN, pawnCoord, 
+                                                              auxCoord, type);
+                                if (validateMoveAux(auxMove)) pawnList
+                                                                  .add(auxMove);
+                            }
+                        }
+                    }
+                }
+                /* double step when not moved before */
+                if (piece.getMoveCounter() == 0) {
+                    
+                    if(color == WHITE){
+                        /* Double step for white is only possible from rank 1 
+                           to rank 3, for black only from rank 6 to rank 4.
+                        */
+                        auxCoord = new Coordinate(3, pawnCoord.getY());
+                        /* verify both squares in front of pawn not occupied */
+                        if(!board.isOccupied(auxCoord) && !board.isOccupied(
+                                        new Coordinate(2, pawnCoord.getY()))){ 
+                            auxMove = new Move(PAWN, pawnCoord, auxCoord, 
+                                                                        NORMAL);
+                        if (validateMoveAux(auxMove)) pawnList.add(auxMove);
+                        }  
+                    }
+                    else{ 
+                        auxCoord = new Coordinate(4, pawnCoord.getY());
+                        /* verify both squares in front of pawn not occupied */
+                        if(!board.isOccupied(auxCoord) && !board.isOccupied(
+                                        new Coordinate(5, pawnCoord.getY()))){                                                 
+                            auxMove = new Move(PAWN, pawnCoord, auxCoord, 
+                                                                        NORMAL);
+                        if (validateMoveAux(auxMove)) pawnList.add(auxMove);                        
+                        }
+                    }
+
+                }
+
+                /* en passant */
+                if (board.enPassantPossible()) {
+
+                    auxCoord = pawnCoord.getCoordInDir(color.getPawnCapture1());
+                    if (auxCoord != null) {
+                        auxMove = new Move(PAWN, pawnCoord, auxCoord, ENPASSANT);
+                        if (validateMoveAux(auxMove)) pawnList.add(auxMove);
+                    }
+
+                    auxCoord = pawnCoord.getCoordInDir(color.getPawnCapture2());
+                    if (auxCoord != null) {
+                        auxMove = new Move(PAWN, pawnCoord, auxCoord, ENPASSANT);
+                        if (validateMoveAux(auxMove)) pawnList.add(auxMove);
+                    }
+                }        
+                
+                return pawnList;
+        }        
+        
+        return null;
+    }
+
+    /**
+     * Gets all legal moves for given piece in a straight line or diagonal in
+     * all directions given by dirList. Can be used to get all moves for Queen,
+     * Rook or Bishop. Does not verify if directions are allowed for that piece!
+     * Should be verified before calling method (by giving appropriate diection
+     * list).
+     * 
+     * @param dirList   directions to search moves for
+     * @param piece     generates moves for this piece
+     * @return          all moves in a straight line or diagonal
+     */
+    private ArrayList<Move> zoomPieceList(List<Direction> dirList, Piece piece){
+
+        ArrayList<Move> returnList = new ArrayList<>();
+        Coordinate startCoord = piece.getCoord();
+        Coordinate auxCoord;
+        Move auxMove;
+        
+        for(Direction dir : dirList){
+            
+            auxCoord = startCoord.getCoordInDir(dir);
+            /* coordinate exists */
+            while (auxCoord != null) {
+                
+                auxMove = new Move(piece.getType(), startCoord, auxCoord, 
+                                                    getTypeToCoord(auxCoord));
+                if (validateMoveAux(auxMove)) returnList.add(auxMove);
+                /* stop searching this direction, if a piece is on square */
+                if(auxMove.getMoveType() == TAKE) break;
+                /* proceed further in this direction */
+                auxCoord = auxCoord.getCoordInDir(dir);
+            }
+        }
+        
+        return returnList;
+    }
+
+    /**
+     * Gets move type for a move to given coordinate. Returns TAKE if square is
+     * occupied, NORMAL otherwise.
+     * 
+     * @param coordTo   coordinate to move to
+     * @return          move type of a move to given coordinate
+     */
+    private MoveType getTypeToCoord(Coordinate coordTo) {
+
+        if (board.isOccupied(coordTo)) return TAKE;
+        else return NORMAL;
+    
+    }  
+    
+    /**
+     * Verifies if the player controlling given color is in check.
+     * 
+     * @param color     color of the player to verify
+     * @return
+     */
     public boolean isInCheck(ChessColor color) {
-        //TODO: better way to check for check ?
-        return !isAttackedBy(board.getKing(color).getCoord(), color.getInverse(), false).isEmpty();
+        
+        return isAttacked(board.getKingCoord(color), color.getInverse(), null);
+    }
+
+    /**
+     * Verifies if the player controlling given color is in check after given
+     * move is executed.
+     * 
+     * @param move      move to be executed
+     * @param color     color of the player to verify
+     * @return 
+     */
+    private boolean isCheckAfterMove(Move move, ChessColor color) {
+        
+        board.executeMove(move);
+        
+        if (isInCheck(color)) {
+            board.unexecuteMove(move);
+            return true;
+        }
+        board.unexecuteMove(move);
+        
+        return false;    
     }
 }

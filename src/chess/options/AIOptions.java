@@ -1,30 +1,31 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.options;
 
 /**
  *
- * @author Phoenix
+ * Provides a collection of options for a chess AI.
  */
 public class AIOptions {
     
+    /* maximal search depth */
     private int searchDepth;
+    /* maximal search depth of quiescence search */
     private int quietSearchDepth;
+    /* size of transposition table */
     private int transpositionTableSize;
-    private int maxEvPositions;
-    private int maxEvPositionsQuiet;
+    /* play in creator mode */
     private boolean peterMode;
     
+    /* default values */
     private static final int DEFAULT_SEARCH_DEPTH = 6;
     private static final int  DEFAULT_QUIET_SEARCH_DEPTH = 20;
     private static final int  DEFAULT_TRANSPOSITION_TABLE_SIZE = 20000000;   
-    
     private static final boolean DEFAULT_PETERMODE = false; 
     
+    /**
+     * Class constructor. Options will be initialized with default values.
+     */
     public AIOptions() {
+        
         searchDepth = DEFAULT_SEARCH_DEPTH;
         quietSearchDepth = DEFAULT_QUIET_SEARCH_DEPTH;
         transpositionTableSize = DEFAULT_TRANSPOSITION_TABLE_SIZE;
@@ -43,15 +44,7 @@ public class AIOptions {
         this.transpositionTableSize = transpositionTableSize;
     }
 
-    public void setMaxEvPositions(int maxEvPositions) {
-        this.maxEvPositions = maxEvPositions;
-    }
-
-    public void setMaxEvPositionsQuiet(int maxEvPositionsQuiet) {
-        this.maxEvPositionsQuiet = maxEvPositionsQuiet;
-    }
-
-    public void setPeterMode(boolean peterMode) {
+    public void setCreatorMode(boolean peterMode) {
         this.peterMode = peterMode;
     }
 
@@ -65,14 +58,6 @@ public class AIOptions {
 
     public int getTranspositionTableSize() {
         return transpositionTableSize;
-    }
-
-    public int getMaxEvPositions() {
-        return maxEvPositions;
-    }
-
-    public int getMaxEvPositionsQuiet() {
-        return maxEvPositionsQuiet;
     }
 
     public boolean isPeterMode() {

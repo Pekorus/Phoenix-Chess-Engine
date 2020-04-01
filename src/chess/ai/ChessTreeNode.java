@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.ai;
 
 import chess.move.Move;
@@ -10,39 +5,63 @@ import java.util.ArrayList;
 
 /**
  *
- * @author Phoenix
+ * Provides a traversable tree structure to store all legal moves of a chess 
+ * position.
  */
 public class ChessTreeNode{
     
     private final Move move;
-    //private int depth;
     private ArrayList<ChessTreeNode> children;
-    
-    public ChessTreeNode(Move move/*, int depth*/) {
+
+    /**
+    * Class constructor.
+    * 
+    * @param move   move represented by this node
+    */
+    public ChessTreeNode(Move move) {
         this.move = move;
         this.children = new ArrayList<>();
-        //this.depth = depth;
     }
 
+    /**
+     * Gets the number of children of this node.
+     * 
+     * @return  number of children
+     */
     public int getChildCount(){
         return children.size();
     }
-
+    
+    /**
+     * Gets the subtree of this node that represents given move. Returns null
+     * if this node has no child with given move.
+     * 
+     * @param move  returned node will represent this move
+     * @return      node that represents given move
+     */
     public ChessTreeNode getSubTreeByMove(Move move){
         for(ChessTreeNode child : children){
             if(child.move.equals(move)){
-                //child.increaseDepth();
                 return child;
             }
         }
         return null;
     }
     
+    /**
+     * Adds given node to this node as a child node. 
+     * 
+     * @param node  node to be added as child
+     */
     public void addChildNode(ChessTreeNode node){
         this.children.add(node);
     }
 
-    /* Moves the node with the specified move to front of children list */
+    /**
+     * Moves the node with the specified move to front of children list.
+     * 
+     * @param move  specifies the node that will de sorted to front
+     */
     public void moveNodeToFront(Move move){
         if(move != null){
             for(ChessTreeNode child : children){
@@ -63,10 +82,6 @@ public class ChessTreeNode{
         return move;
     }
 
-    /*public int getDepth() {
-        return depth;
-    }*/
-
     public ArrayList<ChessTreeNode> getChildren() {
         return children;
     }
@@ -79,30 +94,11 @@ public class ChessTreeNode{
        if(children==null) return false;
        if(children.isEmpty()) return false;
        return true;
-    }
-
-    /*private void increaseDepth() {
-       this.depth += 1;
-       if(this.children!=null){
-           for(ChessTreeNode child : children){
-               child.increaseDepth();
-           }
-       }
-    }*/ 
+    } 
 
     @Override
     public String toString() {
         return move.toString();
     }
-
-    /*void setDepth(int depth) {
-        this.depth = depth;
-        if(this.children!=null){
-           for(ChessTreeNode child : children){
-               child.setDepth(depth-1);
-           }
-        }   
-    }*/
-
-
+    
 }

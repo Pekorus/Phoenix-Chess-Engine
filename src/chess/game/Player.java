@@ -1,25 +1,30 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.game;
 
-import chess.gui.ChessGuiView;
 import chess.move.Move;
 
 /**
  *
- * @author Phoenix
+ * Provides an interface for a chess player.
  */
 
 public interface Player {
     
-    public abstract void update(ChessGame game, Move move, Object arg);
+    /**
+     * Game controller notifies players about a played move with this method. 
+     * 
+     * @param move  the move that was played last in this game
+     */
+    public void update(Move move);
 
-    public abstract void getNextMove();
+    /**
+     * Game controller requests the player's next move with this method.
+     */
+    public void getNextMove();
 
-    public ChessGuiView getView();
-
+    /**
+     * Game controller notifies players about the end of the game with this 
+     * method. All preparations that have to be done before a game ends have
+     * to be made before this method returns.
+     */
     public void endGame();
 }

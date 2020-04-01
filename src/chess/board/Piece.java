@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.board;
 
 import chess.coordinate.Coordinate;
@@ -10,22 +5,29 @@ import java.util.Objects;
 
 /**
  *
- * @author Phoenix
+ * Provides a chess piece for a chess game.
  */
 public class Piece {
     
+    /* type of piece (king, queen, bishop, knight, rook, pawn) */
     private PieceType piecetype;
+    /* coordinate of the piece on the chess board */
     private Coordinate coordinate;
+    /* color of the pice */
     private final ChessColor color;
+    /* counter to determine how many moves the piece already made (used to check
+    if castling is possible for kings and rooks, and if pawns can move two 
+    squares in their first move) */
     private int moveCounter;
     
-    public Piece(PieceType piecetype, ChessColor color, Coordinate coord) {
-        this.piecetype = piecetype;
-        this.color = color;
-        this.coordinate = coord;
-        this.moveCounter = 0;
-    }
-
+    /**
+     * Class constructor.
+     * 
+     * @param piecetype     piecetype of this piece
+     * @param color         color of this piece
+     * @param coord         coordinate on the board
+     * @param moveCounter   counter of moves piece already made
+     */
     public Piece(PieceType piecetype, ChessColor color, Coordinate coord, int
             moveCounter) {
         this.piecetype = piecetype;
@@ -58,7 +60,7 @@ public class Piece {
         this.coordinate = coordinate;
     }
 
-    public PieceType getPiecetype() {
+    public PieceType getType() {
         return piecetype;
     }
 
@@ -109,10 +111,13 @@ public class Piece {
 
     @Override
     public String toString() {
-        return "Piece{" + "piecetype=" + piecetype + ", coordinate=" + coordinate + ", color=" + color + ", moveCounter=" + moveCounter + '}';
+        return "Piece{" + "piecetype=" + piecetype + ", coordinate=" 
+                + coordinate + ", color=" + color + ", moveCounter=" 
+                + moveCounter + '}';
     }
     
     public Piece deepCopy(){
-        return new Piece(piecetype, color, coordinate.deepCopy(), this.getMoveCounter());
+        return new Piece(piecetype, color, coordinate.deepCopy(), 
+                                                        this.getMoveCounter());
     }
 }

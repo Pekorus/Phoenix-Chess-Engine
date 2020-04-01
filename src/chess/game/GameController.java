@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package chess.game;
 
 import chess.ai.ChessAI;
@@ -11,51 +6,81 @@ import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
 import chess.gui.ChessGuiView;
+import chess.gui.ChessOptions;
 import chess.move.Move;
 import chess.options.AIOptions;
 
 /**
  *
- * @author Phoenix
+ * Provides a controller of a chess game that handles the game and player moves.
  */
 public class GameController {
 
+    /* the chess game to handle */
     ChessGame game;
+    /* players */
     Player whitePlayer;
     Player blackPlayer;
+    /* color of the human player */
     ChessColor humanPlayer; 
-    Boolean checkmate= false, draw=false;
+    Boolean checkmate = false, draw =false;
     
-    public GameController(ChessGameType gameType, AIOptions aiOptions) {
+    /**
+     * Class constructor for a chess game from regular starting position.
+     * 
+     * @param gameType      gameType
+     * @param options       options to control gui
+     * @param aiOptions     options to control ai player behaviour
+     */
+    public GameController(ChessGameType gameType, ChessOptions options,
+                                                        AIOptions aiOptions) {
         
         game = new ChessGame();                
-        handlePlayers(gameType, aiOptions);
+        handlePlayers(gameType, options, aiOptions);
         //MainView mainView2= new MainView(700,900);        
     }    
 
-    /* constructor to start game from board editor */
-    public GameController(ChessGameType gameType, AIOptions aiOptions, 
-            Piece[][] pieceArray, ChessColor colorToMove, boolean[] castleRights) {
+    /**
+     * Class constructor for a chess game from custom position.
+     * 
+     * @param gameType      gameType
+     * @param options       options to control gui
+     * @param aiOptions     options to control ai player behaviour
+     * @param pieceArray    board position represented by piece array
+     * @param colorToMove   color to move first
+     * @param castleRights  castling rights in order 0-0 white, 0-0-0 white,
+     *                      0-0 black, 0-0-0 black
+     */
+    public GameController(ChessGameType gameType, ChessOptions options,
+                AIOptions aiOptions, Piece[][] pieceArray, 
+                ChessColor colorToMove, boolean[] castleRights) {
         
         game = new ChessGame(pieceArray, colorToMove, castleRights);
+        
         switch(gameType){            
+            
             case WHITEPLAYER:
-            whitePlayer = new ChessGuiController(this, WHITE, "Human", "ChessAI");                
-            blackPlayer = new ChessAI(this, BLACK, aiOptions, pieceArray, colorToMove,
-            castleRights);
-            humanPlayer = WHITE;
+                
+                whitePlayer = new ChessGuiController(this, game, WHITE, options,
+                        "Human", "ChessAI");                
+                blackPlayer = new ChessAI(this, BLACK, aiOptions, pieceArray, 
+                     colorToMove, castleRights);
+                humanPlayer = WHITE;
             break;
         
             case BLACKPLAYER:
-            blackPlayer = new ChessGuiController(this, BLACK, "Human", "ChessAI");                
-            whitePlayer = new ChessAI(this, WHITE, aiOptions, pieceArray, colorToMove,
-            castleRights);                
-            humanPlayer = BLACK;
+                
+                blackPlayer = new ChessGuiController(this, game, BLACK, options,
+                        "Human", "ChessAI");                
+                whitePlayer = new ChessAI(this, WHITE, aiOptions, pieceArray, 
+                        colorToMove, castleRights);                
+                humanPlayer = BLACK;
             break;
         }
     }
     
     public void startGame(){
+        
         notifyObservers(null);
         if(game.getPlayersTurn()==WHITE) whitePlayer.getNextMove();
         else blackPlayer.getNextMove();
@@ -75,8 +100,8 @@ public class GameController {
     } 
 
     private void notifyObservers(Move nextMove) {
-        whitePlayer.update(game, nextMove, null);
-        blackPlayer.update(game, nextMove, null);
+        whitePlayer.update(nextMove);
+        blackPlayer.update(nextMove);
     }
 
     private void demandNextMove(ChessColor playersTurn) {
@@ -85,8 +110,9 @@ public class GameController {
     }
 
     public ChessGuiView getView(){
-        if(humanPlayer==WHITE) return whitePlayer.getView();
-        else return blackPlayer.getView();
+        if(humanPlayer==WHITE) 
+            return ((ChessGuiController)whitePlayer).getView();
+        else return ((ChessGuiController)blackPlayer).getView();
     }
 
     public void endGame() {
@@ -94,19 +120,24 @@ public class GameController {
         blackPlayer.endGame();
     }
 
-    private void handlePlayers(ChessGameType gameType, AIOptions aiOptions) {
+    private void handlePlayers(ChessGameType gameType, ChessOptions options,
+                                                         AIOptions aiOptions) {
         
         switch(gameType){            
             case WHITEPLAYER:
-            whitePlayer = new ChessGuiController(this, WHITE, "Human", "ChessAI");                
-            blackPlayer = new ChessAI(this, BLACK, aiOptions);
-            humanPlayer = WHITE;
+                
+                whitePlayer = new ChessGuiController(this, game, WHITE, options,
+                        "Human", "ChessAI");                
+                blackPlayer = new ChessAI(this, BLACK, aiOptions);
+                humanPlayer = WHITE;
             break;
         
             case BLACKPLAYER:
-            blackPlayer = new ChessGuiController(this, BLACK, "Human", "ChessAI");                
-            whitePlayer = new ChessAI(this, WHITE, aiOptions);                
-            humanPlayer = BLACK;
+                
+                blackPlayer = new ChessGuiController(this, game, BLACK, options,
+                        "Human", "ChessAI");                
+                whitePlayer = new ChessAI(this, WHITE, aiOptions);                
+                humanPlayer = BLACK;
             break;
         }
     }
