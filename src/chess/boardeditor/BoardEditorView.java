@@ -3,7 +3,7 @@ package chess.boardeditor;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.WHITE;
 import chess.gui.ChessBoardView;
-import chess.gui.ChessOptions;
+import chess.options.ChessOptions;
 import chess.gui.MainView;
 import static chess.gui.MainView.dialogButton;
 import java.awt.Cursor;
@@ -80,7 +80,7 @@ public class BoardEditorView extends JFrame {
         /* load icons (trash can and rotate board) */
         try {
             trashCanImage = ImageIO.read(getClass().
-                                    getResource("/images/Trash_Can.png"));
+                                    getResource("/images/Trash_can.png"));
             rotateIcon = new ImageIcon(ImageIO.read(getClass().
                                     getResource("/images/Rotate_icon.png")));
         } catch (IOException ex) {
@@ -90,7 +90,7 @@ public class BoardEditorView extends JFrame {
         
         try {
             trashCanImage = ImageIO.read(getClass().
-                                    getResource("/images/Trash_Can.png"));
+                                    getResource("/images/Trash_can.png"));
         } catch (IOException ex) {
         }   
         eraseButton = new JButton(new ImageIcon(trashCanImage));        

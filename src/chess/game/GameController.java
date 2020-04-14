@@ -6,7 +6,7 @@ import chess.gui.ChessGuiController;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;
 import chess.gui.ChessGuiView;
-import chess.gui.ChessOptions;
+import chess.options.ChessOptions;
 import chess.move.Move;
 import chess.options.AIOptions;
 
@@ -23,7 +23,7 @@ public class GameController {
     Player blackPlayer;
     /* color of the human player */
     ChessColor humanPlayer; 
-    Boolean checkmate = false, draw =false;
+    Boolean checkmate = false, draw = false;
     
     /**
      * Class constructor for a chess game from regular starting position.
@@ -36,8 +36,11 @@ public class GameController {
                                                         AIOptions aiOptions) {
         
         game = new ChessGame();                
-        handlePlayers(gameType, options, aiOptions);
-        //MainView mainView2= new MainView(700,900);        
+        /* castle right of a starting position */
+        boolean[] castleRights = {true, true, true, true};
+        /* start game with default starting position in chess */
+        handlePlayers(gameType, options, aiOptions, game.getBoard()
+                                        .getPieceArray(), WHITE, castleRights);       
     }    
 
     /**
@@ -55,28 +58,10 @@ public class GameController {
                 AIOptions aiOptions, Piece[][] pieceArray, 
                 ChessColor colorToMove, boolean[] castleRights) {
         
-        game = new ChessGame(pieceArray, colorToMove, castleRights);
+        game = new ChessGame(pieceArray, colorToMove, castleRights);   
+        handlePlayers(gameType, options, aiOptions, pieceArray, colorToMove,
+                castleRights);
         
-        switch(gameType){            
-            
-            case WHITEPLAYER:
-                
-                whitePlayer = new ChessGuiController(this, game, WHITE, options,
-                        "Human", "ChessAI");                
-                blackPlayer = new ChessAI(this, BLACK, aiOptions, pieceArray, 
-                     colorToMove, castleRights);
-                humanPlayer = WHITE;
-            break;
-        
-            case BLACKPLAYER:
-                
-                blackPlayer = new ChessGuiController(this, game, BLACK, options,
-                        "Human", "ChessAI");                
-                whitePlayer = new ChessAI(this, WHITE, aiOptions, pieceArray, 
-                        colorToMove, castleRights);                
-                humanPlayer = BLACK;
-            break;
-        }
     }
     
     public void startGame(){
@@ -121,24 +106,32 @@ public class GameController {
     }
 
     private void handlePlayers(ChessGameType gameType, ChessOptions options,
-                                                         AIOptions aiOptions) {
+                AIOptions aiOptions, Piece[][] pieceArray, 
+                ChessColor colorToMove, boolean[] castleRights) {
         
         switch(gameType){            
+            
             case WHITEPLAYER:
                 
                 whitePlayer = new ChessGuiController(this, game, WHITE, options,
                         "Human", "ChessAI");                
-                blackPlayer = new ChessAI(this, BLACK, aiOptions);
+                blackPlayer = new ChessAI(this, BLACK, aiOptions, pieceArray,
+                                colorToMove, castleRights);
+                
                 humanPlayer = WHITE;
-            break;
+                options.setCreatorColor(BLACK);
+                break;
         
             case BLACKPLAYER:
                 
                 blackPlayer = new ChessGuiController(this, game, BLACK, options,
                         "Human", "ChessAI");                
-                whitePlayer = new ChessAI(this, WHITE, aiOptions);                
+                whitePlayer = new ChessAI(this, WHITE, aiOptions, pieceArray,
+                                   colorToMove, castleRights);                
+                
                 humanPlayer = BLACK;
-            break;
+                options.setCreatorColor(WHITE);
+                break;
         }
     }
     

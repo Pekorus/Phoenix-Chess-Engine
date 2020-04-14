@@ -11,7 +11,7 @@ import chess.game.ChessGame;
 import chess.game.ChessGameType;
 import static chess.game.ChessGameType.BLACKPLAYER;
 import static chess.game.ChessGameType.WHITEPLAYER;
-import chess.gui.ChessOptions;
+import chess.options.ChessOptions;
 import chess.gui.MainController;
 import java.awt.Point;
 import java.awt.event.ActionEvent;

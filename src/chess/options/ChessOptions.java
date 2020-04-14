@@ -1,4 +1,4 @@
-package chess.gui;
+package chess.options;
 
 import chess.board.ChessColor;
 import static chess.board.ChessColor.WHITE;
@@ -20,15 +20,19 @@ public class ChessOptions {
     private final ImageIcon[][] spriteArray = new ImageIcon[2][6];;     
     /* random color icon */
     private ImageIcon randomColorIcon;
-    /* creator sprite for creator mode */
-    private ImageIcon creatorImage;
+    /* creator sprites for creator mode */
+    private ImageIcon creatorWhiteImage;
+    private ImageIcon creatorBlackImage;
     /* stores if game played is in creator mode or not */
     private boolean creatorMode;
-
+    /* stores color of pieces of creator in creator mode */
+    private ChessColor  creatorColor;
+    
     public ChessOptions() {
         
         loadSprites();
         this.creatorMode = false;
+        this.creatorColor = null;
     }
 
     public ImageIcon[][] getSpriteArray() {
@@ -36,7 +40,7 @@ public class ChessOptions {
     }
 
     public ImageIcon getCreatorImage() {
-        return creatorImage;
+        return creatorWhiteImage;
     }
 
     public ImageIcon getRandomColorIcon() {
@@ -55,7 +59,11 @@ public class ChessOptions {
         this.creatorMode = creatorMode;
     }
 
- /**
+    public void setCreatorColor(ChessColor creatorColor) {
+        this.creatorColor = creatorColor;
+    }
+    
+    /**
      * Loads sprites and sets imageArray, spriteArray and randomColorIcon.
      */
     private void loadSprites() {
@@ -64,8 +72,10 @@ public class ChessOptions {
             randomColorIcon = new ImageIcon(ImageIO.read(getClass().
                                 getResource("/images/Random_color_icon.png")));
             
-            creatorImage = new ImageIcon(ImageIO.read(getClass().
-                                getResource("/images/Creator.png"))); 
+            creatorWhiteImage = new ImageIcon(ImageIO.read(getClass().
+                                getResource("/images/CreatorWhiteCrown.png"))); 
+            creatorBlackImage = new ImageIcon(ImageIO.read(getClass().
+                                getResource("/images/CreatorBlackCrown.png")));
             
             BufferedImage spriteSheet = ImageIO.read(getClass().
                     getResource("/images/Chess_pieces.png"));
@@ -97,8 +107,7 @@ public class ChessOptions {
                 
         } catch (IOException ex) {
         }        
-
-        
+     
     }
     
     /**
@@ -115,7 +124,12 @@ public class ChessOptions {
         
         switch (pieceType) {
             case KING:
-                 return (spriteArray[aux][0]);
+                
+                if(creatorMode && color == creatorColor) 
+                    if(color == WHITE) return creatorWhiteImage; 
+                    else return creatorBlackImage;
+                
+                return (spriteArray[aux][0]);
 
             case QUEEN:
                 return (spriteArray[aux][1]);

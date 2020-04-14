@@ -71,8 +71,9 @@ public class AnalyticsWriter {
      * @param currentLabel the analytics data to be written 
      */
     public void writeAnalyticsTurn(String currentLabel) {
+        
         try {
-            writer.write(currentLabel);
+            if(currentLabel != null) writer.write(currentLabel);
             writer.flush();
         } catch (IOException ex) {
             Logger.getLogger(AnalyticsWriter.class.getName()).log(Level.SEVERE, 

@@ -1,5 +1,6 @@
 package chess.gui;
 
+import chess.options.ChessOptions;
 import chess.board.ChessColor;
 import static chess.board.ChessColor.*;
 import chess.board.Piece;

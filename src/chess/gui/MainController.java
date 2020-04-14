@@ -1,5 +1,6 @@
 package chess.gui;
 
+import chess.options.ChessOptions;
 import chess.board.ChessColor;
 import chess.board.Piece;
 import chess.boardeditor.BoardEditorController;
@@ -7,12 +8,15 @@ import chess.game.ChessGameType;
 import static chess.game.ChessGameType.*;
 import chess.game.GameController;
 import chess.options.AIOptions;
+import chess.options.CalcType;
+import static chess.options.CalcType.DEPTH;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.ParseException;
 import java.util.Random;
 import javax.swing.WindowConstants;
 
@@ -38,7 +42,12 @@ public class MainController extends WindowAdapter implements ActionListener,
      */
     public MainController() {
         
+        /* initialize options */
+        this.aiOptions = new AIOptions();
+        aiOptions.loadOptions();        
         this.options = new ChessOptions();         
+        options.setCreatorMode(aiOptions.isPeterMode());
+        
         /* initialize main gui */
         this.mainView = new MainView(this, options);
         mainView.setTitle("Phoenix Chess Engine");
@@ -46,10 +55,10 @@ public class MainController extends WindowAdapter implements ActionListener,
         mainView.setResizable(false);
         mainView.setSize(760, 940);
         mainView.addCardPanel();
+        setOptionSliders();
         
         /* initialize game */
         this.gameType = null;      
-        this.aiOptions = new AIOptions();
         this.gameController = new GameController(WHITEPLAYER, options,
                                                                     aiOptions);
         handleViews();
@@ -91,11 +100,14 @@ public class MainController extends WindowAdapter implements ActionListener,
         }
 
         else if(source == mainView.resetDefault){
+            
             mainView.searchDepthSlider.setValue(
                                              aiOptions.getDefaultSearchDepth());
             mainView.quietSearchDepthSlider.setValue(
                                         aiOptions.getDefaultQuietSearchDepth());            
             mainView.peterCheckBox.setSelected(false);
+            mainView.timeCalc.setSelected(true);
+            mainView.timeField.setValue(aiOptions.getDefaultTurnTime()/1000);
         }
         
         else if(source == mainView.applyChanges){
@@ -105,6 +117,20 @@ public class MainController extends WindowAdapter implements ActionListener,
                                                                    .getValue());
             aiOptions.setCreatorMode(mainView.peterCheckBox.isSelected());          
             options.setCreatorMode(mainView.peterCheckBox.isSelected());
+            
+            if(mainView.timeCalc.isSelected()) 
+                                        aiOptions.setCalcType(CalcType.TIME);
+            else aiOptions.setCalcType(CalcType.DEPTH);
+            /* commit edit of textfield to get current value with getValue */
+            try{
+                mainView.timeField.commitEdit();                
+            }
+            catch(ParseException ex){    
+            }
+            aiOptions.setTurnTime(1000* (long) mainView.timeField.getValue());
+            
+            /* save options */
+            aiOptions.saveOptions();
             
             /* start new game */
             mainView.gameTypeDialog.setLocationRelativeTo(mainView);
@@ -177,6 +203,18 @@ public class MainController extends WindowAdapter implements ActionListener,
         mainView.pack(); 
     }
 
+    private void setOptionSliders(){
+        
+        mainView.searchDepthSlider.setValue(aiOptions.getSearchDepth());
+        mainView.quietSearchDepthSlider.
+                                    setValue(aiOptions.getQuietSearchDepth());
+        mainView.peterCheckBox.setSelected(aiOptions.isPeterMode());
+        if(aiOptions.getCalcType() == DEPTH)
+                                          mainView.depthCalc.setSelected(true);
+        else mainView.timeCalc.setSelected(true);
+        mainView.timeField.setValue(aiOptions.getTurnTime()/1000);
+    }
+    
     @Override
     public void mouseClicked(MouseEvent e) {
         
@@ -188,6 +226,7 @@ public class MainController extends WindowAdapter implements ActionListener,
         Object source = e.getSource();
         
         if(source == mainView.boardEditor){
+            options.setCreatorColor(null);
             BoardEditorController boardEditor = new BoardEditorController(this, 
                     760, 940, mainView.getLocation(), options);
             boardEditor.startEditor();
@@ -222,11 +261,11 @@ public class MainController extends WindowAdapter implements ActionListener,
     @Override
     public void windowClosing(WindowEvent e) {
        gameController.endGame();    
+       System.exit(0);
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-       gameController.endGame();
     }
         
 }

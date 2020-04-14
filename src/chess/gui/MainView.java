@@ -1,5 +1,6 @@
 package chess.gui;
 
+import chess.options.ChessOptions;
 import static chess.board.ChessColor.*;
 import static chess.board.PieceType.KING;
 import java.awt.BorderLayout;
@@ -10,16 +11,20 @@ import static java.awt.GridBagConstraints.WEST;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.text.NumberFormat;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 import static javax.swing.SwingConstants.HORIZONTAL;
@@ -33,7 +38,7 @@ import javax.swing.border.Border;
  */
 public class MainView extends JFrame{
     
-    private static final String VERSION = "0.9.9.5";
+    private static final String VERSION = "0.9.9.9.9";
     
     /* fields for main frame */
     private final MainController mainControl;
@@ -54,9 +59,10 @@ public class MainView extends JFrame{
     final JDialog optionsDialog = new JDialog();
     JSlider searchDepthSlider; 
     JSlider quietSearchDepthSlider;
-    JButton resetDefault;
-    JButton applyChanges;
+    JButton resetDefault, applyChanges;
     JCheckBox peterCheckBox;
+    JFormattedTextField timeField; 
+    JRadioButton depthCalc, timeCalc;
     
     /* about dialog */
     final JDialog aboutDialog = new JDialog();
@@ -156,8 +162,8 @@ public class MainView extends JFrame{
 
     private void createOptionsDialog(){
         
-        optionsDialog.setTitle("Game Options");
-        optionsDialog.setSize(450, 520);
+        optionsDialog.setTitle("AI Options");
+        optionsDialog.setSize(600, 600);
         optionsDialog.setResizable(false);
         optionsDialog.setModal(true);        
         optionsDialog.setLayout(new GridBagLayout());
@@ -170,19 +176,50 @@ public class MainView extends JFrame{
         mainConstr.gridwidth = 2;        
         mainConstr.insets = new Insets(0, 0, 10, 0);       
         
+        GridBagConstraints constr = new GridBagConstraints();        
         Border optionsBorder = BorderFactory.createEtchedBorder();
         
-        /* search Depth Panel */
-        JPanel searchDepthPanel = new JPanel(new GridBagLayout());
-        searchDepthPanel.setBorder(optionsBorder);
-        optionsDialog.add(searchDepthPanel, mainConstr);
-        GridBagConstraints constr = new GridBagConstraints();
+        /* panel to choose type of restriction for move calculation */
+        JPanel moveCalcPanel = new JPanel(new GridBagLayout());
+        moveCalcPanel.setBorder(optionsBorder);
+        optionsDialog.add(moveCalcPanel, mainConstr);
         
-        JLabel searchDepthLabel = new JLabel("Search depth", 
-                SwingConstants.CENTER);
+        mainConstr.insets = new Insets(10,10,20,10);
+        moveCalcPanel.add(new JLabel("<html>AI move calculation can be "
+                + "restricted in two ways: fixed depth or time. If fixed "
+                + "depth is chosen,<br> the move will be calculated fully for "
+                + "that depth. This can take a long time in extreme cases, "
+                + "<br>depending on processor power and complexity of"
+                + " position. The AI will always respect given<br> time for "
+                + "a move; Abortion of calculation mid-move can still take some "
+                + "additional time.</html>"), mainConstr);
+        mainConstr.insets = new Insets(0, 0, 10, 0);
+        
+        ButtonGroup group = new ButtonGroup();
+        timeCalc = new JRadioButton("Restrict by time");
+        group.add(timeCalc);
+        timeCalc.setFocusable(false);
+        constr.gridx = 1;
+        constr.gridy = 1;
+        moveCalcPanel.add(timeCalc, constr);
+        
+        depthCalc = new JRadioButton("Restrict by depth");
+        group.add(depthCalc);
+        depthCalc.setFocusable(false);
         constr.gridx = 0;
+        constr.gridy = 1;
+        moveCalcPanel.add(depthCalc, constr);        
+        
+        
+        /* search Depth Panel */
+        JPanel searchDepthPanel = new JPanel(new GridBagLayout());        
+        constr.gridx = 0;
+        constr.gridy = 2;
+        moveCalcPanel.add(searchDepthPanel, constr);
+        
+        JLabel searchDepthLabel = new JLabel("Search depth");
         constr.gridy = 0;
-        constr.insets = new Insets(0,10,0,0);
+        constr.insets = new Insets(0,10,0,0); 
         searchDepthPanel.add(searchDepthLabel, constr);        
         
         searchDepthSlider = new JSlider(HORIZONTAL, 2, 12, 6);
@@ -203,7 +240,33 @@ public class MainView extends JFrame{
         constr.gridy = 1;
         constr.gridwidth = 2;
         searchDepthPanel.add(searchDepthTip, constr);
+        constr.gridwidth = 1;         
+        
+        
+        /* time restriction panel */
+        JPanel timePanel = new JPanel (new GridBagLayout());
+        constr.gridx = 1;
+        constr.gridy = 2;        
+        moveCalcPanel.add(timePanel, constr);
+
+        constr.gridx = 0;
+        constr.gridy = 0;
+        constr.insets = new Insets(0,10,0,0);
+        JPanel timeInput = new JPanel(new GridBagLayout());
+        timePanel.add(timeInput, constr);
+        
+        constr.insets = new Insets(0,10,10,0);
+        constr.gridwidth = 2;
+        timeInput.add(new JLabel("Calculation time: "), constr);
         constr.gridwidth = 1;
+        constr.gridy = 1;
+        timeField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        timeField.setValue(6);
+        timeField.setColumns(3);
+        timeInput.add(timeField, constr);
+        constr.gridx = 1;
+        timeInput.add(new JLabel(" seconds"), constr);
+        
         
         /* quiescence search depth panel */
         JPanel quietSearchDepthPanel = new JPanel(new GridBagLayout());        
@@ -216,6 +279,7 @@ public class MainView extends JFrame{
         constr.gridy = 0;
         constr.insets = new Insets(0,10,0,0);
         quietSearchDepthPanel.add(quietSearchDepthLabel, constr);        
+        
         
         /* depth slider */
         quietSearchDepthSlider = new JSlider(HORIZONTAL, 0, 30, 20);
@@ -238,6 +302,7 @@ public class MainView extends JFrame{
         quietSearchDepthPanel.add(quietSearchDepthTip, constr);
         constr.gridwidth = 1;
         
+        
         /* creator mode checkbox */
         JPanel peterCheckBoxPanel = new JPanel(new GridBagLayout());
         peterCheckBoxPanel.setBorder(optionsBorder);
@@ -253,6 +318,7 @@ public class MainView extends JFrame{
         peterCheckBoxPanel.add(peterTip, constr);
         mainConstr.gridy = 2;
         optionsDialog.add(peterCheckBoxPanel, mainConstr);
+        
         
         /* Buttons at end of options dialog */
         applyChanges = new JButton("Apply changes (starts new game)");

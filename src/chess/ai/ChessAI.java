@@ -16,6 +16,8 @@ import chess.move.Move;
 import static chess.move.MoveType.NORMAL;
 import static chess.move.MoveType.TAKE;
 import chess.options.AIOptions;
+import chess.options.CalcType;
+import static chess.options.CalcType.TIME;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.time.Duration;
@@ -24,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +56,10 @@ public class ChessAI implements Player {
     
     private int SEARCH_DEPTH;
     private int QUIET_SEARCH_DEPTH;
+    /* time to restrict duration of ai move */
+    private long TURN_TIME;
+    /* type of restriction on ai move calculation */
+    private CalcType CALC_TYPE;
     private static final int TRANSPOSITION_TABLE_SIZE = 200000;
     private static final int DRAW_THRESHOLD_VALUE = -50;
     /* highest value for a position (lowest value is given by -MATEVALUE) */
@@ -209,7 +218,9 @@ public class ChessAI implements Player {
     private int iterationDepth = 0;
     private long moveDuration = 0;
     private final JTextArea analyticsLabel = new JTextArea();
-
+    private String currentLabel;
+    private Instant start;
+    
     /* regular AI fields */
     private final GameController controller;
     /* AI has a copy of the game to execute/unexecute moves in the search tree 
@@ -217,15 +228,18 @@ public class ChessAI implements Player {
     private final ChessGame ownGame;
     /* the rules class to be used */
     private final ChessRules rules;
+    
     /* own board to execute/unexecute moves in search tree */
     private final Board board;
     private final ArrayList<Piece> ownPieces;
     private final ArrayList<Piece> enemyPieces;
     private final ChessColor ownColor;
+    
     /* transposition table */
     private final ChessTransTable transTable;
     private Move storedBestMove;
     private int storedBestValue;
+    private ArrayList<Move> storedBestVariation;
     private ChessTreeNode currentTree;
     private ChessGameStage gameStage;
     /* array to store moves for the killer heuristic */
@@ -261,7 +275,7 @@ public class ChessAI implements Player {
         this.currentTree = new ChessTreeNode(null);
 
         gameStage = OPENING;
-        killerMoves = new Move[SEARCH_DEPTH + 1][2];
+        killerMoves = new Move[40][2];
         createAnalyticsFrame();
         
         this.analyticsWriter = new AnalyticsWriter();
@@ -299,7 +313,7 @@ public class ChessAI implements Player {
         setOptions(aiOptions);
 
         gameStage = OPENING;
-        killerMoves = new Move[SEARCH_DEPTH + 1][2];
+        killerMoves = new Move[40][2];
         createAnalyticsFrame();
         this.analyticsWriter = new AnalyticsWriter();
         analyticsWriter.writeNewGame();
@@ -309,11 +323,13 @@ public class ChessAI implements Player {
     public void update(Move lastMove) {
         
         if (lastMove != null) {            
+            
             if(ownGame.getPlayersTurn()!= ownColor) analyticsWriter
                                               .movePlayed(lastMove.toString());
             ownGame.executeMove(lastMove, false);
 
             /* if enemy queen is traded, change gamestage flag to endgame */
+            //TODO: endgame else case ?
             gameStage = ENDGAME;
             for (Piece piece : enemyPieces) {
                 if (piece.getType() == QUEEN) {
@@ -360,8 +376,10 @@ public class ChessAI implements Player {
         for (Piece piece : pieces) {
             switch (piece.getType()) {
                 case PAWN:
+                    
                     value += PAWN_BASIC_VALUE + pawnBonus(piece);
                     break;
+                
                 case QUEEN:
                     /* distance to enemy king, weighted with 0.5 */
                     value += QUEEN_BASIC_VALUE - 0.5 * (piece.getCoord()
@@ -369,7 +387,9 @@ public class ChessAI implements Player {
                                                     getInverse()).getCoord()));
                     //value += queenBonus(piece);
                     break;
+                
                 case BISHOP:
+                
                     bishopCount++;
                     if (bishopCount > 1) {
                         /* more than one bishop */
@@ -379,10 +399,14 @@ public class ChessAI implements Player {
                     }
                     value += BISHOP_BASIC_VALUE + bishopBonus(piece);
                     break;
+                
                 case KNIGHT:
+                    
                     value += KNIGHT_BASIC_VALUE + knightBonus(piece.getCoord());
                     break;
+                
                 case ROOK:
+                
                     if (otherRookFile == piece.getCoord().getY()) {
                         /* rooks on same file */
                         value += ROOK_DOUBLE_FILE_BONUS + ROOK_BASIC_VALUE 
@@ -394,6 +418,7 @@ public class ChessAI implements Player {
 
                     value += ROOK_BASIC_VALUE + rookBonus(piece);
                     break;
+                
                 case KING:
                     value += kingBonus(piece);
             }
@@ -535,7 +560,10 @@ public class ChessAI implements Player {
             /* build nodes recursively with a cutoff through alpha-beta-pruning 
              */
             for (ChessTreeNode node : chessTree.getChildren()) {
-
+                
+                /* Stop calculation of node if thread was cancelled */
+                if(moveCalculation.isCancelled()) break;
+                
                 ownGame.executeMove(node.getMove(), false);
                 if (firstChild) {
                     gameValue = -builtTreeAndEvaluate(node, -beta, -alpha, 
@@ -586,10 +614,18 @@ public class ChessAI implements Player {
 
     @Override
     public void getNextMove() {
+        
+        Timer timer = new Timer();         
+        
+        /* AI move calculation is done on a separate thread */     
         moveCalculation = new SwingWorker<Move, Void>() {
+            
             @Override
             public Move doInBackground() {
+                
+                /* Play first move in creator mode */
                 if (peterMode && firstMove) {
+                    
                     firstMove = false;
                     if (ownColor == BLACK) {
                         return new Move(PAWN, new Coordinate(6, 6), 
@@ -599,33 +635,54 @@ public class ChessAI implements Player {
                                 new Coordinate(2, 6), NORMAL);
                     }
                 }
+
                 /* measure time to calculate move */
-                Instant start = Instant.now();
-                iterativeDeepeningSearch(SEARCH_DEPTH);
-                Instant finish = Instant.now();
-                moveDuration = Duration.between(start, finish).toMillis();
-                if (iterationDepth < SEARCH_DEPTH) {
-                    return storedBestMove;
+                start = Instant.now();
+                
+                /* search function depends on restriction: time or depth */
+                if(CALC_TYPE == TIME){                    
+                    
+                    iterDeepSearchTime();
+                    /* stop timer when calculation has ended */
+                    timer.cancel();
+                
                 }
-                return transTable.getEntryByZobrisKey(board.getHashValue())
-                        .getBestMove();
+                else iterDeepSearchDepth(SEARCH_DEPTH);
+                
+                
+                return storedBestMove;
             }
 
             @Override
             public void done() {
-                printAndResetAnalytics();
+                
+                analyticsLabel.append(currentLabel);
+                analyticsWriter.writeAnalyticsTurn(currentLabel);
+                resetAnalytics();
                 transTable.clear();
+                
                 try {
                     controller.nextMove(ownColor, get());
+                } catch (CancellationException ex) {
+                    controller.nextMove(ownColor, storedBestMove);
                 } catch (InterruptedException | ExecutionException ex) {
-                    Logger.getLogger(ChessAI.class.getName()).log(Level.SEVERE, 
-                            null, ex);
-
+                    Logger.getLogger(ChessAI.class.getName())
+                                                   .log(Level.SEVERE, null, ex);
                 }
             }
         };
 
         moveCalculation.execute();
+        
+        if(CALC_TYPE == TIME){
+            /* Cancel move execution after specified time */
+            timer.schedule(new TimerTask(){
+                @Override
+                public void run() {
+                    moveCalculation.cancel(false);
+                }
+            }, TURN_TIME);
+        }
     }
 
     /**
@@ -807,66 +864,62 @@ public class ChessAI implements Player {
     }
 
     /**
-     * Appends analytics of this turn to the analyticsLabel, writes them into a 
-     * text file and resets them for the next turn.
+     * Builds a string with the current state of the AI analytics.
      */
-    private void printAndResetAnalytics() {
+    private String builtCurrentAnalytics() {
         
-        String currentLabel = "";
-        currentLabel = currentLabel.concat("Search duration: " + ((float)moveDuration)/1000 
-                                                                      + " sec");
-        currentLabel = currentLabel.concat("\nBest variation: " 
-                                                             + bestVariation());
-        TransTableEntry tableEntry = transTable.getEntryByZobrisKey(board
-                                                               .getHashValue());
-        int gameValue = 0;
-        if (tableEntry != null) {
-            gameValue = tableEntry.getValue();
-        }
-        if (iterationDepth < SEARCH_DEPTH) {
-            gameValue = storedBestValue;
-        }
+        String label = "";
+        label = label.concat("Search duration: " + 
+                                           ((float)moveDuration)/1000 + " sec");
+        label = label.concat("\nBest variation: " + storedBestVariation);
+
+        int gameValue = storedBestValue;
         if (gameValue > 10000) {
-            currentLabel = currentLabel.concat("\nGame value: " + ownColor 
+            label = label.concat("\nGame value: " + ownColor 
                + " mates in " + (SEARCH_DEPTH - gameValue + MATEVALUE + 1) / 2);
         } else if (gameValue < -10000) {
-            currentLabel = currentLabel.concat("\nGame value: " 
+            label = label.concat("\nGame value: " 
                     + ownColor.getInverse() + " mates in " 
                                  + (SEARCH_DEPTH + gameValue + MATEVALUE) / 2);
         } else {
-            currentLabel = currentLabel.concat("\nGame value: " 
+            label = label.concat("\nGame value: " 
                                     + String.format("%.2f", 0.01 * gameValue));
         }
-        currentLabel = currentLabel.concat("\nEvaluated positions: " 
+        label = label.concat("\nEvaluated positions: " 
                                                           + evaluatedPositions);
-        currentLabel = currentLabel.concat("\nVisited nodes: " + visitedNodes
+        label = label.concat("\nVisited nodes: " + visitedNodes
                 + ", visited quiet nodes: " + visitedQuietNodes);
-        currentLabel = currentLabel.concat("\nTransp. used: " 
+        label = label.concat("\nTransp. used: " 
                                                           + transpositionsUsed);
-        currentLabel = currentLabel.concat("\nTransp. Table entries: " 
+        label = label.concat("\nTransp. Table entries: " 
                + transTable.getHashFilled() + " / " + TRANSPOSITION_TABLE_SIZE);
-        currentLabel = currentLabel.concat("\nIterated to depth: " 
+        label = label.concat("\nIterated to depth: " 
                                                              + iterationDepth);
-        currentLabel = currentLabel.concat("\nMaximum Depth: " 
+        label = label.concat("\nMaximum Depth: " 
                                     + (Math.abs(reachedDepth) + SEARCH_DEPTH));
-        currentLabel = currentLabel.concat("\nNodes per second: "
+        label = label.concat("\nNodes per second: "
                 +(visitedNodes+visitedQuietNodes)/(moveDuration+1) +"k");
-        currentLabel = currentLabel.concat("\nEvaluated Positions per second: "+
-                                        (evaluatedPositions/(moveDuration+1)+"k"));
-        currentLabel = currentLabel.concat("\n\n");
+        label = label.concat("\nEvaluated Positions per second: "+
+                                     (evaluatedPositions/(moveDuration+1)+"k"));
+        label = label.concat("\n\n");
+        
+        return label;        
+    }
+
+    /**
+     * Resets all AI analytics fields.
+     */
+    private void resetAnalytics(){
         
         evaluatedPositions = 0;
         visitedNodes = 0;
         visitedQuietNodes = 0;
         transpositionsUsed = 0;
         iterationDepth = 0;
-        reachedDepth = 0;
-
-        analyticsLabel.append(currentLabel);
-        analyticsWriter.writeAnalyticsTurn(currentLabel);
-        
+        reachedDepth = 0;        
+        moveDuration = 0;
     }
-
+   
     /**
      * Calculates value of current position in tree by only using quiet 
      * positions. Quiet positions are positions in which the king is not in
@@ -937,6 +990,9 @@ public class ChessAI implements Player {
              */
             for (ChessTreeNode node : quietList) {
 
+                /* Stop calculation of node if thread was cancelled */
+                if(moveCalculation.isCancelled()) break;
+                
                 visitedQuietNodes++;
                 anyMove = true;
                 ownGame.executeMove(node.getMove(), false);
@@ -1063,43 +1119,97 @@ public class ChessAI implements Player {
      * @param aiOptions     the options to be implemented
      */
     private void setOptions(AIOptions aiOptions) {
+        
         SEARCH_DEPTH = aiOptions.getSearchDepth();
         QUIET_SEARCH_DEPTH = aiOptions.getQuietSearchDepth();
         peterMode = aiOptions.isPeterMode();
+        TURN_TIME = aiOptions.getTurnTime();
+        CALC_TYPE = aiOptions.getCalcType();
     }
 
     @Override
     public void endGame() {
-        //if(moveCalculation != null) moveCalculation.cancel(true);
+        
+        if(moveCalculation != null) moveCalculation.cancel(true);
         analyticsView.dispose();
         analyticsWriter.endGame();
     }
 
     /**
-     * Conducts a search of current position with iterative deepening. The first
-     * search is always 2 plies deep. Then the search is deepened one ply at a 
-     * time until the maximal depth is reached.
+     * Conducts a search of current position with iterative deepening restricted 
+     * by time. The first search is always 2 plies deep. Then the search is 
+     * deepened one ply at a time until the maximal depth is reached.
+     * 
+     */
+    private void iterDeepSearchTime() {
+
+        int depth = 2;
+        
+        while(!moveCalculation.isCancelled()) {
+            
+            builtTreeAndEvaluate(currentTree, -Integer.MAX_VALUE, 
+                                      Integer.MAX_VALUE, ownColor, depth, true);
+
+            /* if bestMove exists (move calculation was not aborted), store 
+               analytics of that move
+            */
+            if(!moveCalculation.isCancelled()){
+                
+                iterationDepth = max(iterationDepth, depth);
+                storedBestMove = transTable.getEntryByZobrisKey(
+                                            board.getHashValue()).getBestMove();
+                storedBestValue = transTable.getEntryByZobrisKey(
+                                               board.getHashValue()).getValue();                                 
+                storedBestVariation = bestVariation();
+            }
+            moveDuration = Duration.between(start, Instant.now()).toMillis();            
+            currentLabel = builtCurrentAnalytics(); 
+            
+            /* increase depth by 1 for next search */
+            depth += 1;
+        }
+    }
+
+    /**
+     * Conducts a search of current position with iterative deepening restricted 
+     * by fixed depth. The first search is always 2 plies deep. Then the search 
+     * is deepened one ply at a time until the maximal depth is reached. Search 
+     * depth can be reduced by one if a quiescence search explosion is detected.
      * 
      * @param searchDepth   maximal depth to search at
      */
-    private void iterativeDeepeningSearch(int searchDepth) {
+    private void iterDeepSearchDepth(int searchDepth) {
 
         boolean quietExplosionFlag = false;
 
         for (int depth = 2; depth <= searchDepth; depth++) {
+            
+            if(moveCalculation.isCancelled()) break;
+            
             builtTreeAndEvaluate(currentTree, -Integer.MAX_VALUE, 
                                       Integer.MAX_VALUE, ownColor, depth, true);
-            iterationDepth = max(iterationDepth, depth);
-            storedBestMove = transTable.getEntryByZobrisKey(
-                                            board.getHashValue()).getBestMove();
-            storedBestValue = transTable.getEntryByZobrisKey(
-                                               board.getHashValue()).getValue();
 
+            /* if bestMove exists (move calculation was not aborted), store 
+               analytics of that move
+            */
+            if(!moveCalculation.isCancelled()){
+                
+                iterationDepth = max(iterationDepth, depth);
+                storedBestMove = transTable.getEntryByZobrisKey(
+                                            board.getHashValue()).getBestMove();
+                storedBestValue = transTable.getEntryByZobrisKey(
+                                               board.getHashValue()).getValue();                                 
+                storedBestVariation = bestVariation();
+            }
+            moveDuration = Duration.between(start, Instant.now()).toMillis();            
+            currentLabel = builtCurrentAnalytics(); 
+            
             /* If the ratio visited nodes in quiescence search to visited 
             regular nodes is larger than 3 on any of the last 2 plies, a quiet 
             search explosion seems to be likely (based on experience). In that 
             case reduce the number of iterations (and final depth) by one.
              */
+
             if (depth >= SEARCH_DEPTH - 2 && visitedQuietNodes / 
                                                             visitedNodes >= 3) 
             {
@@ -1112,7 +1222,8 @@ public class ChessAI implements Player {
             }
         }
     }
-
+    
+    
     /**
      * Sorts children of a tree by stated rules.
      *  -taking moves, sorted by MVVLVA
