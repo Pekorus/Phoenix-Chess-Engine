@@ -157,6 +157,8 @@ public class AIOptions {
                 calcType = DEPTH;
             else calcType = TIME;
             
+            reader.close();
+            
         } catch (IOException ex) {
             resetDefaultOptions();
         }
