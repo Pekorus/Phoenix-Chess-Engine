@@ -203,6 +203,9 @@ public class MainController extends WindowAdapter implements ActionListener,
         mainView.pack(); 
     }
 
+    /**
+     * Sets the option fields of the option dialog to values in AIOptions.
+     */
     private void setOptionSliders(){
         
         mainView.searchDepthSlider.setValue(aiOptions.getSearchDepth());

@@ -246,7 +246,7 @@ public class ChessAI implements Player {
     private final Move[][] killerMoves;
     /* thread in which the calculation of the move takes place */
     private SwingWorker moveCalculation;
-    private boolean firstMove = true;
+    private boolean firstMove;
     /* stores if AI plays the creators favorite openings */
     private boolean peterMode;
 
@@ -268,7 +268,8 @@ public class ChessAI implements Player {
         this.ownPieces = board.getPiecesList(ownColor);
         this.enemyPieces = board.getPiecesList(ownColor.getInverse());
         this.transTable = new ChessTransTable(TRANSPOSITION_TABLE_SIZE);
-
+        this.firstMove = true;
+        
         setOptions(aiOptions);
 
         /* create root of tree */
@@ -306,7 +307,9 @@ public class ChessAI implements Player {
         this.ownPieces = board.getPiecesList(ownColor);
         this.enemyPieces = board.getPiecesList(ownColor.getInverse());
         this.transTable = new ChessTransTable(TRANSPOSITION_TABLE_SIZE);
-
+        /* custom board, AI can't play creator mode on first move */
+        this.firstMove = false;
+        
         /* create root of tree */
         this.currentTree = new ChessTreeNode(null);
 

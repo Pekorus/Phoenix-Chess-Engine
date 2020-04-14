@@ -36,6 +36,7 @@ public class ChessGame{
      * Class constructor for a chess game from regular starting position.
      */
     public ChessGame() {
+        
         this.board = new Board(); 
         this.winner = null;
         this.draw = null;
@@ -54,7 +55,9 @@ public class ChessGame{
      * @param castleRights  ´   castling rights, in order 0-0 white, 0-0-0 white
      *                          0-0 black, 0-0-0 black
      */
-    public ChessGame(Piece[][] pieceArray, ChessColor colorToMove, boolean[] castleRights) {
+    public ChessGame(Piece[][] pieceArray, ChessColor colorToMove, 
+                                                    boolean[] castleRights) {
+        
         this.board = new Board(pieceArray, colorToMove, castleRights);
         this.winner = null;
         this.draw = null;
