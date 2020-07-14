@@ -11,9 +11,12 @@ import static java.awt.GridBagConstraints.WEST;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.io.IOException;
 import java.text.NumberFormat;
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -38,7 +41,7 @@ import javax.swing.border.Border;
  */
 public class MainView extends JFrame{
     
-    private static final String VERSION = "0.9.9.9.9";
+    private static final String VERSION = "1.0";
     
     /* fields for main frame */
     private final MainController mainControl;
@@ -163,7 +166,7 @@ public class MainView extends JFrame{
     private void createOptionsDialog(){
         
         optionsDialog.setTitle("AI Options");
-        optionsDialog.setSize(600, 600);
+        optionsDialog.setSize(600, 700);
         optionsDialog.setResizable(false);
         optionsDialog.setModal(true);        
         optionsDialog.setLayout(new GridBagLayout());
@@ -186,13 +189,16 @@ public class MainView extends JFrame{
         
         mainConstr.insets = new Insets(10,10,20,10);
         moveCalcPanel.add(new JLabel("<html>AI move calculation can be "
-                + "restricted in two ways: fixed depth or time. If fixed "
-                + "depth is chosen,<br> the move will be calculated fully for "
+                + "restricted in two ways: fixed depth or fixed time.<br><br> "
+                + "Restrict by depth:<br> Move will be calculated fully for "
                 + "that depth. This can take a long time in extreme cases, "
                 + "<br>depending on processor power and complexity of"
-                + " position. The AI will always respect given<br> time for "
-                + "a move; Abortion of calculation mid-move can still take some "
-                + "additional time.</html>"), mainConstr);
+                + " position.<br><br> Restrict by time:<br> Given time is "
+                + "considered as maximum time to execute a move."
+                + " Displayed time in analytics <br>is the actual time "
+                + "needed to calculate the move, all additional time went to "
+                + "calculate one<br>ply deeper but it was not finished in max "
+                + "time. </html>"), mainConstr);
         mainConstr.insets = new Insets(0, 0, 10, 0);
         
         ButtonGroup group = new ButtonGroup();
@@ -340,7 +346,7 @@ public class MainView extends JFrame{
     private void createAboutDialog(){
 
         aboutDialog.setTitle("About");
-        aboutDialog.setSize(800, 600);
+        aboutDialog.setSize(900, 550);
         aboutDialog.setResizable(false);
         aboutDialog.setModal(true);
         
@@ -376,20 +382,33 @@ public class MainView extends JFrame{
         c.gridy = 2;
         aboutDialogPanel.add(piecesCreditsPanel, c);        
         
-        canCreditsPanel.add(new JLabel("<html>Trash can icon (board editor)<br>"
-                + "<br> https://commons.wikimedia.org/wiki/File:Trash_Can.svg "
+        ImageIcon trashCanImage;
+        ImageIcon rotateIcon;
+        /* load icons (trash can and rotate board) */
+        try {
+            trashCanImage = new ImageIcon(ImageIO.read(getClass().
+                                    getResource("/images/Trash_can.png")));
+            rotateIcon = new ImageIcon(ImageIO.read(getClass().
+                                    getResource("/images/Rotate_icon.png")));
+
+            canCreditsPanel.add(new JLabel(trashCanImage));
+            canCreditsPanel.add(new JLabel("<html>"
+                + "https://commons.wikimedia.org/wiki/File:Trash_Can.svg "
                 + "<br>by Andy<br><br>Shared from the Open Clip Art Library "
                 + "which released it into public domain<br>https://openclipart."
                 + "org/</html>"));
-        c.gridy = 3;
-        aboutDialogPanel.add(canCreditsPanel, c); 
+            c.gridy = 3;
+            aboutDialogPanel.add(canCreditsPanel, c); 
         
-        rotateCreditsPanel.add(new JLabel("<html>Rotate icon (board editor)<br>"
-                + "<br> https://commons.wikimedia.org/wiki/File:Rotate2_svg.svg"
+            rotateCreditsPanel.add(new JLabel(rotateIcon));
+            rotateCreditsPanel.add(new JLabel("<html>"
+                + "https://commons.wikimedia.org/wiki/File:Rotate2_svg.svg"
                 + " <br>by BenjStaw<br><br>Shared under CCO 1.0 Universal Publi"
                 + "c Domain Dedication</html>"));
-        c.gridy = 4;
-        aboutDialogPanel.add(rotateCreditsPanel, c);         
+            c.gridy = 4;
+            aboutDialogPanel.add(rotateCreditsPanel, c);         
+        } catch (IOException ex) {
+        }           
         
         JLabel codeCreditsHead = new JLabel("Code credits");
         c.gridy = 1;

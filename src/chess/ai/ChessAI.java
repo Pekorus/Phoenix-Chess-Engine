@@ -868,8 +868,10 @@ public class ChessAI implements Player {
 
     /**
      * Builds a string with the current state of the AI analytics.
+     * 
+     * @param depth     analytics for this label calculated to this depth
      */
-    private String builtCurrentAnalytics() {
+    private String builtCurrentAnalytics(int depth) {
         
         String label = "";
         label = label.concat("Search duration: " + 
@@ -879,11 +881,11 @@ public class ChessAI implements Player {
         int gameValue = storedBestValue;
         if (gameValue > 10000) {
             label = label.concat("\nGame value: " + ownColor 
-               + " mates in " + (SEARCH_DEPTH - gameValue + MATEVALUE + 1) / 2);
+               + " mates in " + (depth - gameValue + MATEVALUE + 1) / 2);
         } else if (gameValue < -10000) {
             label = label.concat("\nGame value: " 
                     + ownColor.getInverse() + " mates in " 
-                                 + (SEARCH_DEPTH + gameValue + MATEVALUE) / 2);
+                                 + (depth + gameValue + MATEVALUE) / 2);
         } else {
             label = label.concat("\nGame value: " 
                                     + String.format("%.2f", 0.01 * gameValue));
@@ -899,7 +901,7 @@ public class ChessAI implements Player {
         label = label.concat("\nIterated to depth: " 
                                                              + iterationDepth);
         label = label.concat("\nMaximum Depth: " 
-                                    + (Math.abs(reachedDepth) + SEARCH_DEPTH));
+                                    + (Math.abs(reachedDepth) + depth));
         label = label.concat("\nNodes per second: "
                 +(visitedNodes+visitedQuietNodes)/(moveDuration+1) +"k");
         label = label.concat("\nEvaluated Positions per second: "+
@@ -1164,9 +1166,10 @@ public class ChessAI implements Player {
                 storedBestValue = transTable.getEntryByZobrisKey(
                                                board.getHashValue()).getValue();                                 
                 storedBestVariation = bestVariation();
+                moveDuration = Duration.between(start, Instant.now()).toMillis();            
+                currentLabel = builtCurrentAnalytics(depth);                                       
             }
-            moveDuration = Duration.between(start, Instant.now()).toMillis();            
-            currentLabel = builtCurrentAnalytics(); 
+ 
             
             /* increase depth by 1 for next search */
             depth += 1;
@@ -1205,7 +1208,7 @@ public class ChessAI implements Player {
                 storedBestVariation = bestVariation();
             }
             moveDuration = Duration.between(start, Instant.now()).toMillis();            
-            currentLabel = builtCurrentAnalytics(); 
+            currentLabel = builtCurrentAnalytics(SEARCH_DEPTH); 
             
             /* If the ratio visited nodes in quiescence search to visited 
             regular nodes is larger than 3 on any of the last 2 plies, a quiet 

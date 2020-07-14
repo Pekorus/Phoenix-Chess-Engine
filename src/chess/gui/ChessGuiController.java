@@ -57,6 +57,7 @@ public class ChessGuiController implements ActionListener, Player {
     public ChessGuiController(GameController gameControl, ChessGame game,
             ChessColor ownColor, ChessOptions options, String playerName, 
             String opponentName) {
+        
         this.gameControl = gameControl;
         this.game = game;
         this.ownColor = ownColor;
@@ -179,11 +180,11 @@ public class ChessGuiController implements ActionListener, Player {
         /* type determined, determine if move is a pawn promotion or not */
         if (piece1.getType() == PAWN && piece1.isColor()==ownColor
                     && pawnPromotionValid()) {
-                view.setPromoteDialogColor(piece1.isColor());
-                view.promoteDialog.setLocationRelativeTo(view);
-                view.promoteDialog.setVisible(true);
-                nextMove = new Move(PAWN, coordFrom, coordTo,
-                        type, nextPromotion);
+                
+            view.setPromoteDialogColor(piece1.isColor());
+            view.promoteDialog.setLocationRelativeTo(view);
+            view.promoteDialog.setVisible(true);
+            nextMove = new Move(PAWN, coordFrom, coordTo, type, nextPromotion);
         }
         /* not a pawn promotion */
         else nextMove = new Move(piece1.getType(), coordFrom, coordTo, type);
@@ -192,7 +193,8 @@ public class ChessGuiController implements ActionListener, Player {
 
     @Override
     public void update(Move move) {
-          if(move!=null)  highlightMove(move);       
+          
+        if(move!=null)  highlightMove(move);       
         view.update(game);        
     }
 

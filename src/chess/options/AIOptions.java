@@ -32,7 +32,7 @@ public class AIOptions {
     private final int  DEFAULT_TRANSPOSITION_TABLE_SIZE = 20000000;   
     private final boolean DEFAULT_PETERMODE = false; 
     private final long DEFAULT_TURN_TIME = 6000;
-    private final CalcType DEFAULT_CALC_TYPE = TIME;
+    private final CalcType DEFAULT_CALC_TYPE = DEPTH;
     
     /**
      * Class constructor. Options will be initialized with default values.

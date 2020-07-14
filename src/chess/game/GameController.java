@@ -72,14 +72,16 @@ public class GameController {
     }
             
     public void nextMove(ChessColor color, Move move){        
-        if(checkmate || draw) return;
-        if(color != game.getPlayersTurn()) return;
+        
+        if(checkmate || draw || color != game.getPlayersTurn()) return;
+        /* executeMove validates legality of move with mode "true" */
         if(game.executeMove(move, true)){
+            
             checkmate = game.isCheckmate();
             draw = game.setDraw();
             notifyObservers(move);
-            if(checkmate || draw) return;
-            demandNextMove(game.getPlayersTurn());        
+            if(!(checkmate || draw)) demandNextMove(game.getPlayersTurn());
+     
         }
         else demandNextMove(game.getPlayersTurn());
     } 
