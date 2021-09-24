@@ -41,7 +41,7 @@ import javax.swing.border.Border;
  */
 public class MainView extends JFrame{
     
-    private static final String VERSION = "1.01";
+    private static final String VERSION = "1.021";
     
     /* fields for main frame */
     private final MainController mainControl;
