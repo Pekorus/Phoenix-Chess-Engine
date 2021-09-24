@@ -80,9 +80,9 @@ public class BoardEditorView extends JFrame {
         /* load icons (trash can and rotate board) */
         try {
             trashCanImage = ImageIO.read(getClass().
-                                    getResource("/images/Trash_can.png"));
+                                    getResource("/Trash_can.png"));
             rotateIcon = new ImageIcon(ImageIO.read(getClass().
-                                    getResource("/images/Rotate_icon.png")));
+                                    getResource("/Rotate_icon.png")));
         } catch (IOException ex) {
         }   
         eraseButton = new JButton(new ImageIcon(trashCanImage));
@@ -90,7 +90,7 @@ public class BoardEditorView extends JFrame {
         
         try {
             trashCanImage = ImageIO.read(getClass().
-                                    getResource("/images/Trash_can.png"));
+                                    getResource("/Trash_can.png"));
         } catch (IOException ex) {
         }   
         eraseButton = new JButton(new ImageIcon(trashCanImage));        
