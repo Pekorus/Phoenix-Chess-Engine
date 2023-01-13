@@ -2,6 +2,7 @@ package chess.ai;
 
 import chess.move.Move;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -19,17 +20,9 @@ public class ChessTreeNode{
     * @param move   move represented by this node
     */
     public ChessTreeNode(Move move) {
-        this.move = move;
-        this.children = new ArrayList<>();
-    }
 
-    /**
-     * Gets the number of children of this node.
-     * 
-     * @return  number of children
-     */
-    public int getChildCount(){
-        return children.size();
+        this.move = move;
+        children = new ArrayList<>(0);
     }
     
     /**
@@ -40,10 +33,9 @@ public class ChessTreeNode{
      * @return      node that represents given move
      */
     public ChessTreeNode getSubTreeByMove(Move move){
+
         for(ChessTreeNode child : children){
-            if(child.move.equals(move)){
-                return child;
-            }
+            if(child.move.equals(move)) return child;
         }
         return null;
     }
@@ -51,10 +43,23 @@ public class ChessTreeNode{
     /**
      * Adds given node to this node as a child node. 
      * 
-     * @param node  node to be added as child
+     * @param move  move to be added as child node
      */
-    public void addChildNode(ChessTreeNode node){
-        this.children.add(node);
+    public void addChildNodes(Move move){
+
+        children.add(new ChessTreeNode(move));
+    }
+
+    /**
+     * Adds given moves to this node as children.
+     *
+     * @param moveList list of moves to be added as child
+     */
+    public void addChildNodes(List<Move> moveList){
+
+        for (Move move : moveList) {
+            children.add(new ChessTreeNode(move));
+        }
     }
 
     /**
@@ -63,26 +68,23 @@ public class ChessTreeNode{
      * @param move  specifies the node that will de sorted to front
      */
     public void moveNodeToFront(Move move){
-        if(move != null){
-            for(ChessTreeNode child : children){
-                if(move.equals(child.getMove())){
-                    children.remove(child);
-                    children.add(0, child);
-                    break;
-                }
+
+        for(ChessTreeNode child : children){
+            if(child.getMove().equals(move)){
+                children.remove(child);
+                children.add(0, child);
+                break;
             }
         }
     }
-    
-    public void removeChildNode(ChessTreeNode node){
-        children.remove(node);
-    }
 
     public Move getMove() {
+
         return move;
     }
 
     public ArrayList<ChessTreeNode> getChildren() {
+
         return children;
     }
 
@@ -91,10 +93,8 @@ public class ChessTreeNode{
     }    
     
     boolean hasChildren() {
-       if(children==null) return false;
-       if(children.isEmpty()) return false;
-       return true;
-    } 
+       return children!=null && !children.isEmpty();
+    }
 
     @Override
     public String toString() {

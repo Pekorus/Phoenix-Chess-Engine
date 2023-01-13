@@ -12,16 +12,16 @@ import java.util.Stack;
 
 /**
  *
- * Provides a chess board to execute/unexecute moves on. The legality of moves 
- * is not verified. The zobirs hash value of the position is updated everytime
+ * Provides a chess board to execute/unexecute moves on. The legality of moves
+ * is not verified. The Zobris hash value of the position is updated everytime
  * a move is executed/unexecuted, therefore hashing is relatively cheap.
  */
 public class Board {
     
     private final Piece[][] board;
-    private final ArrayList<Piece> blackPieces= new ArrayList<>();
-    private final ArrayList<Piece> whitePieces= new ArrayList<>();    
-    /* stack of all captured pieces (used for unexecution of moves) */
+    private final ArrayList<Piece> blackPieces= new ArrayList<>(16);
+    private final ArrayList<Piece> whitePieces= new ArrayList<>(16);
+    /* stack of all captured pieces (used for unmaking of moves) */
     private final Stack<Piece> takenPieces= new Stack<>();
     /* pawn structures of both colors. Provides a fast way to check the pawn
         structure for an AI.
@@ -42,11 +42,12 @@ public class Board {
      * Class constructor for a regular chess starting position.
      */
     public Board() {
-        this.board = new Piece[8][8];
+
+        board = new Piece[8][8];
         createStartPosition();                    
         createPieceFields();      
-        initializeZobrisValues(1);
-        hashValue = this.zobrisHashBoard();
+        initializeZobrisValues(1235674);
+        hashValue = zobrisHashBoard();
     }
 
     /**
@@ -62,202 +63,196 @@ public class Board {
     public Board(Piece[][] pieceArray, ChessColor colorToMove, 
                                                     boolean[] castleRights) {
         
-        this.board = copyPieceArray(pieceArray);
+        board = copyPieceArray(pieceArray);
         createPieceFields();         
         verifyAndSetCastleRights(castleRights);
         initializeZobrisValues(1);
-        hashValue = this.zobrisHashBoard();
+        hashValue = zobrisHashBoard();
         if(colorToMove ==BLACK) hashValue ^= zobrisSideToMove;
     }
     
     public void executeMove(Move move){
+
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
-        Piece piece = getPieceOnCoord(coordFrom);        
-        
+
+        Piece piece = getPieceOnCoord(coordFrom);
+        updatePieceHashValue(piece, coordFrom);
+
         switch(move.getMoveType()){
-            
+
             case NORMAL:
-            updatePieceHashValue(piece, coordFrom);                        
-            move(piece, coordFrom, coordTo);
-            if(move.getPromoteTo()!=null){
-                piece.setPiecetype(move.getPromoteTo());
-                decreasePawn(piece.isColor(), coordTo.getY());
-            }
-            updatePieceHashValue(piece, coordTo);
+
+                move(piece, coordFrom, coordTo);
+                /* promotion */
+                if(move.getPromoteTo()!=null){
+                    piece.setPiecetype(move.getPromoteTo());
+                    decreasePawn(piece.getColor(), coordFrom.getY());
+                }
+
             break;
-            
-            case TAKE:                    
-            updatePieceHashValue(piece, coordFrom);
-            Piece optPiece = getPieceOnCoord(coordTo);
-            move(piece, coordFrom, coordTo);
-            optPiece.setCoord(null);            
-            takenPieces.push(optPiece);
-            /* remove taken piece from piece list */
-            removePieceFromList(optPiece);            
-           
-            /* promotion */
-            if(move.getPromoteTo()!=null){
-                piece.setPiecetype(move.getPromoteTo());
-                decreasePawn(piece.isColor(), coordTo.getY());
-            }            
-            
-            updatePieceHashValue(piece, coordTo);            
-            updatePieceHashValue(optPiece, coordTo);           
-           
-            /* update pawn structure */
-            if(optPiece.getType()==PAWN){
-                decreasePawn(optPiece.isColor(), coordTo.getY());
-            }    
-            if(piece.getType()==PAWN){
-                decreasePawn(piece.isColor(), coordFrom.getY());
-                increasePawn(piece.isColor(), coordTo.getY());
-            }
+
+            case TAKE:
+
+                Piece optPiece = getPieceOnCoord(coordTo);
+                takenPieces.push(optPiece);
+                /* remove taken piece from piece list */
+                removePieceFromList(optPiece);
+                updatePieceHashValue(optPiece, coordTo);
+
+                move(piece, coordFrom, coordTo);
+
+                /* promotion */
+                if(move.getPromoteTo()!=null){
+                    piece.setPiecetype(move.getPromoteTo());
+                    decreasePawn(piece.getColor(), coordFrom.getY());
+                }
+
+                /* update pawn structure */
+                if(optPiece.getType()==PAWN){
+                    decreasePawn(optPiece.getColor(), coordTo.getY());
+                }
+                if(piece.getType()==PAWN){
+                    decreasePawn(piece.getColor(), coordFrom.getY());
+                    increasePawn(piece.getColor(), coordTo.getY());
+                }
             break;
-            
-            case ENPASSANT:          
-            move(piece, coordFrom, coordTo);            
-            /* clear pawn that is taken by en passant */
-            Coordinate optCoord = coordTo.takenCoordEP(piece.isColor());
-            optPiece = getPieceOnCoord(optCoord); 
-            this.clearField(optCoord);            
-            optPiece.setCoord(null);          
-            takenPieces.push(optPiece);            
-            removePieceFromList(optPiece);
-            
-            /* updateHashValue */
-            updatePieceHashValue(piece, coordFrom);
-            updatePieceHashValue(piece, coordTo);            
-            updatePieceHashValue(optPiece, optCoord); 
-            
-            /* update pawn structure */
-            decreasePawn(piece.isColor(), coordFrom.getY());
-            increasePawn(piece.isColor(), coordTo.getY());            
-            decreasePawn(piece.isColor().getInverse(), coordTo.getY());
+
+            case ENPASSANT:
+
+                move(piece, coordFrom, coordTo);
+                ChessColor pawnColor = piece.getColor();
+
+                /* clear pawn that is taken by en passant */
+                Coordinate optCoord = coordTo.takenCoordEP(pawnColor);
+                Piece optPawn = getPieceOnCoord(optCoord);
+                takenPieces.push(optPawn);
+                removePieceFromList(optPawn);
+                clearField(optCoord);
+                updatePieceHashValue(optPawn, optCoord);
+
+                /* update pawn structure */
+                decreasePawn(pawnColor, coordFrom.getY());
+                increasePawn(pawnColor, coordTo.getY());
+                decreasePawn(optPawn.getColor(), coordTo.getY());
             break;
-            
+
             case CASTLE:
-            /* move king */
-            move(piece, coordFrom, coordTo);                      
-            /* move rook */ 
-            Coordinate rookFrom = coordTo.getRookCastleCoord();
-            Piece rook = this.getPieceOnCoord(rookFrom);
-            Coordinate rookTo = coordFrom.
-                            getCoordInDir(coordFrom.straightLineDir(coordTo));
-            move(rook, rookFrom, rookTo);
-            rook.increaseMoveCounter();
-            
-            updatePieceHashValue(piece, coordFrom);
-            updatePieceHashValue(piece, coordTo);            
-            updatePieceHashValue(rook, rookFrom); 
-            updatePieceHashValue(rook, rookTo);            
-            break;            
+                /* move king */
+                move(piece, coordFrom, coordTo);
+                /* move rook */
+                Coordinate[] rookCoords = coordTo.getRookCastleCoords();
+                Piece rook = getPieceOnCoord(rookCoords[0]);
+                move(rook, rookCoords[0], rookCoords[1]);
+                rook.increaseMoveCounter();
+
+                updatePieceHashValue(rook, rookCoords[0]);
+                updatePieceHashValue(rook, rookCoords[1]);
+            break;
         }
+
+        updatePieceHashValue(piece, coordTo);
         piece.increaseMoveCounter();
         hashValue ^= zobrisSideToMove;
     }
 
     private void clearField(Coordinate coord) {
-        this.board[coord.getX()][coord.getY()] = null;
+
+        board[coord.getX()][coord.getY()] = null;
     }
 
     private void setField(Piece piece, Coordinate coord) {
-        this.board[coord.getX()][coord.getY()] = piece;
+        board[coord.getX()][coord.getY()] = piece;
     }
 
     public Piece getPieceOnCoord(Coordinate coord) {
         if(coord==null) return null;
-        return this.board[coord.getX()][coord.getY()];
+        return board[coord.getX()][coord.getY()];
     }
 
     public boolean isOccupied(Coordinate coordTo) {
-        return this.board[coordTo.getX()][coordTo.getY()]!= null;       
+        return board[coordTo.getX()][coordTo.getY()]!= null;
     }
 
     public void unexecuteMove(Move move) {
+
         Coordinate coordFrom = move.getCoordFrom();
         Coordinate coordTo = move.getCoordTo();
+
         Piece piece = getPieceOnCoord(coordTo);
-        
+        updatePieceHashValue(piece, coordTo);
+        /* reverse move */
+        move(piece, coordTo, coordFrom);
+
         switch(move.getMoveType()){
             
             case NORMAL:
-            updatePieceHashValue(piece, coordTo);
-            /* reverse move */
-            move(piece, coordTo, coordFrom);
+
             /* promotion */
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(PAWN);
-                increasePawn(piece.isColor(), coordTo.getY());
+                increasePawn(piece.getColor(), coordFrom.getY());
             }
-            updatePieceHashValue(piece, coordFrom);
+
             break;
             
             case TAKE:           
-            updatePieceHashValue(piece, coordTo);            
-            move(piece, coordTo, coordFrom);
+
             /* reset taken piece */
             Piece takenPiece = takenPieces.pop();
-            this.setField(takenPiece, coordTo);            
-            takenPiece.setCoord(coordTo);            
+            setField(takenPiece, coordTo);
+            updatePieceHashValue(takenPiece, coordTo);
+
             /* insert taken piece back to list */
-            addPieceToList(takenPiece);           
+            addPieceToList(takenPiece);
+
             /* promotion */
             if(move.getPromoteTo()!=null){
                 piece.setPiecetype(PAWN);              
-                increasePawn(piece.isColor(), coordTo.getY());
+                increasePawn(piece.getColor(), coordFrom.getY());
             }
 
-            updatePieceHashValue(piece, coordFrom);
-            updatePieceHashValue(takenPiece, coordTo);
-            
+            /* update pawn structure */
             if(takenPiece.getType()==PAWN){
-                increasePawn(takenPiece.isColor(), coordTo.getY());
+                increasePawn(takenPiece.getColor(), coordTo.getY());
             }
             if(piece.getType()==PAWN){
-                increasePawn(piece.isColor(), coordFrom.getY());
-                decreasePawn(piece.isColor(), coordTo.getY());
+                increasePawn(piece.getColor(), coordFrom.getY());
+                decreasePawn(piece.getColor(), coordTo.getY());
             }
             break;
             
             case ENPASSANT: 
-            move(piece, coordTo, coordFrom);    
-            ChessColor pawnColor = piece.isColor();
+
             /* reset taken pawn */
-            Coordinate optCoord = coordTo.takenCoordEP(pawnColor);
             Piece takenPawn = takenPieces.pop();
-            this.setField(takenPawn, optCoord);            
-            takenPawn.setCoord(optCoord);                       
+            setField(takenPawn, takenPawn.getCoord());
             addPieceToList(takenPawn);
-            
-            updatePieceHashValue(piece, coordTo);
-            updatePieceHashValue(piece, coordFrom);            
-            updatePieceHashValue(takenPawn, optCoord);             
-            
+            updatePieceHashValue(takenPawn, takenPawn.getCoord());
+
+            ChessColor pawnColor = piece.getColor();
+
             decreasePawn(pawnColor, coordTo.getY());
             increasePawn(pawnColor, coordFrom.getY());            
             increasePawn(pawnColor.getInverse(), coordTo.getY());            
+
             break;
             
             case CASTLE:
-            /* move king */
-            move(piece, coordTo, coordFrom);    
-            
+
             /* move rook */
-            Coordinate rookFrom = coordTo.getRookCastleCoord();
-            Coordinate rookTo = coordFrom.
-                            getCoordInDir(coordFrom.straightLineDir(coordTo));            
-            Piece rook = this.getPieceOnCoord(rookTo);
+            Coordinate[] rookCoords = coordTo.getRookCastleCoords();
+            Piece rook = getPieceOnCoord(rookCoords[1]);
             
-            move(rook, rookTo, rookFrom);  
+            move(rook, rookCoords[1], rookCoords[0]);
             rook.decreaseMoveCounter();
-            
-            updatePieceHashValue(piece, coordTo);
-            updatePieceHashValue(piece, coordFrom);            
-            updatePieceHashValue(rook, rookTo); 
-            updatePieceHashValue(rook, rookFrom);              
+
+            updatePieceHashValue(rook, rookCoords[1]);
+            updatePieceHashValue(rook, rookCoords[0]);
             break;           
         }
+
+        updatePieceHashValue(piece, coordFrom);
         piece.decreaseMoveCounter();
         hashValue ^= zobrisSideToMove;
     }     
@@ -298,20 +293,22 @@ public class Board {
     }
 
     private void move(Piece piece, Coordinate coordFrom, Coordinate coordTo) {
-            this.clearField(coordFrom);
-            /* set piece to new field */
-            this.setField(piece, coordTo);
-            piece.setCoord(coordTo);  
+
+        clearField(coordFrom);
+        /* set piece to new field */
+        setField(piece, coordTo);
+        piece.setCoord(coordTo);
+
     }
 
     public Piece getKing(ChessColor color) {
         if(color==WHITE) return whiteKing;
-        return blackKing;
+        else return blackKing;
     }    
 
     public Coordinate getKingCoord(ChessColor color){
         if(color==WHITE) return whiteKing.getCoord();
-        return blackKing.getCoord();
+        else return blackKing.getCoord();
     }
     
     public Coordinate getWhiteKingCoord(){
@@ -331,7 +328,7 @@ public class Board {
             for(int j=0; j<8; j++){
                 Piece auxPiece = board[i][j];
                 if(auxPiece!=null){
-                    if(auxPiece.isColor()==WHITE){
+                    if(auxPiece.getColor()==WHITE){
                         if(auxPiece.getType()==KING) whiteKing = auxPiece;
                         if(auxPiece.getType()==PAWN) pawnStructWhite[j]++;
                         whitePieces.add(auxPiece);
@@ -347,12 +344,12 @@ public class Board {
     }
 
     private void removePieceFromList(Piece piece) {
-        if(piece.isColor()==WHITE) whitePieces.remove(piece);
+        if(piece.getColor()==WHITE) whitePieces.remove(piece);
         else blackPieces.remove(piece);
     }
 
     private void addPieceToList(Piece optPiece) {
-        if(optPiece.isColor()==WHITE) whitePieces.add(optPiece);
+        if(optPiece.getColor()==WHITE) whitePieces.add(optPiece);
         else blackPieces.add(optPiece);
     }
 
@@ -369,11 +366,6 @@ public class Board {
     private void increasePawn(ChessColor color, int y) {
         if(color==WHITE) pawnStructWhite[y]++;
         else pawnStructBlack[y]++;
-    }
-
-    public int[] getPawnStruct(ChessColor color) {
-        if(color==WHITE) return pawnStructWhite;
-        else return pawnStructBlack;
     }
 
     /**
@@ -426,14 +418,14 @@ public class Board {
         
         /*matrix represents every combination of a chess square (8x8) and 
         every piece with an index (0-11) specified in method "pieceIndex" */
-        Random randomLong = new Random(12345674);
+        Random randomLong = new Random(seed);
         zobrisMatrix = new long[8][8][12];
         //randomLong.setSeed(seed);
         for(int i=0; i<8; i++){
            for(int j=0; j<8; j++){ 
                for(int k=0; k<12; k++){
                    zobrisMatrix[i][j][k] = randomLong.nextLong();
-               }    
+               }
            }
         }
         /* value represents the side to move */
@@ -465,50 +457,26 @@ public class Board {
      */
     private int pieceIndex(Piece piece) {
         
-        int index = -1;
-        if(piece.isColor()==WHITE){
-            switch(piece.getType()){
-                case KING:
-                   index = 0;
-                   break; 
-                case QUEEN:
-                    index = 1;
-                    break;
-                case BISHOP:
-                    index = 2;
-                    break;
-                case KNIGHT:
-                    index = 3;
-                    break;
-                case ROOK:
-                    index = 4;
-                    break;
-                case PAWN:
-                    index = 5;
-                    break;
-            }
+        int index;
+        if(piece.getColor()==WHITE){
+            index = switch (piece.getType()) {
+                case KING -> 0;
+                case QUEEN -> 1;
+                case BISHOP -> 2;
+                case KNIGHT -> 3;
+                case ROOK -> 4;
+                case PAWN -> 5;
+            };
         }
         else{
-            switch(piece.getType()){
-                case KING:
-                   index = 6;
-                   break; 
-                case QUEEN:
-                    index = 7;
-                    break;
-                case BISHOP:
-                    index = 8;
-                    break;
-                case KNIGHT:
-                    index = 9;
-                    break;
-                case ROOK:
-                    index = 10;
-                    break;
-                case PAWN:
-                    index = 11;
-                    break;
-            }            
+            index = switch (piece.getType()) {
+                case KING -> 6;
+                case QUEEN -> 7;
+                case BISHOP -> 8;
+                case KNIGHT -> 9;
+                case ROOK -> 10;
+                case PAWN -> 11;
+            };
         }
         return index;
     }

@@ -9,17 +9,12 @@ public enum DrawType {
 
     @Override
     public String toString() {
-        switch(this){
-            case TECHNICAL:
-                return "technical draw";
-            case STALEMATE:
-                return "stalemate";
-            case FIFTYTURNS:
-                return "Fifty-move rule";
-            case THREEFOLD:
-                return "threefold repetition";
-        }       
-        return "";
+        return switch (this) {
+            case TECHNICAL -> "technical draw";
+            case STALEMATE -> "stalemate";
+            case FIFTYTURNS -> "Fifty-move rule";
+            case THREEFOLD -> "threefold repetition";
+        };
     }
 
 

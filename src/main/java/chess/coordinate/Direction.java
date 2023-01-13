@@ -15,7 +15,7 @@ public enum Direction {
     private final int offsetX;
     private final int offsetY;
     
-    private Direction(int offsetX, int offsetY) {
+    Direction(int offsetX, int offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
     }
@@ -28,7 +28,7 @@ public enum Direction {
      */
     public static List<Direction> createBishopList(){
         
-        List<Direction> bishopList = new ArrayList<>();    
+        List<Direction> bishopList = new ArrayList<>(4);
         bishopList.add(Direction.NE);
         bishopList.add(Direction.NW);
         bishopList.add(Direction.SE);
@@ -45,7 +45,7 @@ public enum Direction {
      */
     public static List<Direction> createRookList(){
         
-        List<Direction> rookList = new ArrayList<>();    
+        List<Direction> rookList = new ArrayList<>(4);
         rookList.add(Direction.N);
         rookList.add(Direction.E);
         rookList.add(Direction.S);
@@ -60,17 +60,16 @@ public enum Direction {
      * @return  opposite direction
      */
     public Direction oppositeDir(){
-        switch(this){
-            case N:  return S;
-            case NE: return SW;
-            case E:  return W;
-            case SE: return NW;
-            case S:  return N;
-            case SW: return NE;
-            case W:  return E;
-            case NW: return SE;
-        }
-    return null;
+        return switch (this) {
+            case N -> S;
+            case NE -> SW;
+            case E -> W;
+            case SE -> NW;
+            case S -> N;
+            case SW -> NE;
+            case W -> E;
+            case NW -> SE;
+        };
     }
     
     public int getOffsetX() {

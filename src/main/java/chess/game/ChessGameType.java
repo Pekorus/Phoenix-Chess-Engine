@@ -6,5 +6,5 @@ package chess.game;
  * or AI against AI)
  */
 public enum ChessGameType {
-    WHITEPLAYER, BLACKPLAYER, TWOPLAYER, AIVSAI;
+    WHITEPLAYER, BLACKPLAYER, TWOPLAYER, AIVSAI
 }

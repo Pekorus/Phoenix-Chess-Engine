@@ -14,7 +14,7 @@ public interface Observer {
      * @param move  the move that was played last in this game, is null at start
      *              of game
      */
-    public void update(Move move);
+    void update(Move move);
 
     /**
      * Game controller notifies players about the end of the game with this 
@@ -23,6 +23,6 @@ public interface Observer {
      * 
      * @param result    result of the game (white/ black won, draw or unfinished
      */
-    public void endGame(ChessGameEndType result);
+    void endGame(ChessGameEndType result);
     
 }

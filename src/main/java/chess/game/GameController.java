@@ -39,7 +39,7 @@ public class GameController {
      * 
      * @param gameType      gameType
      * @param options       options to control gui
-     * @param aiOptions     options to control ai player behaviour
+     * @param aiOptions     options to control AI player behaviour
      * @param observer      observer to be added to the game
      */
     public GameController(ChessGameType gameType, ChessOptions options,
@@ -59,7 +59,7 @@ public class GameController {
      * 
      * @param gameType      gameType
      * @param options       options to control gui
-     * @param aiOptions     options to control ai player behaviour
+     * @param aiOptions     options to control AI player behaviour
      * @param pieceArray    board position represented by piece array
      * @param colorToMove   color to move first
      * @param castleRights  castling rights in order 0-0 white, 0-0-0 white,
@@ -141,48 +141,38 @@ public class GameController {
                 AIOptions aiOptions, Piece[][] pieceArray, 
                 ChessColor colorToMove, boolean[] castleRights,
                 boolean startingPos) {
-        
-        switch(gameType){            
-            
-            case WHITEPLAYER:
-                               
-                if(startingPos)
+
+        switch (gameType) {
+            case WHITEPLAYER -> {
+                if (startingPos)
                     blackPlayer = new ChessAI(this, BLACK, aiOptions);
                 else
-                    blackPlayer = new ChessAI(this, BLACK, aiOptions, 
+                    blackPlayer = new ChessAI(this, BLACK, aiOptions,
                             pieceArray, colorToMove, castleRights);
-                
                 whitePlayer = new ChessGuiController(this, game, WHITE, options,
-                        "Human", blackPlayer.getPlayerName(), false);                 
-                
+                        "Human", blackPlayer.getPlayerName(), false);
                 humanPlayer = WHITE;
                 options.setCreatorColor(BLACK);
-                break;
-        
-            case BLACKPLAYER:
-                              
-                if(startingPos)
+            }
+            case BLACKPLAYER -> {
+                if (startingPos)
                     whitePlayer = new ChessAI(this, WHITE, aiOptions);
                 else
-                    whitePlayer = new ChessAI(this, WHITE, aiOptions, 
+                    whitePlayer = new ChessAI(this, WHITE, aiOptions,
                             pieceArray, colorToMove, castleRights);
-
                 blackPlayer = new ChessGuiController(this, game, BLACK, options,
-                        whitePlayer.getPlayerName(), "Human", false);                                 
-                
+                        whitePlayer.getPlayerName(), "Human", false);
                 humanPlayer = BLACK;
                 options.setCreatorColor(WHITE);
-                break;
-        
-            case AIVSAI:
-                
-                whitePlayer = new TestAI(this, WHITE, aiOptions);                
-                blackPlayer = new ChessAI(this, BLACK, aiOptions);
-               
-                humanPlayer = null;    
+            }
+            case AIVSAI -> {
+                whitePlayer = new ChessAI(this, WHITE, aiOptions);
+                blackPlayer = new TestAI(this, BLACK, aiOptions);
+                humanPlayer = null;
                 observers.add(new ChessGuiController(this, game, WHITE, options,
-                    whitePlayer.getPlayerName(), blackPlayer.getPlayerName(),
+                        whitePlayer.getPlayerName(), blackPlayer.getPlayerName(),
                         true));
+            }
         }
     }
     

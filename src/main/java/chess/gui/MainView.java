@@ -36,12 +36,12 @@ import javax.swing.border.Border;
 
 /**
  *
- * Provides the gui of a chess programm. Needs MainController class (logic part)
+ * Provides the gui of a chess program. Needs MainController class (logic part)
  * to function.
  */
 public class MainView extends JFrame{
     
-    private static final String VERSION = "1.021";
+    private static final String VERSION = "1.03";
     
     /* fields for main frame */
     private final MainController mainControl;
@@ -104,7 +104,7 @@ public class MainView extends JFrame{
             aiBattle.addActionListener(mainControl);
             gameMenu.add(aiBattle);
             
-            aiMatch = new JMenuItem("AI match");
+            aiMatch = new JMenuItem("AI match (Beta)");
             aiMatch.addActionListener(mainControl);
             gameMenu.add(aiMatch);
             
@@ -354,7 +354,7 @@ public class MainView extends JFrame{
     private void createAboutDialog(){
 
         aboutDialog.setTitle("About");
-        aboutDialog.setSize(900, 550);
+        aboutDialog.setSize(600, 550);
         aboutDialog.setResizable(false);
         aboutDialog.setModal(true);
         
@@ -416,21 +416,7 @@ public class MainView extends JFrame{
             c.gridy = 4;
             aboutDialogPanel.add(rotateCreditsPanel, c);         
         } catch (IOException ex) {
-        }           
-        
-        JLabel codeCreditsHead = new JLabel("Code credits");
-        c.gridy = 1;
-        c.gridx = 1;
-        c.insets = new Insets(0, 10, 10, 0);
-        aboutDialogPanel.add(codeCreditsHead, c);
-        
-        fastUtilsPanel.add(new JLabel("<html>Some classes of the fastutil "
-                + "library were used <br><br> http://fastutil.di.unimi.it/"
-                + "<br><br> Shared under the Apache License 2.0"
-                + "<br>http://www.apache.org/licenses/LICENSE-2.0.html"
-                + "</html>"));
-        c.gridy = 2;
-        aboutDialogPanel.add(fastUtilsPanel, c);
+        }
         
         aboutDialog.add(aboutDialogPanel);
     }

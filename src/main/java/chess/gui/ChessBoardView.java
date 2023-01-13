@@ -33,8 +33,8 @@ public class ChessBoardView extends JPanel{
     
     /* coordinate axes of chess board */
     private final JPanel downCoordAxis = new JPanel(new GridLayout(1,8));
-    private final JPanel rightCoordAxis = new JPanel(new GridLayout(8,1));;
-    
+    private final JPanel rightCoordAxis = new JPanel(new GridLayout(8,1));
+
     /* Options to control gui, including sprites for painting */
     ChessOptions options;
 
@@ -46,7 +46,7 @@ public class ChessBoardView extends JPanel{
     private final Color darkColor = Color.getHSBColor(0.52175f, 0.4f, 0.6f);
     
     /**
-     * Class contructor.
+     * Class constructor.
      * 
      * @param controller    controller that implements button logic
      * @param options       options to control gui
@@ -141,7 +141,7 @@ public class ChessBoardView extends JPanel{
                     buttonArray[a][b].setIcon(null);
                 } else {
                     ImageIcon sprite = options.getSprite(pieces[i][j].getType(),
-                            pieces[i][j].isColor());
+                            pieces[i][j].getColor());
                     buttonArray[a][b].setIcon(sprite);
                 }
             }

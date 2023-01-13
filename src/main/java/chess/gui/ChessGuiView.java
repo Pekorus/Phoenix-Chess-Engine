@@ -175,13 +175,13 @@ public class ChessGuiView extends JPanel{
         int newestMove = moveList.size() - 1;
         GridBagConstraints numberConstr, move1Constr, move2Constr;
 
-        if (newestMove == -1) ; 
+        if (newestMove == -1) return;
         /* number of moves in list is odd */
         else if (newestMove % 2 == 0) {
             JPanel triPanel = new JPanel(new GridBagLayout());
             triPanel.setMaximumSize(new Dimension(220, 20));
 
-            label1 = new JLabel(Integer.toString(newestMove / 2 + 1) + ".", 
+            label1 = new JLabel(newestMove / 2 + 1 + ".",
                                                         SwingConstants.CENTER);
 
             label1.setPreferredSize(new Dimension(40, 20));

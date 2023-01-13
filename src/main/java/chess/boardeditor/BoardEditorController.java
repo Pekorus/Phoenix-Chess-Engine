@@ -167,30 +167,28 @@ public class BoardEditorController implements ActionListener{
                 return false;
             
             /* increase move counter if pawn is not on initial position */
-            if(piece.isColor() == WHITE && piece.getCoord().getX()!= 1)
+            if(piece.getColor() == WHITE && piece.getCoord().getX()!= 1)
                 piece.increaseMoveCounter();
-            if(piece.isColor() == BLACK && piece.getCoord().getX()!= 6)
+            if(piece.getColor() == BLACK && piece.getCoord().getX()!= 6)
                 piece.increaseMoveCounter();
         }
     
         if(piece.getType() == KING){
             
-            if(piece.isColor() == WHITE){
+            if(piece.getColor() == WHITE){
                 /* only one king per side (same coord is allowed to allow 
                 removing of king with the same king selected by button */                
                 if(whiteKing!= null && !piece.getCoord().equals(whiteKing.
                         getCoord())) return false;          
-                /* no kings on adjacent squares */ 
-                if(blackKing != null && 
-                        piece.getCoord().distance(blackKing.getCoord())==1)
-                    return false;                   
+                /* no kings on adjacent squares */
+                return blackKing == null ||
+                        piece.getCoord().distance(blackKing.getCoord()) != 1;
             }
             else{
                 if(blackKing!= null && !piece.getCoord()
-                        .equals(blackKing.getCoord())) return false;          
-                if(whiteKing != null && 
-                        piece.getCoord().distance(whiteKing.getCoord())==1)
-                    return false;
+                        .equals(blackKing.getCoord())) return false;
+                return whiteKing == null ||
+                        piece.getCoord().distance(whiteKing.getCoord()) != 1;
             }                       
         }        
         return true;
@@ -201,7 +199,7 @@ public class BoardEditorController implements ActionListener{
         Piece oldPiece = pieceArray[x][y];
 
         if (piece.getType() == KING) {
-            if (piece.isColor() == WHITE) {
+            if (piece.getColor() == WHITE) {
                 whiteKing = piece;
                 whiteKingCounter++;
             } else {
@@ -213,7 +211,7 @@ public class BoardEditorController implements ActionListener{
         if (oldPiece != null) {
             /* restore fields if king is deleted */
             if (oldPiece.getType() == KING) {
-                if (oldPiece.isColor() == WHITE) {
+                if (oldPiece.getColor() == WHITE) {
                     whiteKingCounter--;
                     whiteKing = null;
                 } else {
@@ -224,12 +222,12 @@ public class BoardEditorController implements ActionListener{
 
             /* if the same piece is selected, remove the piece from the board */
             if (piece.getType() == oldPiece.getType()
-                    && piece.isColor() == oldPiece.isColor()) {
+                    && piece.getColor() == oldPiece.getColor()) {
                 /* if king is replaced, another correction is needed (until this
                     point king counter was added and then subtracted by 1
                 */
                 if(piece.getType() == KING){
-                    if(piece.isColor() == WHITE) whiteKingCounter--;
+                    if(piece.getColor() == WHITE) whiteKingCounter--;
                     else blackKingCounter--;
                 }
                 

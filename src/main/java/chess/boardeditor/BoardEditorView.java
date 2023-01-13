@@ -6,7 +6,6 @@ import chess.gui.ChessBoardView;
 import chess.options.ChessOptions;
 import chess.gui.MainView;
 import static chess.gui.MainView.dialogButton;
-import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import static java.awt.GridBagConstraints.CENTER;
 import static java.awt.GridBagConstraints.EAST;
@@ -59,7 +58,7 @@ public class BoardEditorView extends JFrame {
     private final BoardEditorController controller;
 
     /**
-     * Class contructor.
+     * Class constructor.
      * 
      * @param controller    controller of the gui
      * @param options       options containing sprites to paint
@@ -214,10 +213,6 @@ public class BoardEditorView extends JFrame {
         this.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
                 image, new Point(0, 0), "custom cursor"));
         this.validate();
-    }
-
-    void restoreCursor() {
-        this.setCursor(Cursor.getDefaultCursor());
     }
 
     public void setOwnColor(ChessColor ownColor) {

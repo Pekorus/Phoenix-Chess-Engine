@@ -29,7 +29,7 @@ public class ChessGame{
     private final ChessRules rules;
     /* list of all past moves */
     private final LinkedList<Move> moveList= new LinkedList<>();
-    /* list of past positions, stored as zobrist hash vlue */
+    /* list of past positions, stored as Zobrist hash value */
     private final LinkedList<Long> recentPositions;
     
     /**
@@ -116,8 +116,8 @@ public class ChessGame{
      * @param color     color of player to be checked
      * @return 
      */
-    public boolean isInCheck(ChessColor color) {
-        return rules.isInCheck(color);
+    public boolean isNotInCheck(ChessColor color) {
+        return !rules.isInCheck(color);
     }
     
     /**
@@ -148,7 +148,7 @@ public class ChessGame{
      * Verifies if game is a draw, mode controls if stalemate is also verified.
      * False mode is used in AI to improve performance.
      * 
-     * @param mode
+     * @param mode      controls if stalemate is verified or not
      * @return 
      */
     public boolean isDraw(boolean mode){

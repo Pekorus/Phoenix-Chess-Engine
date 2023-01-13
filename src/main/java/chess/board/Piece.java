@@ -64,7 +64,7 @@ public class Piece {
         return piecetype;
     }
 
-    public ChessColor isColor() {
+    public ChessColor getColor() {
         return color;
     }
 

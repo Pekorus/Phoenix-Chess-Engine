@@ -6,8 +6,8 @@ package chess.board;
  */
 public enum PieceType {
            
-    /* Int values are regular materialic values of chess pieces in the analysis
-       of chess positions. King value is arbitralily chosen as a high value that
+    /* Int values are regular material values of chess pieces in the analysis
+       of chess positions. King value is arbitrarily chosen as a high value that
        is never reached in an analysis to make it more important than anything
        else in the position.
     */ 
@@ -20,7 +20,7 @@ public enum PieceType {
 
     private final int materialValue;
 
-    private PieceType(int materialValue) {
+    PieceType(int materialValue) {
         this.materialValue = materialValue;
     }
 
@@ -30,22 +30,15 @@ public enum PieceType {
 
     @Override
     public String toString() {
-        
-        switch (this){
-            case KING:
-                return "K";
-            case QUEEN: 
-                return "Q";
-            case BISHOP:
-                return "B";
-            case KNIGHT:
-                return "N";
-            case ROOK:
-                return "R";
-            case PAWN:
-                return " ";
-        }
-      return "";    
+
+        return switch (this) {
+            case KING -> "K";
+            case QUEEN -> "Q";
+            case BISHOP -> "B";
+            case KNIGHT -> "N";
+            case ROOK -> "R";
+            case PAWN -> " ";
+        };
     }
 
 

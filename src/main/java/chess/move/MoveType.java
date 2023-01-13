@@ -12,14 +12,11 @@ public enum MoveType {
 
     @Override
     public String toString() {
-        switch (this){
-            case NORMAL:
-                return "-";
-            case TAKE:
-            case ENPASSANT:    
-                return "x";
-        }       
-    return "";    
+        return switch (this) {
+            case NORMAL -> "-";
+            case TAKE, ENPASSANT -> "x";
+            default -> "";
+        };
     }
 
         

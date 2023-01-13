@@ -39,7 +39,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
     private final boolean observerMode;
     /* stores human players choice for next promotion */
     private PieceType nextPromotion = null;
-    /* stores the next move that human plaers wants to make */
+    /* stores the next move that human player wants to make */
     private Move nextMove = null;
     /* fields to store user pressed coordinates and which fields are currently
        highlighted by being painted
@@ -57,7 +57,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
      * @param options       options to control gui
      * @param whitePlayerName    name of human player
      * @param blackPlayerName  name of opponents name
-     * @param observerMode  determines if gui only observs a game or plays 
+     * @param observerMode  determines if gui only observes a game or plays
      */
     public ChessGuiController(GameController gameControl, ChessGame game,
             ChessColor ownColor, ChessOptions options, String whitePlayerName, 
@@ -75,7 +75,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
     @Override
     public void actionPerformed(ActionEvent e) {
         
-        if(observerMode == true) return;
+        if(observerMode) return;
         
         Object source = e.getSource();
         
@@ -119,7 +119,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
                         => highlight square and store it 
                     */
                     if (pressedCoord1 == null && clickedPiece != null 
-                                && clickedPiece.isColor() ==ownColor) {
+                                && clickedPiece.getColor() ==ownColor) {
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
                         view.chessBoardPanel.paintFieldColor(paintedCoord1);
@@ -129,7 +129,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
                     */
                     } else if (pressedCoord1 != null && pressedCoord2 == null 
                                      && clickedPiece!= null && 
-                                           clickedPiece.isColor()== ownColor) {
+                                           clickedPiece.getColor()== ownColor) {
                         view.chessBoardPanel.restoreFieldColor(paintedCoord1);
                         pressedCoord1 = new Coordinate(a, b);
                         paintedCoord1 = new Coordinate(i, j);
@@ -178,7 +178,7 @@ public class ChessGuiController implements ActionListener, Player, Observer {
         /* castling */
         else if (piece1.getType() == KING && coordFrom.distance(coordTo) == 2)
                                                                 type = CASTLE;
-        /* en pasant */ 
+        /* en passant */
         else if (piece1.getType() == PAWN && 
                                 coordFrom.diagonalLineDir(coordTo) != null)
                                                             type = ENPASSANT;
@@ -186,10 +186,10 @@ public class ChessGuiController implements ActionListener, Player, Observer {
         else type = NORMAL;
         
         /* type determined, determine if move is a pawn promotion or not */
-        if (piece1.getType() == PAWN && piece1.isColor()==ownColor
+        if (piece1.getType() == PAWN && piece1.getColor()==ownColor
                     && pawnPromotionValid()) {
                 
-            view.setPromoteDialogColor(piece1.isColor());
+            view.setPromoteDialogColor(piece1.getColor());
             view.promoteDialog.setLocationRelativeTo(view);
             view.promoteDialog.setVisible(true);
             nextMove = new Move(PAWN, coordFrom, coordTo, type, nextPromotion);
@@ -215,10 +215,9 @@ public class ChessGuiController implements ActionListener, Player, Observer {
         if(ownColor==WHITE && pressedCoord2.getX() == 7 && 
                                                       pressedCoord1.getX()==6)
             return true;
-        else if(ownColor==BLACK && pressedCoord2.getX() == 0 
-                && pressedCoord1.getX()== 1)
-            return true;
-    return false;    
+
+        else return ownColor == BLACK && pressedCoord2.getX() == 0
+                && pressedCoord1.getX() == 1;
     }
 
     public String getWhitePlayerName() {

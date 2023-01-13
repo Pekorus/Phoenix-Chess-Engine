@@ -57,13 +57,13 @@ public class TestAI implements Player {
     
     private int SEARCH_DEPTH;
     private int QUIET_SEARCH_DEPTH;
-    /* time to restrict duration of ai move */
+    /* time to restrict duration of AI move */
     private long TURN_TIME;
-    /* type of restriction on ai move calculation */
+    /* type of restriction on AI move calculation */
     private CalcType CALC_TYPE;
     private static final int TRANSPOSITION_TABLE_SIZE = 200000;
     private static final int DRAW_THRESHOLD_VALUE = -50;
-    /* highest value for a position (lowest value is given by -MATEVALUE) */
+    /* highest value for a position (the lowest value is given by -MATEVALUE) */
     private static final int MATEVALUE = Integer.MAX_VALUE / 2;
     /* value to control the search depth reduction in null move search */ 
     private static final int NULLMOVE_REDUCTION = 2;
@@ -210,7 +210,6 @@ public class TestAI implements Player {
 
     /* fields for AI analytics */
     private JFrame analyticsView;
-    //private final AnalyticsWriter analyticsWriter;
     private int evaluatedPositions = 0;
     private int visitedNodes = 0;
     private int visitedQuietNodes = 0;
@@ -316,13 +315,14 @@ public class TestAI implements Player {
 
         setOptions(aiOptions);
 
-        /* if enemy queen is traded, gamestage flag is set to endgame, otherwise
+        /* if enemy queen is traded, game stage flag is set to endgame, otherwise
             it is set to middle game */
         //TODO: endgame else case ?
         gameStage = ENDGAME;
         for (Piece piece : enemyPieces) {
             if (piece.getType() == QUEEN) {
                 gameStage = MIDDLEGAME;
+                break;
             }
         }
         killerMoves = new Move[100][2];
@@ -340,12 +340,13 @@ public class TestAI implements Player {
             //    analyticsWriter.movePlayed(lastMove.toString());
             ownGame.executeMove(lastMove, false);
 
-            /* if enemy queen is traded, change gamestage flag to endgame */
+            /* if enemy queen is traded, change game stage flag to endgame */
             //TODO: endgame else case ?
             gameStage = ENDGAME;
             for (Piece piece : enemyPieces) {
                 if (piece.getType() == QUEEN) {
                     gameStage = MIDDLEGAME;
+                    break;
                 }
             }
             if (currentTree.hasChildren()) {
@@ -355,7 +356,7 @@ public class TestAI implements Player {
     }
 
     /**
-     * Returns value of the static board evalutation function. Higher values 
+     * Returns value of the static board evaluation function. Higher values
      * correspond to a better position for the specified color. It is always
      * true that evaluateBoard(WHITE) = -evaluateBoard(BLACK).
      * 
@@ -618,7 +619,7 @@ public class TestAI implements Player {
      */
     private ArrayList<Move> allPossibleMoves(ArrayList<Piece> pieces) {
         
-        ArrayList<Move> allMoves = new ArrayList<>();
+        ArrayList<Move> allMoves = new ArrayList<>(30);
         for (Piece piece : pieces) {
             allMoves.addAll(rules.getAllLegalMoves(piece));
         }
@@ -696,7 +697,7 @@ public class TestAI implements Player {
             int gameValue;
 
             /* conduct a null-move search */
-            if (allowNullMove && !ownGame.isInCheck(colorToMove)) {
+            if (allowNullMove && ownGame.isNotInCheck(colorToMove)) {
                 ownGame.executeNullMove();
                 gameValue = -builtTreeAndEvaluate(new ChessTreeNode(null), 
                                  -beta, -beta + 1, colorToMove.getInverse(), 
@@ -723,7 +724,7 @@ public class TestAI implements Player {
                 /* no  legal moves: not in check => stalemate, in check => 
                     checkmate */
                 if (!chessTree.hasChildren()) {
-                    if (!ownGame.isInCheck(colorToMove)) {
+                    if (ownGame.isNotInCheck(colorToMove)) {
                         return 0;
                     } else {
                         return gameValue;
@@ -737,7 +738,7 @@ public class TestAI implements Player {
             /* Move best move from table to front of node list if it is a valid
                 move.
              */
-            chessTree.moveNodeToFront(tableBestMove);
+            if(tableBestMove != null) chessTree.moveNodeToFront(tableBestMove);
 
             boolean firstChild = true;
             /* build nodes recursively with a cutoff through alpha-beta-pruning 
@@ -772,7 +773,7 @@ public class TestAI implements Player {
                     bestMove = node.getMove();
                 }
                 if (alpha >= beta) {
-                    /* store the refutation move as killermove to use
+                    /* store the refutation move as killer move to use
                            at same depth */
                     if (node.getMove().getMoveType() != TAKE) {
                         //TODO: node.getDepth = depth+1 ?
@@ -872,8 +873,8 @@ public class TestAI implements Player {
      * Calculates value for this piece as stated by the static evaluation 
      * function. 
      * 
-     * @param bishop    piece to be evaluated
-     * @return          value of static evaluation function
+     * @param coord    coordinate of the bishop to be evaluated
+     * @return         value of static evaluation function
      */
     private int bishopBonus(Coordinate coord, ChessColor color) {
         
@@ -977,7 +978,7 @@ public class TestAI implements Player {
         
         int bonus = 0;
         Coordinate coord = queen.getCoord();
-        if (queen.isColor() == BLACK) {
+        if (queen.getColor() == BLACK) {
             bonus += QUEEN_BONUS_MATRIX[coord.getX()][coord.getY()];
         } else {
             bonus += QUEEN_BONUS_MATRIX[7 - coord.getX()][7 - coord.getY()];
@@ -1015,7 +1016,7 @@ public class TestAI implements Player {
     }
 
     /**
-     * Gets best variation from transposition table for current position.
+     * Gets the best variation from transposition table for current position.
      * 
      * @return      best variation as list of plies for current position
      */
@@ -1148,7 +1149,7 @@ public class TestAI implements Player {
                 /* no  legal moves: not in check => stalemate, in check => 
                     checkmate */
                 if (!chessTree.hasChildren()) {
-                    if (!ownGame.isInCheck(colorToMove)) {
+                    if (ownGame.isNotInCheck(colorToMove)) {
                         return DRAW_THRESHOLD_VALUE;
                     }
                     if (colorToMove == ownColor) {
@@ -1161,9 +1162,9 @@ public class TestAI implements Player {
 
             ArrayList<ChessTreeNode> quietList = chessTree.getChildren();
 
-            /*If player is not in check, consider only takes. Otherwise take
+            /*If player is not in check, consider only takes. Otherwise, take
             all moves into consideration */
-            if (!ownGame.isInCheck(colorToMove)) {
+            if (ownGame.isNotInCheck(colorToMove)) {
                 quietList = createTakeList(quietList, true);
                 quietList.sort(new SortByMVVLVA());
             } else {
@@ -1210,14 +1211,12 @@ public class TestAI implements Player {
                                                             ChessColor color) {
         ArrayList<Move> allMoves;
         if (color == ownColor) {
-            allMoves = allPossibleMoves((ArrayList<Piece>) ownPieces);
+            allMoves = allPossibleMoves(ownPieces);
         } else {
-            allMoves = allPossibleMoves((ArrayList<Piece>) enemyPieces);
+            allMoves = allPossibleMoves(enemyPieces);
         }
 
-        for (Move move : allMoves) {
-            chessTree.addChildNode(new ChessTreeNode(move));
-        }
+        chessTree.addChildNodes(allMoves);
     }
     
     /**
@@ -1247,7 +1246,7 @@ public class TestAI implements Player {
     private ArrayList<ChessTreeNode> createTakeList(
                             ArrayList<ChessTreeNode> nodeList, boolean mode) {
 
-        ArrayList<ChessTreeNode> takeList = new ArrayList<>();
+        ArrayList<ChessTreeNode> takeList = new ArrayList<>(nodeList.size());
 
         for (ChessTreeNode node : nodeList) {
             if (mode) {
@@ -1510,16 +1509,16 @@ public class TestAI implements Player {
         }
 
         private int score(ChessTreeNode node) {
-            int score = 0;
+
             Move move = node.getMove();
 
             /* Taking moves get +1000 score, also additional score for 
                        MVVLVA */
             if (move.getMoveType() == TAKE) {
-                score = +1000 + board.getPieceTypeOnCoord(move.getCoordTo())
+                return 1000 + board.getPieceTypeOnCoord(move.getCoordTo())
                     .getMaterialValue()- move.getPieceType().getMaterialValue();
             }
-            return score;
+            else return 0;
         }
     }
 }

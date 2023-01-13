@@ -26,21 +26,21 @@ import javax.swing.WindowConstants;
 
 /**
  *
- * Provides the gui of a chess programm. Needs MainView (graphical part) class 
+ * Provides the gui of a chess program. Needs MainView (graphical part) class
  * to function.
  */
 public class MainController extends WindowAdapter implements ActionListener, 
                                                       MouseListener, Observer{
 
     MainView mainView;
-    /* controller of the chess agme */
+    /* controller of the chess game */
     GameController gameController;
     ChessGameType gameType;
     /* options to control gui */
     ChessOptions options;
     /* options to control AI behaviour */
     AIOptions aiOptions;
-    /* flag for ai match */
+    /* flag for AI match */
     boolean aiMatch = false;
     /* counters for AI Match */
     float whiteWins = 0, blackWins = 0;
@@ -140,7 +140,7 @@ public class MainController extends WindowAdapter implements ActionListener,
             if(mainView.timeCalc.isSelected()) 
                                         aiOptions.setCalcType(CalcType.TIME);
             else aiOptions.setCalcType(CalcType.DEPTH);
-            /* commit edit of textfield to get current value with getValue */
+            /* commit edit of text field to get current value with getValue */
             try{
                 mainView.timeField.commitEdit();                
             }
@@ -165,10 +165,6 @@ public class MainController extends WindowAdapter implements ActionListener,
             gameController.endGame();
             System.exit(0);
        }
-    }
-
-    public MainView getMainView() {
-        return mainView;
     }
 
     /**
@@ -205,7 +201,7 @@ public class MainController extends WindowAdapter implements ActionListener,
     }
     
     /**
-     * Starts a chess game from a custom postion.
+     * Starts a chess game from a custom position.
      *  
      * @param pieceArray    board position represented by piece array
      * @param gameType      type of game
@@ -314,21 +310,14 @@ public class MainController extends WindowAdapter implements ActionListener,
     
         /* if an AI match is played, updated scores and start new game */
         if(aiMatch && result != NOTFINISHED){
-        
+
             switch (result) {
-                
-                case WHITEWIN:
-                    whiteWins++;
-                    break;
-            
-                case BLACKWIN:
-                    blackWins++;
-                    break;
-                        
-                case DRAW:
+                case WHITEWIN -> whiteWins++;
+                case BLACKWIN -> blackWins++;
+                case DRAW -> {
                     whiteWins += 0.5;
                     blackWins += 0.5;
-    
+                }
             }
             matchCount++;
             if(matchCount >= 10){

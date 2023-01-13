@@ -1,27 +1,25 @@
 package chess.ai;
 
-import static it.unimi.dsi.fastutil.Hash.DEFAULT_LOAD_FACTOR;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import java.util.HashMap;
 
 /**
  *
- * Provides a transposition table to store positions in. Uses a primitive int
- * to object hash map provided by the fastutil library.
+ * Provides a transposition table to store positions in.
  */
 public class ChessTransTable {
-    
-    private final Int2ObjectOpenHashMap<TransTableEntry> hashMap;
+
+    private final HashMap<Integer, TransTableEntry> hashMap;
     private final int mapSize;
     private int hashCollisions;
-    
+
     /**
      * Class constructor.
-     * 
+     *
      * @param entryCount    size of the hash map
      */
     public ChessTransTable(int entryCount) {
         this.mapSize = entryCount+1;
-        this.hashMap = new Int2ObjectOpenHashMap(mapSize, DEFAULT_LOAD_FACTOR); 
+        this.hashMap = new HashMap<Integer, TransTableEntry>(mapSize);
         this.hashCollisions = 0;
     }
 
@@ -67,18 +65,10 @@ public class ChessTransTable {
 
     private int zobrisToHashMapKey(long zobris){
         return (int) (zobris %mapSize);
-    } 
-
-    public int getHashCollisions() {
-        return hashCollisions;
     }
 
     public int getHashFilled(){
         return hashMap.size();
-    }
-    
-    public void resetCollisionCounter(){
-        hashCollisions = 0;
     }
     
     /**

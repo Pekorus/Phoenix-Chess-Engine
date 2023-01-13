@@ -90,8 +90,7 @@ public class Move {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        return hash;
+        return 3;
     }
 
     @Override
@@ -118,10 +117,7 @@ public class Move {
         if (this.moveType != other.moveType) {
             return false;
         }
-        if (this.promoteTo != other.promoteTo) {
-            return false;
-        }
-        return true;
+        return this.promoteTo == other.promoteTo;
     }
 
     
